@@ -19,8 +19,6 @@
 (define-syntax regexp-match!
   (syntax-parser
    [(f pat-stx arg* ...)
-    #:when (or (string? (syntax-e #'pat-stx))
-               (regexp? (syntax-e #'pat-stx)))
     #:with num-groups (count-groups (format "~a" (syntax-e #'pat-stx)) #:src #'f)
     #:with ((index* . group-id*) ...)
            #`#,(for/list ([i (in-range (syntax-e #'num-groups))])
@@ -37,7 +35,8 @@
 (define-for-syntax (count-groups v #:src stx)
   (cond
    [(string? v)  (count-groups/string v #:src stx)]
-   [(regexp? v)  (count-groups/regexp v #:src stx)]
+   ;[(regexp? v)  (count-groups/regexp v #:src stx)]
+   ;[(pregexp? v) (count-groups/pregexp v #:src stx)]
    [else         (error 'regexp-match! "Internal error on input" v)]))
 
 ;; Count the number of matched parentheses in a regexp pattern.
@@ -64,6 +63,9 @@
         (loop (+ i 1) in-paren num-groups)]))))
 
 (define-for-syntax (count-groups/regexp rxp #:src stx)
+  (error 'regexp-match! "Not implemented"))
+
+(define-for-syntax (count-groups/regexp pxp #:src stx)
   (error 'regexp-match! "Not implemented"))
 
 (define-for-syntax (group-error str reason)
