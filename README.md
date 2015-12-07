@@ -47,6 +47,5 @@ This library's [Scribble docs](TODO) give full details on the static checks.
 - `printf`
 
 #### `dependent/regexp`
-- `regexp-match?`
 - `regexp-match`
 
