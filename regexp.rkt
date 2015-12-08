@@ -45,15 +45,15 @@
   (syntax-parser
    [(f pat-stx arg* ...)
     #:with num-groups (count-groups #'pat-stx #:src #'f)
-    #:with ((index* . group-id*) ...)
-           #`#,(for/list ([i (in-range (syntax-e #'num-groups))])
-                 (cons i (format-id #'f "group-~a" i)))
-    ;; Chaining list-ref?
-    #'(let ([m (regexp-match pat-stx arg* ...)])
-        (if m
-          (let ([group-id* (or (list-ref m index*) (error 'regexp-match! "Internal error, try Racket's `regexp-match`"))] ...)
-            (list (car m) group-id* ...))
-          m))]
+    #:with (index* ...) #`#,(for/list ([i (in-range (syntax-e #'num-groups))]) i)
+    #'(let ([maybe-match (regexp-match pat-stx arg* ...)])
+        (if maybe-match
+          (let ([m : (Listof (Option String)) maybe-match])
+            (list (car maybe-match)
+                  (begin (set! m (cdr m))
+                         (or (car m) (error 'regexp-match! (format "Internal error at result index ~a, try Racket's regexp-match" index*))))
+                  ...))
+          #f))]
    [(f arg* ...)
     (syntax/loc #'f (regexp-match arg* ...))]))
 
