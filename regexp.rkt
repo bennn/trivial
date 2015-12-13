@@ -1,11 +1,15 @@
 #lang typed/racket/base
 
-;; TODO byte-regexp
+;; TODO use syntax-class to abstract over local-expands / check num-groups
+;; TODO groups can be #f. Don't just 'error'
 
 (provide
-  regexp:
-  define-regexp:
-  pregexp:
+  regexp:       define-regexp:
+  pregexp:      define-pregexp:
+  byte-regexp:  define-byte-regexp:
+  byte-pregexp: define-byte-pregexp:
+  ;; Expression and definition forms that try checking their argument patterns.
+  ;; If check succeeds, will remember #groups for calls to `regexp-match:`.
 
   regexp-match:
   ;; (-> Pattern String Any * (U #f (List String *N+1)))
@@ -19,6 +23,7 @@
 
 (require (for-syntax
   racket/base
+  (only-in racket/format ~a)
   racket/syntax
   syntax/id-table
   syntax/parse
@@ -28,11 +33,14 @@
 
 (define-for-syntax num-groups-key 'regexp-match:num-groups)
 (define-for-syntax errloc-key     'regexp-match:)
-
 (define-for-syntax id+num-groups (make-free-id-table))
 
 ;; (define-matcher f)
-;; TODO document
+;; Expand to two forms:
+;; - (f: arg)
+;; - (define-f: id arg)
+;; The first is for statically-checked patterns in expressions,
+;;  the second is for patterns in definitions.
 (define-syntax define-matcher
   (syntax-parser
    [(_ f:id)
@@ -42,18 +50,26 @@
         ;; For expressions, (regexp: val)
         (define-syntax f:
           (syntax-parser
-           [(_ x:str)
-            (syntax-property #'(f x)
+           [g:id
+            (syntax/loc #'g f)]
+           [(_ pat-stx)
+            #:with pat-stx+ (regexp-expand #'pat-stx)
+            #:with (num-groups . T) (count-groups #'pat-stx+)
+            (syntax-property #'(f pat-stx+)
               num-groups-key
-              (count-groups #'x))]
+              (cons (syntax-e #'num-groups) #'T))]
            [(_ arg* (... ...))
             #'(f arg* (... ...))]))
         ;; For definitions, (define-regexp: id val)
         (define-syntax define-f:
           (syntax-parser
-           [(_ name:id x)
-            (free-id-table-set! id+num-groups #'name (count-groups #'x))
-            #'(define name x)]
+           [(_ name:id pat-stx)
+            #:with pat-stx+ (regexp-expand #'pat-stx)
+            #:with (num-groups . T) (count-groups #'pat-stx+)
+            (free-id-table-set! id+num-groups
+                                #'name
+                                (cons (syntax-e #'num-groups) #'T))
+            #'(define name pat-stx+)]
            [(_ arg* (... ...))
             #'(define arg* (... ...))]))) ]))
 
@@ -65,70 +81,107 @@
 (define-syntax regexp-match:
   (syntax-parser
    [(f pat-stx arg* ...)
-    #:with num-groups (count-groups #'pat-stx)
-    #:when (syntax-e #'num-groups)
+    #:with pat-stx+ (regexp-expand #'pat-stx)
+    #:with (num-groups . T) (count-groups #'pat-stx+)
     #:with (index* ...) #`#,(for/list ([i (in-range (syntax-e #'num-groups))]) i)
-    #'(let ([maybe-match (regexp-match pat-stx arg* ...)])
+    #'(let ([maybe-match (regexp-match pat-stx+ arg* ...)])
         (if maybe-match
-          (let ([m : (Listof (Option String)) maybe-match])
+          (let ([m : (Listof (Option T)) maybe-match])
             (list (car maybe-match)
                   (begin (set! m (cdr m))
                          (or (car m) (error 'regexp-match: (format "Internal error at result index ~a, try using Racket's regexp-match" index*))))
                   ...))
           #f))]
+   [f:id
+    (syntax/loc #'f regexp-match)]
    [(f arg* ...)
     (syntax/loc #'f (regexp-match arg* ...))]))
 
 ;; -----------------------------------------------------------------------------
-
-(define-for-syntax (count-groups v-stx)
-  (let ([v (syntax-e v-stx)])
-    (cond
-     [(identifier? v-stx) (free-id-table-ref id+num-groups v-stx #f)]
-     [(string? v)       (count-groups/string v #:src v-stx)]
-     [(regexp? v)       (count-groups/regexp v #:src v-stx)]
-     [(pregexp? v)      (count-groups/pregexp v #:src v-stx)]
-     [(byte-regexp? v)  (count-groups/byte-regexp v #:src v-stx)]
-     [(byte-pregexp? v) (count-groups/byte-pregexp v #:src v-stx)]
-     [else  (error errloc-key (format "Internal error on input '~e'" v))])))
-
-;; Count the number of matched parentheses in a regexp pattern.
-;; Raise an exception if there are unmatched parens.
-(define-for-syntax (count-groups/string str #:src stx)
-  (define last-index (- (string-length str) 1))
-  (let loop ([i 0] [in-paren #f] [num-groups 0])
-    (if (> i last-index)
-      (if in-paren
-        (group-error str (format "'(' at index ~a" in-paren))
-        num-groups)
-      (case (string-ref str i)
-       [(#\()
-        (loop (+ i 1) i num-groups)]
-       [(#\))
-        (unless in-paren
-          (group-error str (format "')' at index ~a" i)))
-        (loop (+ i 1) #f (+ 1 num-groups))]
-       [(#\\)
-        (if (and (< i last-index) (eq? #\\ (string-ref str (+ i 1))))
-          (loop (+ i 3) in-paren num-groups)
-          (loop (+ i 2) in-paren num-groups))]
-       [else
-        (loop (+ i 1) in-paren num-groups)]))))
-
-(define-for-syntax (count-groups/regexp rxp #:src stx)
-  (error errloc-key "Not implemented"))
-
-(define-for-syntax (count-groups/pregexp pxp #:src stx)
-  (error errloc-key "Not implemented"))
-
-(define-for-syntax (count-groups/byte-regexp rxp #:src stx)
-  (error errloc-key "Not implemented"))
-
-(define-for-syntax (count-groups/byte-pregexp pxp #:src stx)
-  (error errloc-key "Not implemented"))
 
 (define-for-syntax (group-error str reason)
   (raise-argument-error
     errloc-key
     (format "Valid regexp pattern (contains unmatched ~a)" reason)
     str))
+
+(define-for-syntax (regexp-expand stx)
+  (local-expand stx 'expression '()))
+
+(define-for-syntax (quoted-stx-value? stx)
+  (and
+    (syntax? stx)
+    (let ([v (syntax-e stx)])
+      (and
+        (list? v)
+        (free-identifier=? (car v) (syntax/loc stx quote))
+        (syntax-e (cadr v))))))
+
+(define-for-syntax (count-groups v-stx)
+  (cond
+    [(syntax-property v-stx num-groups-key)
+     => (lambda (x) x)]
+    [(identifier? v-stx)
+     (free-id-table-ref id+num-groups v-stx #f)]
+    [(quoted-stx-value? v-stx)
+     => (lambda (v)
+     (cond
+       [(string? v)        (count-groups/string v #:src v-stx)]
+       [(regexp? v)        (count-groups/regexp v #:src v-stx)]
+       [(pregexp? v)       (count-groups/pregexp v #:src v-stx)]
+       [(bytes? v)         (count-groups/bytes v #:src v-stx)]
+       [(byte-regexp? v)   (count-groups/byte-regexp v #:src v-stx)]
+       [(byte-pregexp? v)  (count-groups/byte-pregexp v #:src v-stx)]
+       [else               #f]))]
+    [else  #f]))
+
+;; Count the number of matched parentheses in a regexp pattern.
+;; Raise an exception if there are unmatched parens.
+(define-for-syntax (count-groups/untyped str #:src stx)
+  (define last-index (- (string-length str) 1))
+  (let loop ([i 0] [in-paren '()] [num-groups 0])
+    (if (> i last-index)
+      (if (null? in-paren)
+        num-groups
+        (group-error str (format "'(' at index ~a" (car in-paren))))
+      (case (string-ref str i)
+       [(#\()
+        ;; Watch for (? patterns
+        (if (and (< i last-index)
+                 (eq? #\? (string-ref str (+ i 1))))
+          (loop (+ i 2) (cons #f in-paren) num-groups)
+          (loop (+ i 1) (cons i in-paren) num-groups))]
+       [(#\))
+        (cond
+         [(null? in-paren)
+          (group-error str (format "')' at index ~a" i))]
+         [(eq? #f (car in-paren))
+          ;; Matched closing paren, but does not count as a group
+          (loop (+ i 1) (cdr in-paren) num-groups)]
+         [else
+          (loop (+ i 1) (cdr in-paren) (+ 1 num-groups))])]
+       [(#\\)
+        (if (and (< i last-index)
+                 (eq? #\\ (string-ref str (+ i 1))))
+          (loop (+ i 3) in-paren num-groups)
+          (loop (+ i 2) in-paren num-groups))]
+       [else
+        (loop (+ i 1) in-paren num-groups)]))))
+
+(define-for-syntax (count-groups/string str #:src stx)
+  (cons (count-groups/untyped str #:src stx) (syntax/loc stx String)))
+
+(define-for-syntax (count-groups/bytes b #:src stx)
+  (cons (count-groups/untyped (~a b) #:src stx) (syntax/loc stx Bytes)))
+
+(define-for-syntax (count-groups/regexp rx #:src stx)
+  (count-groups/string (~a rx) #:src stx))
+
+(define-for-syntax count-groups/pregexp
+  count-groups/regexp)
+
+(define-for-syntax (count-groups/byte-regexp bx #:src stx)
+  (count-groups/bytes (~a bx) #:src stx))
+
+(define-for-syntax count-groups/byte-pregexp
+  count-groups/byte-regexp)
