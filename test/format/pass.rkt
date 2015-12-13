@@ -39,4 +39,16 @@
   (parameterize ([error-print-width 4])
     (test-format: ["~a ~.a" "hello" "world"] "hello w..."))
 
+  ;; Higher-order use: should work, but lose typechecking
+  (check-equal?
+    ((lambda ([f : (-> String Any String)] [x : Any]) (f "hello ~a" x))
+     format: 'world)
+    "hello world")
+
+  (check-exn exn:fail:contract?
+    (lambda ()
+      ((lambda ([f : (-> String Any Void)])
+         (f "~b" "not-a-number"))
+       printf:)))
+
 )

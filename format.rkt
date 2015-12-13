@@ -40,11 +40,17 @@
                       (if t (quasisyntax/loc #'f (ann #,a #,t)) a))])
         (quasisyntax/loc #'f
           (format template #,@arg+*))))]
+   [f:id
+    (syntax/loc #'f format)]
    [(f tmp arg* ...)
     (syntax/loc #'f (format tmp arg* ...))]))
 
-(define-syntax-rule (printf: arg* ...)
-  (display (format: arg* ...)))
+(define-syntax printf:
+  (syntax-parser
+   [f:id
+    (syntax/loc #'f printf)]
+   [(f arg* ...)
+    (syntax/loc #'f (display (format: arg* ...)))]))
 
 ;; -----------------------------------------------------------------------------
 
