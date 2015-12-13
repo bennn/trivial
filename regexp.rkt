@@ -27,6 +27,7 @@
   racket/syntax
   syntax/id-table
   syntax/parse
+  trivial/private/common
 ))
 
 ;; =============================================================================
@@ -53,7 +54,7 @@
            [g:id
             (syntax/loc #'g f)]
            [(_ pat-stx)
-            #:with pat-stx+ (regexp-expand #'pat-stx)
+            #:with pat-stx+ (expand-expr #'pat-stx)
             #:with (num-groups . T) (count-groups #'pat-stx+)
             (syntax-property #'(f pat-stx+)
               num-groups-key
@@ -64,7 +65,7 @@
         (define-syntax define-f:
           (syntax-parser
            [(_ name:id pat-stx)
-            #:with pat-stx+ (regexp-expand #'pat-stx)
+            #:with pat-stx+ (expand-expr #'pat-stx)
             #:with (num-groups . T) (count-groups #'pat-stx+)
             (free-id-table-set! id+num-groups
                                 #'name
@@ -81,7 +82,7 @@
 (define-syntax regexp-match:
   (syntax-parser
    [(f pat-stx arg* ...)
-    #:with pat-stx+ (regexp-expand #'pat-stx)
+    #:with pat-stx+ (expand-expr #'pat-stx)
     #:with (num-groups . T) (count-groups #'pat-stx+)
     #:with (index* ...) #`#,(for/list ([i (in-range (syntax-e #'num-groups))]) i)
     #'(let ([maybe-match (regexp-match pat-stx+ arg* ...)])
@@ -104,9 +105,6 @@
     errloc-key
     (format "Valid regexp pattern (contains unmatched ~a)" reason)
     str))
-
-(define-for-syntax (regexp-expand stx)
-  (local-expand stx 'expression '()))
 
 (define-for-syntax (quoted-stx-value? stx)
   (and
