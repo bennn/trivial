@@ -2,31 +2,27 @@
 
 ;; `format:` expressions that should fail to compile
 
-;; TODO abstract the 'module ...'
-(define TEST-CASE* (syntax->list #'(
-  (module t typed/racket/base (require trivial/format)
-    (printf: "hello ~a" "john" "doe"))
-  (module t typed/racket/base (require trivial/format)
-    (printf: "hello ~a" "john" "doe"))
-  (module t typed/racket/base (require trivial/format)
-    (printf: "binary number ~b\n" 3.14))
-  (module t typed/racket/base (require trivial/format)
-    (printf: "character ~c\n" 88))
-  (module t typed/racket/base (require trivial/format)
-    (printf: "octl ~o\n" 1.0+2i))
-  (module t typed/racket/base (require trivial/format)
-    (printf: "hex ~o\n" (exact->inexact 0)))
+(define (expr->typed-module expr)
+  #`(module t typed/racket/base
+      (require trivial/format)
+      #,expr))
+
+(define TEST-CASE* (map expr->typed-module '(
+  (printf: "hello ~a" "john" "doe")
+  (printf: "hello ~a" "john" "doe")
+  (printf: "binary number ~b\n" 3.14)
+  (printf: "character ~c\n" 88)
+  (printf: "octl ~o\n" 1.0+2i)
+  (printf: "hex ~o\n" (exact->inexact 0))
 )))
 
 (module+ test
   (require
     rackunit)
 
-  (define format-eval
-    (let ([format-ns (make-base-namespace)])
-      (lambda (stx)
-        (lambda () ;; For `check-exn`
-          (eval-syntax stx format-ns)))))
+  (define (format-eval stx)
+    (lambda () ;; For `check-exn`
+      (compile-syntax stx)))
 
   (for ([rkt (in-list TEST-CASE*)])
     (check-exn #rx"format::|Type Checker"
