@@ -84,6 +84,7 @@
    [(f pat-stx arg* ...)
     #:with pat-stx+ (expand-expr #'pat-stx)
     #:with (num-groups . T) (count-groups #'pat-stx+)
+    #:when (syntax-e #'num-groups)
     #:with (index* ...) #`#,(for/list ([i (in-range (syntax-e #'num-groups))]) i)
     #'(let ([maybe-match (regexp-match pat-stx+ arg* ...)])
         (if maybe-match
@@ -105,15 +106,6 @@
     errloc-key
     (format "Valid regexp pattern (contains unmatched ~a)" reason)
     str))
-
-(define-for-syntax (quoted-stx-value? stx)
-  (and
-    (syntax? stx)
-    (let ([v (syntax-e stx)])
-      (and
-        (list? v)
-        (free-identifier=? (car v) (syntax/loc stx quote))
-        (syntax-e (cadr v))))))
 
 (define-for-syntax (count-groups v-stx)
   (cond
@@ -163,6 +155,9 @@
                  (eq? #\\ (string-ref str (+ i 1))))
           (loop (+ i 3) in-paren num-groups)
           (loop (+ i 2) in-paren num-groups))]
+       [(#\|)
+        ;; Nope! Can't handle pipes
+        #f]
        [else
         (loop (+ i 1) in-paren num-groups)]))))
 

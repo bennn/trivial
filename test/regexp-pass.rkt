@@ -247,4 +247,13 @@
       (U #f (List Bytes Bytes Bytes)))
     '(#"hellooo" #"ll" #"ooo"))
 
+  ;; -- special cases / miscellaneous
+
+  ;; --- Can't handle |, yet
+  (check-equal?
+    (ann
+      (regexp-match: "this(group)|that" "that")
+      (U #f (Listof (U #f String))))
+    '("that" #f))
+
 )

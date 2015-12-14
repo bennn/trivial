@@ -43,6 +43,11 @@
         (define rx "he(l*)(o*)")
         (regexp-match: rx "helloooooooo"))
       (U #f (List String String String))))
+  ;; --- Can't handle |, yet
+  (module t typed/racket/base (require trivial/regexp)
+    (ann
+      (regexp-match: "this(group)|that" "that")
+      (U #f (List String String))))
 )))
 
 (module+ test
