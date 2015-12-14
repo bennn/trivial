@@ -70,6 +70,15 @@ Each file in the root directory of this repo can be imported specifically, as in
 These files only export macros.
 
 
+Naming
+---
+
+- The library is "trivial" because it solves only the simplest typechecking problems, and does so simply by analyzing a local chunk of source code.
+
+- By convention, we suffix all our exports with a trailing colon.
+  This is a hint that the macro will attempt some extra static analysis (including typechecking) at its call-site.
+
+
 Contributing
 ---
 
