@@ -1,14 +1,18 @@
 #lang typed/racket/base
 
+;; Constant-folding math operators.
+;; Where possible, they simplify their arguments.
+
 (provide
   +: -: *: /:
-  ;; Fold syntactic constants
+  ;; Same signature as the racket/base operators,
+  ;;  but try to simplify arguments during expansion.
 )
 
 (require (for-syntax
-  racket/base
+  typed/racket/base
   (only-in racket/format ~a)
-  racket/syntax
+  (only-in racket/syntax format-id)
   syntax/id-table
   syntax/parse
   trivial/private/common
@@ -41,10 +45,14 @@
 
 ;; -----------------------------------------------------------------------------
 
+;; Simplify a list of expressions using an associative binary operator.
+;; Return either:
+;; - A numeric value
+;; - A list of syntax objects, to be spliced back in the source code
 (define-for-syntax (reduce/op op e*)
-  (let loop ([prev #f]
-             [acc  '()]
-             [e*   e*])
+  (let loop ([prev #f]   ;; (U #f Number), candidate for reduction
+             [acc  '()]  ;; (Listof Syntax), irreducible arguments
+             [e*   e*])  ;; (Listof Syntax), arguments to process
     (if (null? e*)
       ;; then: finished, return a number (prev) or list of expressions (acc)
       (if (null? acc)

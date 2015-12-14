@@ -1,5 +1,7 @@
 #lang typed/racket/base
 
+;; Successful use of `format:`
+
 (module+ test
 
   (require

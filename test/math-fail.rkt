@@ -1,5 +1,7 @@
 #lang racket/base
 
+;; Math expressions that fail to typecheck
+
 (define (expr->typed-module expr)
   #`(module t typed/racket/base
       (require trivial/math)
@@ -18,6 +20,8 @@
   ;; -- dividing by zero => fall back to racket/base
   (ann (/: 1 1 0) One)
 )))
+
+;; -----------------------------------------------------------------------------
 
 (module+ test
   (require

@@ -1,5 +1,7 @@
 #lang typed/racket/base
 
+;; Well-typed use of regexp:
+
 (module+ test
 
   (require

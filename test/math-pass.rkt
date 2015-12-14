@@ -1,5 +1,7 @@
 #lang typed/racket/base
 
+;; Well-typed math
+
 (module+ test
   (require
     trivial/math

@@ -1,7 +1,6 @@
 #lang racket/base
 
 ;; Common helper functions
-;; TODO actually detect the `quote` identifier, don't use eq?
 
 (provide
   expand-expr
@@ -10,13 +9,13 @@
 
   quoted-stx-value?
   ;; (-> Any (U #f Syntax))
-  ;; If the argument is a syntax object representing a quoted #%datum `v`,
+  ;; If the argument is a syntax object representing a quoted datum `v`,
   ;;  return `v`.
   ;; Otherwise, return #f.
 )
 
 (require
-  (for-template (only-in racket/base quote)))
+  (for-template (only-in typed/racket/base quote)))
 
 ;; =============================================================================
 

@@ -1,5 +1,7 @@
 #lang racket/base
 
+;; Ill-typed `regexp:` expressions
+;;
 ;; TODO why can't I catch errors for (ann ... (List String))? WhydoI need #f?
 
 (define (expr->typed-module expr)
@@ -35,6 +37,8 @@
   (ann (regexp-match: "this(group)|that" "that")
        (U #f (List String String)))
 )))
+
+;; -----------------------------------------------------------------------------
 
 (module+ test
   (require

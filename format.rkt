@@ -1,5 +1,7 @@
 #lang typed/racket/base
 
+;; Statically-checked format strings
+
 (provide
   format:
   ;; (-> (x:String) Any *N Void)
@@ -17,7 +19,10 @@
 )
 
 (require
-  (for-syntax typed/racket/base syntax/parse racket/sequence))
+  (for-syntax
+    typed/racket/base
+    syntax/parse
+    racket/sequence))
 
 ;; =============================================================================
 
@@ -29,7 +34,7 @@
            [num-expected (length type*)]
            [num-given (for/sum ([a (in-syntax #'(arg* ...))]) 1)])
       (unless (= num-expected num-given)
-        (raise-arity-error
+        (apply raise-arity-error
           (syntax-e #'f)
           num-expected
           (for/list ([a (in-syntax #'(arg* ...))]) (syntax->datum a))))
@@ -45,6 +50,7 @@
    [(f tmp arg* ...)
     (syntax/loc #'f (format tmp arg* ...))]))
 
+;; Short for `(displayln (format: ...))`
 (define-syntax printf:
   (syntax-parser
    [f:id
@@ -55,10 +61,10 @@
 ;; -----------------------------------------------------------------------------
 
 ;; Count the number of format escapes in a string.
-;; Returns a list of optional types (to be spliced into the source code)
-;; Example: If result is '(#f Integer), then
-;; - Expect 2 arguments to format string
-;; - First argument has no constraints, second must be an Integer
+;; Returns a list of optional types (to be spliced into the source code).
+;;   Example: If result is '(#f Integer), then
+;;   - The format string expects 2 arguments
+;;   - First argument has no type constraints, second must be an Integer
 ;; (: count-format-escapes (->* [String] [#:src (U #f Syntax)] (Listof (U #f Syntax))))
 (define-for-syntax (template->type* str #:src [stx #f])
   (define last-index (- (string-length str) 1))
@@ -67,7 +73,7 @@
      [(>= i last-index)
       (reverse acc)]
      [(eq? #\~ (string-ref str i))
-      ;; From fprintf docs
+      ;; From fprintf docs @ http://docs.racket-lang.org/reference/Writing.html
       (case (string-ref str (+ i 1))
        [(#\% #\n #\~ #\space #\tab #\newline)
         ;; Need 0 arguments
@@ -93,4 +99,3 @@
           (string-ref str (+ i 1)))])]
      [else
       (loop (+ i 1) acc)])))
-

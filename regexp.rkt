@@ -1,7 +1,9 @@
 #lang typed/racket/base
 
+;; Stronger types for regular expression matching.
+;;
 ;; TODO use syntax-class to abstract over local-expands / check num-groups
-;; TODO groups can be #f. Don't just 'error'
+;; TODO groups can be #f when using | ... any other way?
 
 (provide
   regexp:       define-regexp:
@@ -9,7 +11,8 @@
   byte-regexp:  define-byte-regexp:
   byte-pregexp: define-byte-pregexp:
   ;; Expression and definition forms that try checking their argument patterns.
-  ;; If check succeeds, will remember #groups for calls to `regexp-match:`.
+  ;; If check succeeds, will remember the number of pattern groups
+  ;; for calls to `regexp-match:`.
 
   regexp-match:
   ;; (-> Pattern String Any * (U #f (List String *N+1)))
@@ -17,14 +20,13 @@
   ;; If the pattern is determined statically, result will be either #f
   ;;  or a list of N+1 strings, where N is the number of groups specified
   ;;  the pattern.
-  ;;
   ;; Will raise a compile-time exception if the pattern contains unmatched groups.
 )
 
 (require (for-syntax
-  racket/base
+  typed/racket/base
   (only-in racket/format ~a)
-  racket/syntax
+  (only-in racket/syntax format-id)
   syntax/id-table
   syntax/parse
   trivial/private/common
@@ -107,6 +109,7 @@
     (format "Valid regexp pattern (contains unmatched ~a)" reason)
     str))
 
+;; Dispatch for counting groups
 (define-for-syntax (count-groups v-stx)
   (cond
     [(syntax-property v-stx num-groups-key)
