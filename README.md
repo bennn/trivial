@@ -40,8 +40,8 @@ When the first argument to `printf:` is not a string literal, nothing special ha
 Besides `printf:`, this library also provides [macros](http://www.greghendershott.com/fear-of-macros/)
 for:
 
-- `regexp-match`, to count the number of groups in a pattern and give the match result a more specific type
-- `+`, `-`, `*`, `/`, to reduce constants where possible, yielding results with more specific types.
+- `regexp-match:`, to count the number of groups in a pattern and give the match result a more specific type
+- `+:`, `-:`, `*:`, `/:`, to reduce constants where possible, yielding results with more specific types.
 
 See the [documentation](http://pkg-build.racket-lang.org/doc/trivial/index.html) for the full story.
 
