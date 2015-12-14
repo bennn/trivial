@@ -3,7 +3,7 @@ trivial
 [![Build Status](https://travis-ci.org/bennn/trivial.svg)](https://travis-ci.org/bennn/trivial)
 [![Coverage Status](https://coveralls.io/repos/bennn/trivial/badge.svg?branch=master&service=github)](https://coveralls.io/github/bennn/trivial?branch=master)
 
-This library provides ``smarter'' versions of Typed Racket standard library functions.
+This library provides "smarter" versions of Typed Racket standard library functions.
 For example:
 
 ```
@@ -13,8 +13,7 @@ For example:
 
 (printf: "hello, ~a")
 
-;; Compiling yields...
-;;
+;; > raco make test.rkt
 ;; format:: arity mismatch;
 ;;  the expected number of arguments does not match the given number
 ;;    expected: 1
