@@ -3,14 +3,17 @@
 @require[scribble/eval]
 @require[scriblib/footnote]
 
-@title[#:tag "top"]{@bold{Trivial: Solving the easiest type-checking problems}}
+@title[#:tag "top"]{Trivial: Solving the easiest type-checking problems}
 @author[@hyperlink["https://github.com/bennn"]{Ben Greenman}]
 
 @defmodule[trivial]
 @(define trivial-eval (make-base-eval #:lang 'typed/racket/base '(begin (require trivial))))
 
 This library exports a collection of @hyperlink["http://www.greghendershott.com/fear-of-macros/"]{macros} that implement statically-checked interfaces to standard library functions.
-All exported macros are named with a trailing colon (meant as a hint that some extra type-checking may happen at the call site).
+All exported macros are named with a trailing colon (meant as a hint that some extra type-checking may happen at the call site).@note{
+  Not a fan of the colon convention? @racket[trivial/no-colon] provides the same identifiers, colon-free.
+  Same goes for each sub-collection, for instance you can require @racket[trivial/math/no-colon].
+}
 
 
 @emph{Hidden Agenda:}
@@ -67,6 +70,7 @@ In other words, the result is one string for the matched substring and an unknow
        (U #f (List String String)))
   (ann (regexp-match: #"(la(m*)bda)" #"lam")
        (U #f (List Bytes Bytes Bytes)))
+  (regexp-match: "(bad))group" "")
 ]
 
   @emph{Note:} the regular expression @racket{|} operator is not currently supported because it can nullify some groups.
