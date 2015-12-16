@@ -70,6 +70,7 @@ In other words, the result is one string for the matched substring and an unknow
        (U #f (List String String)))
   (ann (regexp-match: #"(la(m*)bda)" #"lam")
        (U #f (List Bytes Bytes Bytes)))
+  (regexp-match: "(bad))group" "")
 ]
 
   @emph{Note:} the regular expression @racket{|} operator is not currently supported because it can nullify some groups.

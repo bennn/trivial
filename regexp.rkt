@@ -106,7 +106,7 @@
 (define-for-syntax (group-error str reason)
   (raise-argument-error
     errloc-key
-    (format "Valid regexp pattern (contains unmatched ~a)" reason)
+    (format "Valid regexp pattern (unmatched ~a)" reason)
     str))
 
 ;; Dispatch for counting groups
