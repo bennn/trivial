@@ -10,7 +10,10 @@
 @(define trivial-eval (make-base-eval #:lang 'typed/racket/base '(begin (require trivial))))
 
 This library exports a collection of @hyperlink["http://www.greghendershott.com/fear-of-macros/"]{macros} that implement statically-checked interfaces to standard library functions.
-All exported macros are named with a trailing colon (meant as a hint that some extra type-checking may happen at the call site).
+All exported macros are named with a trailing colon (meant as a hint that some extra type-checking may happen at the call site).@note{
+  Not a fan of the colon convention? @racket[trivial/no-colon] provides the same identifiers, colon-free.
+  Same goes for each sub-collection, for instance you can require @racket[trivial/math/no-colon].
+}
 
 
 @emph{Hidden Agenda:}
