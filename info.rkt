@@ -1,9 +1,8 @@
 #lang info
-
 (define collection 'use-pkg-name)
 (define deps '("base" "typed-racket-lib" "typed-racket-more"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define pkg-desc "Strongly-typed macros")
 (define version "0.1")
 (define pkg-authors '(ben))
-(define scribblings '(("scribblings/trivial.scrbl")))
+(define scribblings '(("scribblings/trivial.scrbl" () ('experimental "typed-racket"))))
