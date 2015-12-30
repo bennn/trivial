@@ -5,4 +5,4 @@
 (define pkg-desc "Strongly-typed macros")
 (define version "0.1")
 (define pkg-authors '(ben))
-(define scribblings '(("scribblings/trivial.scrbl" () ('experimental "typed-racket"))))
+(define scribblings '(("scribblings/trivial.scrbl" () ("typed-racket"))))
