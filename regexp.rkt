@@ -6,10 +6,10 @@
 ;; TODO groups can be #f when using | ... any other way?
 
 (provide
-  regexp:       define-regexp:
-  pregexp:      define-pregexp:
-  byte-regexp:  define-byte-regexp:
-  byte-pregexp: define-byte-pregexp:
+  regexp:       define-regexp:       let-regexp:
+  pregexp:      define-pregexp:      let-pregexp:
+  byte-regexp:  define-byte-regexp:  let-byte-regexp:
+  byte-pregexp: define-byte-pregexp: let-byte-pregexp:
   ;; Expression and definition forms that try checking their argument patterns.
   ;; If check succeeds, will remember the number of pattern groups
   ;; for calls to `regexp-match:`.
@@ -48,6 +48,7 @@
   (syntax-parser
    [(_ f:id)
     #:with f: (format-id #'f "~a:" (syntax-e #'f))
+    #:with let-f: (format-id #'f "let-~a:" (syntax-e #'f))
     #:with define-f: (format-id #'f "define-~a:" (syntax-e #'f))
     #'(begin
         ;; For expressions, (regexp: val)
@@ -63,6 +64,18 @@
               (cons (syntax-e #'num-groups) #'T))]
            [(_ arg* (... ...))
             #'(f arg* (... ...))]))
+        ;; For lets, (let-regexp: ([id val]) ...)
+        (define-syntax let-f:
+          (syntax-parser
+           [(_ ([name:id pat-stx]) e* (... ...))
+            #:with pat-stx+ (expand-expr #'pat-stx)
+            #:with (num-groups . T) (count-groups #'pat-stx+)
+            (free-id-table-set! id+num-groups
+                                #'name
+                                (cons (syntax-e #'num-groups) #'T))
+            #'(let ([name pat-stx+]) e* (... ...))]
+           [(_ arg* (... ...))
+            #'(let arg* (... ...))]))
         ;; For definitions, (define-regexp: id val)
         (define-syntax define-f:
           (syntax-parser

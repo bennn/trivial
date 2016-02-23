@@ -125,6 +125,14 @@
          (f #"ah(oy"))
        byte-pregexp:)))
 
+  ;; -- let-regexp:
+  (check-equal?
+    (ann
+      (let-regexp: ([rx "\\(\\)he(l*)(o*)"])
+        (regexp-match: rx "helllooo"))
+      (U #f (List String String String)))
+    #f)
+
   ;; -- define-regexp:
   (check-equal?
     (ann
@@ -165,13 +173,21 @@
       (U #f (Listof (U #f String))))
     '("hellooo" "ll" "ooo"))
 
+  ;; -- let-pregexp:
+  (check-equal?
+    (ann
+      (let-pregexp: ([rx #px"he(l*)(o*)"])
+        (regexp-match: rx "helllooo"))
+      (u #f (list string string string)))
+    '("helllooo" "lll" "ooo"))
+
   ;; -- define-pregexp:
   (check-equal?
     (ann
       (let ()
         (define-pregexp: rx #px"he(l*)(o*)")
         (regexp-match: rx "helllooo"))
-      (U #f (List String String String)))
+      (u #f (list string string string)))
     '("helllooo" "lll" "ooo"))
 
   (check-equal?
@@ -189,13 +205,21 @@
       (U #f (List String String String)))
     '("hellooo" "ll" "ooo"))
 
-  ;; -- define-byte-regexp:
   (check-equal?
     (ann
       (regexp-match: #rx#"he(l*)(o*)" #"helllooo")
       (U #f (List Bytes Bytes Bytes)))
     '(#"helllooo" #"lll" #"ooo"))
 
+  ;; -- let-byte-regexp:
+  (check-equal?
+    (ann
+      (let-byte-regexp: ([rx #rx#"he(l*)(o*)"])
+        (regexp-match: rx #"helllooo"))
+      (U #f (List Bytes Bytes Bytes)))
+    '(#"helllooo" #"lll" #"ooo"))
+
+  ;; -- define-byte-regexp:
   (check-equal?
     (ann
       (let ()
@@ -219,13 +243,21 @@
       (U #f (List Bytes Bytes Bytes)))
     '(#"hellooo" #"ll" #"ooo"))
 
-  ;; -- define-byte-pregexp:
   (check-equal?
     (ann
       (regexp-match: #px#"he(l*)(o*)" "helllooo")
       (U #f (List Bytes Bytes Bytes)))
     '(#"helllooo" #"lll" #"ooo"))
 
+  ;; -- let-byte-pregexp:
+  (check-equal?
+    (ann
+      (let-byte-pregexp: ([rx #px#"he(l*)(o*)"])
+        (regexp-match: rx "helllooo"))
+      (U #f (List Bytes Bytes Bytes)))
+    '(#"helllooo" #"lll" #"ooo"))
+
+  ;; -- define-byte-pregexp:
   (check-equal?
     (ann
       (let ()
