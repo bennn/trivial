@@ -29,6 +29,7 @@
   (only-in racket/syntax format-id)
   syntax/id-table
   syntax/parse
+  syntax/stx
   trivial/private/common
 ))
 
@@ -67,13 +68,15 @@
         ;; For lets, (let-regexp: ([id val]) ...)
         (define-syntax let-f:
           (syntax-parser
-           [(_ ([name:id pat-stx]) e* (... ...))
-            #:with pat-stx+ (expand-expr #'pat-stx)
-            #:with (num-groups . T) (count-groups #'pat-stx+)
-            (free-id-table-set! id+num-groups
-                                #'name
-                                (cons (syntax-e #'num-groups) #'T))
-            #'(let ([name pat-stx+]) e* (... ...))]
+           [(_ ([name*:id pat-stx*] (... ...)) e* (... ...))
+            #:with (pat-stx+* (... ...)) (stx-map expand-expr #'(pat-stx* (... ...)))
+            #:with ((num-groups* . T*) (... ...)) (stx-map count-groups #'(pat-stx+* (... ...)))
+            #'(let ([name* pat-stx+*] (... ...))
+                (let-syntax ([name* (make-rename-transformer
+                                     (syntax-property #'name*
+                                                      num-groups-key
+                                                      (cons 'num-groups* #'T*)))] (... ...))
+                  e* (... ...)))]
            [(_ arg* (... ...))
             #'(let arg* (... ...))]))
         ;; For definitions, (define-regexp: id val)

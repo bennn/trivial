@@ -128,6 +128,36 @@
   ;; -- let-regexp:
   (check-equal?
     (ann
+      (let-regexp: ([rx #rx"^y(o+)lo$"])
+        (cond
+         [(regexp-match: rx "yolo")
+          => (lambda ([x* : (List String String)])
+            (cadr x*))]
+          ;=> cadr]
+         [else
+          (raise-user-error 'nope)]))
+      String)
+    "o")
+
+  (check-equal?
+    (ann
+      (let-regexp: ([rx1 #rx"^y(o+)lo$"]
+                    [rx2 #rx"^w(e+)pa$"]
+                    [rx3 #rx"^y(e+)rrr$"])
+        (cond
+         [(regexp-match: rx1 "wepa")
+          => cadr]
+         [(regexp-match: rx2 "yolo")
+          => cadr]
+         [(regexp-match: rx3 "yeeeeeerrr")
+          => cadr]
+         [else
+          (raise-user-error 'nope)]))
+      String)
+    "eeeeee")
+
+  (check-equal?
+    (ann
       (let-regexp: ([rx "\\(\\)he(l*)(o*)"])
         (regexp-match: rx "helllooo"))
       (U #f (List String String String)))
@@ -178,7 +208,7 @@
     (ann
       (let-pregexp: ([rx #px"he(l*)(o*)"])
         (regexp-match: rx "helllooo"))
-      (u #f (list string string string)))
+      (U #f (List String String String)))
     '("helllooo" "lll" "ooo"))
 
   ;; -- define-pregexp:
@@ -187,7 +217,7 @@
       (let ()
         (define-pregexp: rx #px"he(l*)(o*)")
         (regexp-match: rx "helllooo"))
-      (u #f (list string string string)))
+      (U #f (List String String String)))
     '("helllooo" "lll" "ooo"))
 
   (check-equal?
