@@ -84,7 +84,7 @@ In other words, the result is one string for the matched substring and an unknow
        (U #f (List String String)))
 ]
 
-Regular expression patterns are expensive to compile, so we offer a definition form that remembers the number of groups in a pattern for later calls to @racket[regexp-match:].
+Large regular expression patterns are expensive to compile, so we offer a definition form that remembers the number of groups in a pattern for later calls to @racket[regexp-match:].
 
 @defform*[((define-regexp: id pattern)
            (define-pregexp: id pattern)
@@ -109,6 +109,32 @@ Regular expression patterns are expensive to compile, so we offer a definition f
     (ann (regexp-match: bpx-red #"blue")
          (U #f (List Bytes))))
 ]
+
+Similarly, @racket[let-regexp:] and friends are expression-binding forms.
+For both the @racket[define-] and @racket[let-] forms, the @racket[pattern] may be any expression.
+The only difference is that regular expression metadata is checked and preserved if present.
+
+@defform*[((let-regexp: ([id expr] ...) expr ...)
+           (let-pregexp: ([id expr] ...) expr ...)
+           (let-byte-regexp: ([id expr] ...) expr ...)
+           (let-byte-pregexp: ([id expr] ...) expr ...))]{}
+
+
+@examples[#:eval trivial-eval
+  (let-regexp: ([hamburger (regexp: "^{{.*beef.*}}$")])
+    (ann (regexp-match: hamburger "{{ lettuce tomato cheese }}")
+         (U #f (List String))))
+  (let-pregexp: ([bigmac (pregexp: "(bun).*(bun).*(bun)")])
+    (ann (regexp-match: bigmac "bun tomato bun meat bun")
+         (U #f (List String String String String))))
+  (let-byte-regexp: ([low-carb (byte-regexp: #"^([^bun]*)meat([^bun]*)$")])
+    (ann (regexp-match: low-carb "meat meat meat")
+         (U #f (List Bytes Bytes Bytes))))
+  (let-byte-pregexp: ([double-diet (byte-pregexp: #" {2}")])
+    (ann (regexp-match: double-diet "  ")
+         (U #f (List Bytes))))
+]
+
 
 The following expression forms also cache the number of pattern groups.
 Use these instead of the standard defaults.
