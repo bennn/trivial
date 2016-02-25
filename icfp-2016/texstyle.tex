@@ -1,0 +1,29 @@
+% Better horizontal rules
+\usepackage{booktabs}
+
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{multicol}
+
+% Override Scribble's default SecRef to numeric only
+\renewcommand{\SecRef}[2]{~#1}
+
+\hypersetup{hidelinks} 
+
+\usepackage[scaled=0.95]{zi4}
+\usepackage[T1]{fontenc}
+
+% For bib style
+\newcommand{\Thyperref}[2]{\hyperref[#2]{#1}}
+
+%% To show overfull, turn off for production!!!
+\overfullrule=1mm
+
+%% balance last page columns
+\usepackage{flushend}
+
+%% for figure 2
+\let\ulcorner\relax
+\let\urcorner\relax
+\let\llcorner\relax
+\let\lrcorner\relax
+\usepackage{amssymb}
