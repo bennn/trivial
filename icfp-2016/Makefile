@@ -14,5 +14,9 @@ paper.tex: pkg compiled/paper_scrbl.zo texstyle.tex
 pkg:
 	raco pkg install --skip-installed trivial
 
+teaser:
+	xelatex teaser.tex
+
 clean:
 	rm -r compiled
+

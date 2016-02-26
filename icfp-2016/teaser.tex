@@ -21,20 +21,22 @@ Technique works by identifying common properties of a set of
  values and using these properties in a macro transformation.
 
 \begin{itemize}
-  \item {\texttt{typeof : (-> Syntax TypeTag)}}
-  \item {\texttt{transformations : (-> TypeTag (Set (-> Syntax Syntax))}}
+  \item Context-free, syntactic, curry-style ``type'' checking.
+  \subitem  {\texttt{typeof : (-> Syntax (TypeTag x MetaData))}}
+  \item Operations using the type tag \& metadata.
+  \subitem  {\texttt{transformations : (-> TypeTag (Set (-> Syntax Syntax)))}}
 \end{itemize}
 
 Table defines type tags and related \texttt{transformations}.
 
 \vspace{0.4cm}
 \begin{center}
-\hspace{-3.5cm}\begin{tabular}{l l l l l}
+\hspace{-4cm}\begin{tabular}{l l l l l}
   Type          &    Syntax Category          &    Metadata    &    Applications    \\\hline\hline
 \\Format String &       {\tt string}          &     \#/$\tau$ of fmt chars & Check args to {\tt printf}
 \\Regexp        &  {\tt string} / {\tt bytes} & \# groups & Check paren-matching${}^*$, smarter return type
 \\Query String  &  {\tt string}               & \# of {\tt \$} vars & Check arity
-\\Function      &  {\tt (lambda ...)}         & Arity        & Type for {\tt apply}
+\\Function      &  {\tt (lambda ...)}         & Arity        & Compile-time arity check for {\tt apply}
 \\Numbers       &  {\tt number}               & Value & Constant folding, accurate types
 \\Vectors       &  {\tt `\#( ... )}            & Length & Access, size, fast operations
 \end{tabular}
@@ -47,9 +49,13 @@ Table defines type tags and related \texttt{transformations}.
   \subitem  i.e. \texttt{\#rx"prefix (" $+$ \#rx"mid" $+$ \#rx") suffix"} should work
   \item {Will hijack \texttt{define} to get procedure arity}
   \item {Add smarter runtime assertions, like \texttt{assert-length} and a remembering \texttt{index?}}
+  \item Typeclass / Darais-class operations?
+  \subitem $\circ~$ Define a {\tt TypeTag}, extend \texttt{typeof}
+  \subitem $\circ~$ Write macro that looks for \& uses tags {\tt equal?}
 \end{itemize}
 
 P.S. Our goal is not to discourage dependent types, but rather to advertise macros.
 P.P.S. Jack Firth might be using the library. Email him?
+P.P.P.S Should work in other languages, hard part will be rename transformers
 
 \end{document}
