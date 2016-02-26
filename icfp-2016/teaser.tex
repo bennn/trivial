@@ -1,0 +1,55 @@
+\documentclass{article}
+\usepackage{palatino}
+\begin{document}
+\begin{abstract}
+  The transformative \emph{and} analytic power of macros can turn
+   a polymorphic type system into a dependent type system, at least
+   for common programming tasks.
+  By analyzing program syntax and propogating known information about program
+   \emph{values} at compile-time, we can express many of the practical
+   motivations for dependent types without requiring programmer annotations
+   or changes to the underlying type system.
+
+  Our macro-expanded types are not proving new theorems,
+   but they recognize facts obvious to the programmer and hopefully
+   give a nice experience.
+\end{abstract}
+
+\subsection*{Outline}
+
+Technique works by identifying common properties of a set of
+ values and using these properties in a macro transformation.
+
+\begin{itemize}
+  \item {\texttt{typeof : (-> Syntax TypeTag)}}
+  \item {\texttt{transformations : (-> TypeTag (Set (-> Syntax Syntax))}}
+\end{itemize}
+
+Table defines type tags and related \texttt{transformations}.
+
+\vspace{0.4cm}
+\begin{center}
+\hspace{-3.5cm}\begin{tabular}{l l l l l}
+  Type          &    Syntax Category          &    Metadata    &    Applications    \\\hline\hline
+\\Format String &       {\tt string}          &     \#/$\tau$ of fmt chars & Check args to {\tt printf}
+\\Regexp        &  {\tt string} / {\tt bytes} & \# groups & Check paren-matching${}^*$, smarter return type
+\\Query String  &  {\tt string}               & \# of {\tt \$} vars & Check arity
+\\Function      &  {\tt (lambda ...)}         & Arity        & Type for {\tt apply}
+\\Numbers       &  {\tt number}               & Value & Constant folding, accurate types
+\\Vectors       &  {\tt `\#( ... )}            & Length & Access, size, fast operations
+\end{tabular}
+\end{center}
+
+
+\subsubsection*{Caveats / Extras}
+\begin{itemize}
+  \item Regular expressions should work with partial groups and warn about unvalidated user input.
+  \subitem  i.e. \texttt{\#rx"prefix (" $+$ \#rx"mid" $+$ \#rx") suffix"} should work
+  \item {Will hijack \texttt{define} to get procedure arity}
+  \item {Add smarter runtime assertions, like \texttt{assert-length} and a remembering \texttt{index?}}
+\end{itemize}
+
+P.S. Our goal is not to discourage dependent types, but rather to advertise macros.
+P.P.S. Jack Firth might be using the library. Email him?
+
+\end{document}
