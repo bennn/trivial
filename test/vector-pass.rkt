@@ -56,4 +56,12 @@
   (check-equal?
     (parse-vector-length #'(build-vector 61 add1))
     61)
+
+  ;; -- vector-length:
+
+  ;; -- define-vector:
+  (let ()
+    (define-vector: v (vector 1 1 2 2))
+    (check-equal? (vector-ref: v 0) 1))
+  ;; -- let-vector:
 )
