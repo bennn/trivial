@@ -17,8 +17,9 @@
   (ann ((lambda ([f : (-> Natural Natural Integer)]) (f 0 0)) -:) Zero)
   (ann ((lambda ([f : (-> Natural Natural Natural)]) (f 0 0)) *:) Zero)
   (ann ((lambda ([f : (-> Natural Natural Exact-Rational)]) (f 0 0)) /:) Zero)
-  ;; -- dividing by zero => fall back to racket/base
-  (ann (/: 1 1 0) One)
+  ;; -- dividing by zero => caught statically
+  (/: 1 1 0)
+  (/: 1 1 (+: 4 -2 -2))
 )))
 
 ;; -----------------------------------------------------------------------------
@@ -27,11 +28,11 @@
   (require
     rackunit)
 
-  (define (format-eval stx)
+  (define (math-eval stx)
     (lambda () ;; For `check-exn`
       (compile-syntax stx)))
 
   (for ([rkt (in-list TEST-CASE*)])
-    (check-exn #rx"format::|Type Checker"
-      (format-eval rkt)))
+    (check-exn #rx"/:|Type Checker"
+      (math-eval rkt)))
 )

@@ -50,10 +50,6 @@
   (check-equal? (ann (/: 0 1 2 3 4) Zero) 0)
   (check-equal? (ann (/: 9 9) One) 1)
 
-  ;; We do not catch this statically
-  (check-exn exn:fail:contract?
-    (lambda () (/: 3 0)))
-
   (check-equal?
     (ann ((lambda ([f : (-> Integer Integer Exact-Rational)]) (f 1 1)) /:) Real)
     1)
@@ -82,7 +78,5 @@
   (check-equal? (ann (let ([n 5]) (*: n 1/5 1)) Exact-Rational) 1)
   (check-equal? (ann (let ([n 5]) (*: 3 n (+: -1 2))) Natural) 15)
   (check-equal? (ann (let ([n 4]) (/: n n)) Positive-Exact-Rational) 1)
-  (check-exn #rx"division by zero"
-    (lambda () (ann (/: 0 0) Zero))) ;; Same for racket/base
 
 )

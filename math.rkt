@@ -24,12 +24,12 @@
   (syntax-parser
    [(_ f:id)
     #:with f: (format-id #'f "~a:" (syntax-e #'f))
-    #'(define-syntax f:
-        (syntax-parser
+    #'(define-syntax (f: stx)
+        (syntax-parse stx
          [(g e* (... ...))
           #:with e+* (for/list ([e (in-list (syntax->list #'(e* (... ...))))])
                        (expand-expr e))
-          (let ([e++ (reduce/op f (syntax->list #'e+*))])
+          (let ([e++ (reduce/op f (syntax->list #'e+*) #:src stx)])
             (if (list? e++)
               (quasisyntax/loc #'g (f #,@e++))
               (quasisyntax/loc #'g #,e++)))]
@@ -45,14 +45,17 @@
 
 ;; -----------------------------------------------------------------------------
 
+(define-for-syntax (division-by-zero stx)
+  (raise-syntax-error '/ "division by zero" stx))
+
 ;; Simplify a list of expressions using an associative binary operator.
 ;; Return either:
 ;; - A numeric value
 ;; - A list of syntax objects, to be spliced back in the source code
-(define-for-syntax (reduce/op op e*)
-  (let loop ([prev #f]   ;; (U #f Number), candidate for reduction
-             [acc  '()]  ;; (Listof Syntax), irreducible arguments
-             [e*   e*])  ;; (Listof Syntax), arguments to process
+(define-for-syntax (reduce/op op expr* #:src stx)
+  (let loop ([prev #f]      ;; (U #f Number), candidate for reduction
+             [acc  '()]     ;; (Listof Syntax), irreducible arguments
+             [e*   expr*])  ;; (Listof Syntax), arguments to process
     (if (null? e*)
       ;; then: finished, return a number (prev) or list of expressions (acc)
       (if (null? acc)
@@ -65,7 +68,8 @@
           (if prev
             ;; Watch for division-by-zero
             (if (and (zero? v) (eq? / op))
-              (loop v (cons prev acc) (cdr e*))
+              (division-by-zero stx)
+              ;(loop v (cons prev acc) (cdr e*))
               (loop (op prev v) acc (cdr e*)))
             (loop v acc (cdr e*)))
           ;; else: save value in acc
