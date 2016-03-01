@@ -33,6 +33,11 @@
          (define rx "he(l*)(o*)")
          (regexp-match: rx "helloooooooo"))
        (U #f (List String String String)))
+  ;; -- set! problems
+  (ann (let-regexp: ([a #rx"(b)(B)"])
+         (set! a #rx"")
+         (regexp-match: a "hai"))
+       (List String String String))
   ;; --- Can't handle |, yet
   (ann (regexp-match: "this(group)|that" "that")
        (U #f (List String String)))
