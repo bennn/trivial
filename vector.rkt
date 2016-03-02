@@ -5,7 +5,7 @@
 (provide
   define-vector:
   let-vector:
-  ;vector-length:
+  vector-length:
   vector-ref:
   ;vector-set!:
   ;vector-map:
@@ -28,6 +28,7 @@
     syntax/id-table
     syntax/parse
     syntax/stx
+    trivial/private/common
   ))
 
 ;; =============================================================================
@@ -36,32 +37,32 @@
 (define-for-syntax errloc-key 'vector:)
 (define-for-syntax id+vector-length (make-free-id-table))
 
-(begin-for-syntax (define-syntax-class literal-vector
-  #:attributes (vector-length)
-  (pattern [e* ...]
-   #:with len (parse-vector-length #'(e* ...))
+(begin-for-syntax (define-syntax-class vector/length
+  #:attributes (expanded length)
+  (pattern e
+   #:with e+ (expand-expr #'e)
+   #:with len (parse-vector-length #'e+)
    #:when (syntax-e #'len)
-   #:attr vector-length #'len)
+   #:attr expanded #'e+
+   #:attr length #'len)
 ))
 
 (define-syntax (define-vector: stx)
   (syntax-parse stx
-   [(_ name:id v:literal-vector)
-    (free-id-table-set! id+vector-length
-                        #'name
-                        (syntax-e #'v.vector-length))
-    #'(define name v)]
+   [(_ name:id v:vector/length)
+    (free-id-table-set! id+vector-length #'name (syntax-e #'v.length))
+    #'(define name v.expanded)]
    [(_ e* ...)
     #'(define e* ...)]))
 
 (define-syntax (let-vector: stx)
   (syntax-parse stx
-   [(_ ([name:id v:literal-vector]) e* ...)
-    #'(let ([name v])
-        (let-syntax ([name (make-rename-transformer
-                             (syntax-property #'name
-                                              vector-length-key
-                                              #'v.vector-length))])
+   [(_ ([name*:id v*:vector/length] ...) e* ...)
+    #'(let ([name* v*.expanded] ...)
+        (let-syntax ([name* (make-rename-transformer
+                              (syntax-property #'name*
+                                               vector-length-key
+                                               'v*.length))] ...)
           e* ...))]
    [(_ e* ...)
     #'(let e* ...)]))
@@ -72,17 +73,23 @@
     (format "Index out-of-bounds: ~a" i)
     v))
 
+(define-syntax (vector-length: stx)
+  (syntax-parse stx
+   [(_ v:vector/length)
+    (syntax/loc stx 'v.length)]
+   [_:id
+    (syntax/loc stx vector-length)]
+   [(_ e* ...)
+    (syntax/loc stx (vector-length e* ...))]))
 
 (define-syntax (vector-ref: stx)
   (syntax-parse stx
-   [(_ v i:nat)
-    #:when (printf "ref: getting langth for ~a\n" (syntax->datum #'v))
-    #:with len (parse-vector-length #'v)
-    #:when (printf "ref: got langth ~a\n" (syntax->datum #'len))
-    #:when (syntax-e #'len)
-    (unless (< (syntax-e #'i) (syntax-e #'len))
+   [(_ v:vector/length i:nat)
+    (unless (< (syntax-e #'i) (syntax-e #'v.length))
       (vector-ref-error (syntax-e #'v) (syntax-e #'i)))
-    (syntax/loc stx (unsafe-vector-ref v i))]
+    (syntax/loc stx (unsafe-vector-ref v.expanded i))]
+   [_:id
+    (syntax/loc stx vector-ref)]
    [(_ e* ...)
     (syntax/loc stx (vector-ref e* ...))]))
 
@@ -100,6 +107,7 @@
       [(~or '#(e* ...)
             #(e* ...)
             ;; TODO #{} #[] #6{} ...
+            (_ vector e* ...) ;; TODO the _ should be matching #%app
             (vector e* ...))
        (length (syntax->list #'(e* ...)))]
       [(make-vector n:nat e* ...)
@@ -107,5 +115,4 @@
       [(build-vector n:nat f)
        (syntax-e #'n)]
       [_ #f])]))
-
 

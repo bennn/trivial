@@ -2,6 +2,7 @@
 
 (module+ test
   (require
+    trivial/math
     trivial/vector
     typed/rackunit)
 
@@ -58,6 +59,27 @@
     61)
 
   ;; -- vector-length:
+  (check-equal?
+    (vector-length: '#()) 0)
+  (check-equal?
+    (vector-length: (vector 1 2 2)) 3)
+  (check-equal?
+    (ann (-: (vector-length: (vector 5 5 5 5 5)) 4)
+         One)
+    1)
+  (let-vector: ([v1 (vector 2 3 4)]
+                [v2 (vector 4 3 2)])
+    (check-equal?
+      (ann (+: 1 (-: (*: 5 (vector-length: v1)) (+: (*: 4 3) (vector-length: v2))))
+           One)
+      1))
+  (let ()
+    (define-vector: v1 (vector 2 3 4))
+    (define-vector: v2 (vector 4 3 2))
+    (check-equal?
+      (ann (*: 5 (-: (vector-length: v1) (*: 1 1 (vector-length: v2) 1)))
+           Zero)
+      0))
 
   ;; -- define-vector:
   (let ()
