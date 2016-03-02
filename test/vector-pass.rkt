@@ -134,6 +134,47 @@
         (lambda ()
           ((lambda ([f : (-> (Vectorof Any) Natural Any Void)])
             (f (vector 0 1 2) 10 9)) vector-set!:))))
+ ;)
+
+ ;(test-suite "vector-map:"
+   (test-case "vector/length map"
+     (check-equal? (vector-map: add1 (vector 1)) (vector 2)))
+
+   (test-case "vector/length map via let"
+     (check-equal?
+       (let-vector: ([v (vector (vector 1) (vector 2 2)
+                                (vector 3 3 3) (vector 4 4 4 4))])
+         (vector-map: vector-length: v))
+       (vector 1 2 3 4)))
+
+   (test-case "map^3"
+     (check-equal?
+       (vector-map: add1 (vector-map: add1 (vector-map: add1 (vector 0 0 0))))
+       (vector 3 3 3)))
+
+   (test-case "plain map"
+     (check-equal?
+       ((lambda ([v : (Vectorof (Vectorof Any))])
+         (vector-map: vector-length: v))
+        (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
+       (vector 1 2 3 4)))
+
+   (test-case "higher-order map pass"
+     (check-equal?
+       ((lambda ([f : (-> (-> Symbol String) (Vectorof Symbol) (Vectorof String))])
+         (f symbol->string '#(x yy z)))
+        vector-map:)
+       (vector "x" "yy" "z")))
+
+   (test-case "higher-order map fail"
+     (check-exn exn:fail:contract?
+       (lambda ()
+         ((lambda ([f : (-> (-> Integer Integer) (Vectorof Integer) (Vectorof Integer))])
+           (vector-ref: (f add1 (vector 0 0)) 3))
+          vector-map:))))
+ ;)
+
+  ;(test-suite "vector-map!:"
   ;)
 
   ;; -- define-vector:

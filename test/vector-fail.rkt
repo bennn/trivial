@@ -21,6 +21,12 @@
 
   (vector-set!: (vector 0) 0 "hello") ;; Strong update
 
+  (vector-ref: (vector-map: (lambda (x) x) (vector #t "ha")) 20)
+
+  (vector-ref:
+    (vector-map: add1 (vector-map: add1 (vector-map: add1 (vector 0 0 0))))
+    3)
+
 )))
 
 ;; -----------------------------------------------------------------------------

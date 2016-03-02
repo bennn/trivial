@@ -8,9 +8,12 @@
   vector-length:
   vector-ref:
   vector-set!:
-  ;vector-map:
+  vector-map:
   ;vector-append:
   ;vector->list
+  ;vector->immutable-vector
+  ;vector-fill!
+  ;
 
   ;; TODO and a few more
 
@@ -24,6 +27,7 @@
   (only-in racket/unsafe/ops
     unsafe-vector-set!
     unsafe-vector-ref)
+  racket/vector
   (for-syntax
     typed/racket/base
     syntax/id-table
@@ -105,7 +109,28 @@
    [(_ e* ...)
     (syntax/loc stx (vector-set! e* ...))]))
 
+(define-syntax (vector-map: stx)
+  (syntax-parse stx
+   [(_ f v:vector/length)
+    #:with (i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)
+    ;; TODO need to set syntax property?
+    #:with v+ (syntax-property
+                (if (small-vector-size? (syntax-e #'v.length))
+                  (syntax/loc stx (vector (f (unsafe-vector-ref v.expanded 'i*)) ...))
+                  (syntax/loc stx (build-vector 'v.length (lambda ([i : Integer])
+                                                            (unsafe-vector-ref v.expanded i)))))
+                vector-length-key
+                (syntax-e #'v.length))
+    (syntax/loc stx v+)]
+   [_:id
+    (syntax/loc stx vector-map)]
+   [(_ e* ...)
+    (syntax/loc stx (vector-map e* ...))]))
+
 ;; -----------------------------------------------------------------------------
+
+(define-for-syntax (small-vector-size? n)
+  (< n 101))
 
 ;; Assume `stx` is creating a vector; get the length of the vector to-be-made
 (define-for-syntax (parse-vector-length stx)
@@ -122,9 +147,13 @@
             (_ vector e* ...) ;; TODO the _ should be matching #%app
             (vector e* ...))
        (length (syntax->list #'(e* ...)))]
-      [(make-vector n:nat e* ...)
-       (syntax-e #'n)]
-      [(build-vector n:nat f)
-       (syntax-e #'n)]
-      [_ #f])]))
+      [(~or (make-vector n e* ...)
+            (_ make-vector n e* ...)
+            (build-vector n e* ...)
+            (_ build-vector n e* ...))
+       (if (syntax-transforming?)
+         (quoted-stx-value? (expand-expr #'n))
+         (and (exact-nonnegative-integer? (syntax-e #'n)) (syntax-e #'n)))]
+      [_
+       #f])]))
 
