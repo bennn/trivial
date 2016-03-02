@@ -39,7 +39,6 @@
 ;; =============================================================================
 
 (define-for-syntax vector-length-key 'vector:length)
-(define-for-syntax errloc-key 'vector:)
 (define-for-syntax id+vector-length (make-free-id-table))
 
 (begin-for-syntax (define-syntax-class vector/length
@@ -72,11 +71,13 @@
    [(_ e* ...)
     #'(let e* ...)]))
 
-(define-for-syntax (vector-bounds-error v i)
-  (raise-argument-error
-    errloc-key
-    (format "Index out-of-bounds: ~a" i)
-    v))
+(define-for-syntax (vector-bounds-error sym v-stx i)
+  (raise-syntax-error
+    sym
+    "Index out-of-bounds"
+    (syntax->datum v-stx)
+    i
+    (list v-stx)))
 
 (define-syntax (vector-length: stx)
   (syntax-parse stx
@@ -91,7 +92,7 @@
   (syntax-parse stx
    [(_ v:vector/length i:nat)
     (unless (< (syntax-e #'i) (syntax-e #'v.length))
-      (vector-bounds-error (syntax-e #'v) (syntax-e #'i)))
+      (vector-bounds-error 'vector-ref: #'v (syntax-e #'i)))
     (syntax/loc stx (unsafe-vector-ref v.expanded i))]
    [_:id
     (syntax/loc stx vector-ref)]
@@ -102,7 +103,7 @@
   (syntax-parse stx
    [(_ v:vector/length i:nat val)
     (unless (< (syntax-e #'i) (syntax-e #'v.length))
-      (vector-bounds-error (syntax-e #'v) (syntax-e #'i)))
+      (vector-bounds-error 'vector-set!: #'v (syntax-e #'i)))
     (syntax/loc stx (unsafe-vector-set! v.expanded i val))]
    [_:id
     (syntax/loc stx vector-set!)]
@@ -113,7 +114,6 @@
   (syntax-parse stx
    [(_ f v:vector/length)
     #:with (i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)
-    ;; TODO need to set syntax property?
     #:with v+ (syntax-property
                 (if (small-vector-size? (syntax-e #'v.length))
                   (syntax/loc stx (vector (f (unsafe-vector-ref v.expanded 'i*)) ...))
