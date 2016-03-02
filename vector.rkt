@@ -67,7 +67,7 @@
    [(_ e* ...)
     #'(let e* ...)]))
 
-(define-for-syntax (vector-ref-error v i reason)
+(define-for-syntax (vector-ref-error v i)
   (raise-argument-error
     errloc-key
     (format "Index out-of-bounds: ~a" i)

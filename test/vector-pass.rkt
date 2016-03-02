@@ -81,6 +81,29 @@
            Zero)
       0))
 
+  ;; -- vector-ref
+  (test-case "vector/length ref"
+    (check-equal? (vector-ref: (vector 1) 0) 1))
+
+  (test-case "vector/length ref, via let"
+    (let-vector: ([v (vector 2)])
+      (check-equal? (vector-ref: v 0) 2)))
+
+  (test-case "vector/length ref, via define"
+    (define-vector: v (vector "a" "bee" "sea"))
+    (check-equal? (vector-ref: v 2) "sea"))
+
+  (test-case "plain vector ref"
+    (check-equal?
+      ((lambda (v) (vector-ref: v 3)) (vector 8 2 19 3 0))
+      3))
+
+  (test-case "higher-order vector ref"
+    (check-exn exn:fail:contract?
+      (lambda ()
+        ((lambda ([f : (-> (Vectorof Any) Natural Any)])
+          (f (vector 0 1 2) 10)) vector-ref:))))
+
   ;; -- define-vector:
   (let ()
     (define-vector: v (vector 1 1 2 2))
