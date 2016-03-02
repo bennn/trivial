@@ -1,5 +1,4 @@
-#lang scribble/manual
-@;#lang scribble/sigplan @onecolumn 
+#lang scribble/sigplan @onecolumn @preprint
 
 @(require "common.rkt")
 
@@ -7,32 +6,32 @@
             "Northeastern University, Boston, USA"
             ""]
 
-@title{Functional Pearl: Do we @emph{really} need Dependent Types?}
-@; Trivial differences, little things that count
-@; Recall 'fexprs are trivial'?
-@; Syntactically dependent types
+@title{Functional Pearl: Do you see what I see?}
+@subtitle{Improving a simple type system with dependent macros}
+@; should say "value-dependent"?
+@; TODO subtitle doesn't appear in the right place
 
 @abstract{
-  The transformative @emph{and} analytic power of macros can turn
-   a polymorphic type system into a dependent type system, at least
-   for common programming tasks.
-  By analyzing program syntax and propogating known information about program
-   @emph{values} at compile-time, we can express many of the practical
-   motivations for dependent types without requiring programmer annotations
-   or changes to the underlying type system.
+  A simple type system with macros is nearly as good as a dependent type
+   system, at least for some common programming tasks.
+  By analyzing program syntax and propogating constants
+   before type-checking, we can express many of the practical
+   motivations for dependent types without any programmer annotations
+   or extensions to the underlying type system.
 
-  Our macro-expanded types are not proving new theorems,
-   but they recognize facts obvious to the programmer and hopefully
-   give a nice programming experience.
-
+  Our syntax-dependent subtypes are not proving theorems,
+   but they detect certain run-time errors at compile-time and
+   cooperate with type inference.
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]
 @;@terms{Performance, Experimentation, Measurement}
 @;@keywords{Gradual typing, performance evaluation}
 
-@include-section{outline.scrbl}
+@include-section{intro.scrbl}
+@include-section{solution.scrbl}
 
 @;@section[#:style 'unnumbered]{Acknowledgments}
+@; acks here
 
 @generate-bibliography[#:sec-title "References"]

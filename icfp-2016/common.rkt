@@ -16,6 +16,7 @@
          parag
          sf
          id
+         todo
          )
 
 (require "bib.rkt"
@@ -133,3 +134,5 @@
 (define (id x)
   (make-element plain @format["~a" x]))
 
+(define (todo . x)
+  (make-element 'bold (list x)))

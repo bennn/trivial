@@ -1038,3 +1038,16 @@
    #:title "MACLISP Reference Manual"
    #:date 1974))
 
+(define f-scp-1991
+  (make-bib
+   #:author "Matthias Felleisen"
+   #:title "On the Expressive Power of Programming Languages"
+   ;#:location (proceedings-location "Science of Computer Programming")
+   #:date 1991))
+
+(define hm-icfp-2004
+  (make-bib
+   #:author "David Herman and Philippe Meunier"
+   #:title "Improving the Static Analysis of Embedded Languages via Partial Evaluation"
+   #:location (proceedings-location icfp) ;#:pages '()
+   #:date 2004))
