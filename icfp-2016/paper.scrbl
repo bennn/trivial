@@ -32,6 +32,11 @@
 @include-section{solution.scrbl}
 
 @;@section[#:style 'unnumbered]{Acknowledgments}
-@; acks here
+
+Sam Tobin-Hochstadt for reminding us that Typed Racket is macro-extensible,
+Stephen Chang for teaching us syntax properties and rename transformers,
+Ryan Culpepper for macrology advice,
+Asumu Takikawa and Leif Andersen for helpful discussions,
+Jack Firth for using the library,
 
 @generate-bibliography[#:sec-title "References"]
