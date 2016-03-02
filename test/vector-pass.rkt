@@ -81,28 +81,60 @@
            Zero)
       0))
 
-  ;; -- vector-ref
-  (test-case "vector/length ref"
-    (check-equal? (vector-ref: (vector 1) 0) 1))
+  ;(test-suite "vector-ref:"
+    (test-case "vector/length ref"
+      (check-equal? (vector-ref: (vector 1) 0) 1))
 
-  (test-case "vector/length ref, via let"
-    (let-vector: ([v (vector 2)])
-      (check-equal? (vector-ref: v 0) 2)))
+    (test-case "vector/length ref, via let"
+      (let-vector: ([v (vector 2)])
+        (check-equal? (vector-ref: v 0) 2)))
 
-  (test-case "vector/length ref, via define"
-    (define-vector: v (vector "a" "bee" "sea"))
-    (check-equal? (vector-ref: v 2) "sea"))
+    (test-case "vector/length ref, via define"
+      (define-vector: v (vector "a" "bee" "sea"))
+      (check-equal? (vector-ref: v 2) "sea"))
 
-  (test-case "plain vector ref"
-    (check-equal?
-      ((lambda (v) (vector-ref: v 3)) (vector 8 2 19 3 0))
-      3))
+    (test-case "plain vector ref"
+      (check-equal?
+        ((lambda (v) (vector-ref: v 3)) (vector 8 2 19 3 0))
+        3))
 
-  (test-case "higher-order vector ref"
-    (check-exn exn:fail:contract?
-      (lambda ()
-        ((lambda ([f : (-> (Vectorof Any) Natural Any)])
-          (f (vector 0 1 2) 10)) vector-ref:))))
+    (test-case "higher-order vector ref"
+      (check-exn exn:fail:contract?
+        (lambda ()
+          ((lambda ([f : (-> (Vectorof Any) Natural Any)])
+            (f (vector 0 1 2) 10)) vector-ref:))))
+
+    (test-case "2-level ref"
+      (let-vector: ([v1  (vector 'X)])
+        (let-vector: ([v2 (vector v1)])
+          (check-equal? (vector-ref: (vector-ref: v2 0) 0) 'X))))
+  ;)
+
+  ;(test-suite "vector-set!:"
+    (test-case "vector/length set!"
+      (check-equal? (vector-set!: (vector 1) 0 8) (void)))
+
+    (test-case "vector/length set!, via let"
+      (let-vector: ([v (vector 2)])
+        (vector-set! v 0 3)
+        (check-equal? (vector-ref: v 0) 3)))
+
+    (test-case "vector/length set, via define"
+      (define-vector: v (vector "a" "bee" "sea"))
+      (vector-set! v 1 "bye")
+      (check-equal? (vector-ref: v 1) "bye"))
+
+    (test-case "plain vector set"
+      (check-equal?
+        ((lambda (v) (vector-set!: v 3 4) (vector-ref: v 3)) (vector 8 2 19 3 0))
+        4))
+
+    (test-case "higher-order vector set"
+      (check-exn exn:fail:contract?
+        (lambda ()
+          ((lambda ([f : (-> (Vectorof Any) Natural Any Void)])
+            (f (vector 0 1 2) 10 9)) vector-set!:))))
+  ;)
 
   ;; -- define-vector:
   (let ()

@@ -15,6 +15,12 @@
     (define-vector: v (vector 3 4))
     (vector-ref: v 9))
 
+  (let-vector: ([v1  (vector 1)])
+    (let-vector: ([v2 (vector v1)])
+      (vector-ref: (vector-ref: v2 0) 1)))
+
+  (vector-set!: (vector 0) 0 "hello") ;; Strong update
+
 )))
 
 ;; -----------------------------------------------------------------------------
