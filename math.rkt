@@ -7,6 +7,8 @@
   +: -: *: /:
   ;; Same signature as the racket/base operators,
   ;;  but try to simplify arguments during expansion.
+
+  expt:
 )
 
 (require (for-syntax
@@ -42,6 +44,22 @@
 (make-numeric-operator -)
 (make-numeric-operator *)
 (make-numeric-operator /)
+
+(define-syntax (expt: stx)
+  (syntax-parse stx
+   [(_ e1 e2)
+    #:with e1+ (expand-expr #'e1)
+    #:with e2+ (expand-expr #'e2)
+    (let ([n1 (quoted-stx-value? #'e1+)]
+          [n2 (quoted-stx-value? #'e2+)])
+      (if (and (number? n1)
+               (number? n2))
+        (quasisyntax/loc stx #,(expt n1 n2))
+        (syntax/loc stx (expt e1+ e2+))))]
+   [_:id
+    (syntax/loc stx expt)]
+   [(_ e* ...)
+    (syntax/loc stx (expt e* ...))]))
 
 ;; -----------------------------------------------------------------------------
 

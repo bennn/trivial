@@ -79,4 +79,18 @@
   (check-equal? (ann (let ([n 5]) (*: 3 n (+: -1 2))) Natural) 15)
   (check-equal? (ann (let ([n 4]) (/: n n)) Positive-Exact-Rational) 1)
 
+  ;; -- expt
+  (check-equal?
+    (ann (expt: 5 3) Index)
+    125)
+  (check-equal?
+    (ann (expt: 99 0) One)
+    1)
+  (check-equal?
+    (ann (expt: (+: 5 -5) 78) Zero)
+    0)
+  (check-equal?
+    (ann (expt: (*: 2 2) (expt: 2 2)) Index)
+    256)
+
 )
