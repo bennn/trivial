@@ -17,3 +17,14 @@ Herman Meunier, 2004
 ---
 
 yolo
+
+
+[Hasochism]
+---
+
+
+[Pluggable Types]
+---
+
+Especially Ernst, Dietl and the regular-expression types for Java.
+Maybe just regexp types but at least that, ya know?
