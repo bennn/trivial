@@ -159,6 +159,10 @@
         (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
        (vector 1 2 3 4)))
 
+   (test-case "large vector"
+     (let-vector: ([v* (make-vector 200 #f)])
+       (check-true (for/and ([v (in-vector (vector-map: not v*))]) v))))
+
    (test-case "higher-order map pass"
      (check-equal?
        ((lambda ([f : (-> (-> Symbol String) (Vectorof Symbol) (Vectorof String))])

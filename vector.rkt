@@ -9,6 +9,7 @@
   vector-ref:
   vector-set!:
   vector-map:
+  vector-map!:
   ;vector-append:
   ;vector->list
   ;vector->immutable-vector
@@ -114,11 +115,16 @@
   (syntax-parse stx
    [(_ f v:vector/length)
     #:with (i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)
+    #:with f+ (gensym 'f)
     #:with v+ (syntax-property
                 (if (small-vector-size? (syntax-e #'v.length))
-                  (syntax/loc stx (vector (f (unsafe-vector-ref v.expanded 'i*)) ...))
-                  (syntax/loc stx (build-vector 'v.length (lambda ([i : Integer])
-                                                            (unsafe-vector-ref v.expanded i)))))
+                  (syntax/loc stx
+                    (let ([f+ f])
+                      (vector (f+ (unsafe-vector-ref v.expanded 'i*)) ...)))
+                  (syntax/loc stx
+                    (let ([f+ f])
+                      (build-vector 'v.length (lambda ([i : Integer])
+                                                (f+ (vector-ref: v.expanded i)))))))
                 vector-length-key
                 (syntax-e #'v.length))
     (syntax/loc stx v+)]
@@ -126,6 +132,23 @@
     (syntax/loc stx vector-map)]
    [(_ e* ...)
     (syntax/loc stx (vector-map e* ...))]))
+
+(define-syntax (vector-map!: stx)
+  (syntax-parse stx
+   [(_ f v:vector/length)
+    #:with f+ (gensym 'f)
+    #:with v+ (syntax-property
+                #'(let ([f+ f])
+                    (for ([i (in-range 'v.length)])
+                      (unsafe-vector-set! v.expanded i (f+ (unsafe-vector-ref v.expanded i))))
+                    v.expanded)
+                vector-length-key
+                (syntax-e #'v.length))
+    (syntax/loc stx v+)]
+   [_:id
+    (syntax/loc stx vector-map!)]
+   [(_ e* ...)
+    (syntax/loc stx (vector-map! e* ...))]))
 
 ;; -----------------------------------------------------------------------------
 

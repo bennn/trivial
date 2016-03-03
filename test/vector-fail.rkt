@@ -27,6 +27,13 @@
     (vector-map: add1 (vector-map: add1 (vector-map: add1 (vector 0 0 0))))
     3)
 
+  (vector-ref: (vector-map!: (lambda (x) x) (vector #t #t)) 4)
+  (vector-ref: (vector-map!: symbol->string (vector 'a 'b)) 0)
+
+  (vector-ref:
+    (vector-map!: add1 (vector-map!: add1 (vector-map!: add1 (vector 0 0 0))))
+    3)
+
 )))
 
 ;; -----------------------------------------------------------------------------
@@ -40,6 +47,6 @@
       (compile-syntax stx)))
 
   (for ([rkt (in-list TEST-CASE*)])
-    (check-exn #rx"vector::|Type Checker"
+    (check-exn #rx"out-of-bounds|Type Checker"
       (vector-eval rkt)))
 )
