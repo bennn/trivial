@@ -1,6 +1,6 @@
 #lang typed/racket/base
 
-;; TODO integrate with trivial/math to get ints from identifiers
+;; TOOD abstract some designs
 
 (provide
   define-vector:
@@ -14,12 +14,12 @@
   vector->list:
   vector->immutable-vector:
   vector-fill!:
-  ;vector-take
-  ;vector-take-right
-  ;vector-drop
-  ;vector-drop-right
-  ;vector-split-at
-  ;vector-split-at-right
+  vector-take:
+  vector-take-right:
+  vector-drop:
+  vector-drop-right:
+;  vector-split-at:
+;  vector-split-at-right:
 
   ;; --- private
   (for-syntax parse-vector-length)
@@ -32,8 +32,10 @@
     unsafe-vector-set!
     unsafe-vector-ref)
   racket/vector
+  trivial/math
   (for-syntax
     typed/racket/base
+    racket/syntax
     syntax/id-table
     syntax/parse
     syntax/stx
@@ -94,10 +96,10 @@
 
 (define-syntax (vector-ref: stx)
   (syntax-parse stx
-   [(_ v:vector/length i:nat)
-    (unless (< (syntax-e #'i) (syntax-e #'v.length))
-      (vector-bounds-error 'vector-ref: #'v (syntax-e #'i)))
-    (syntax/loc stx (unsafe-vector-ref v.expanded i))]
+   [(_ v:vector/length i:nat/expand)
+    (unless (< (syntax-e #'i.expanded) (syntax-e #'v.length))
+      (vector-bounds-error 'vector-ref: #'v (syntax-e #'i.expanded)))
+    (syntax/loc stx (unsafe-vector-ref v.expanded 'i.expanded))]
    [_:id
     (syntax/loc stx vector-ref)]
    [(_ e* ...)
@@ -105,10 +107,10 @@
 
 (define-syntax (vector-set!: stx)
   (syntax-parse stx
-   [(_ v:vector/length i:nat val)
-    (unless (< (syntax-e #'i) (syntax-e #'v.length))
-      (vector-bounds-error 'vector-set!: #'v (syntax-e #'i)))
-    (syntax/loc stx (unsafe-vector-set! v.expanded i val))]
+   [(_ v:vector/length i:nat/expand val)
+    (unless (< (syntax-e #'i.expanded) (syntax-e #'v.length))
+      (vector-bounds-error 'vector-set!: #'v (syntax-e #'i.expanded)))
+    (syntax/loc stx (unsafe-vector-set! v.expanded 'i.expanded val))]
    [_:id
     (syntax/loc stx vector-set!)]
    [(_ e* ...)
@@ -117,14 +119,14 @@
 (define-syntax (vector-map: stx)
   (syntax-parse stx
    [(_ f v:vector/length)
-    #:with (i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)
     #:with f+ (gensym 'f)
     #:with v+ (gensym 'v)
     #:with v++ (syntax-property
                  (if (small-vector-size? (syntax-e #'v.length))
-                   (syntax/loc stx
-                     (let ([f+ f] [v+ v.expanded])
-                       (vector (f+ (unsafe-vector-ref v+ 'i*)) ...)))
+                   (with-syntax ([(i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)])
+                     (syntax/loc stx
+                       (let ([f+ f] [v+ v.expanded])
+                         (vector (f+ (unsafe-vector-ref v+ 'i*)) ...))))
                    (syntax/loc stx
                      (let ([f+ f] [v+ v.expanded])
                        (build-vector 'v.length (lambda ([i : Integer])
@@ -235,6 +237,45 @@
     (syntax/loc stx vector->fill!)]
    [(_ e* ...)
     (syntax/loc stx (vector->fill! e* ...))]))
+
+(begin-for-syntax (define-syntax-rule (make-slice-op op-name left? take?)
+  (lambda (stx)
+    (syntax-parse stx
+     [(_ v:vector/length n:nat/expand)
+      #:with (lo hi)
+        (if 'take?
+          (if 'left?
+            (list 0 (syntax-e #'n.expanded))
+            (list
+              (- (syntax-e #'v.length) (syntax-e #'n.expanded))
+              (syntax-e #'v.length)))
+          (if 'left?
+            (list (syntax-e #'n.expanded) (syntax-e #'v.length))
+            (list 0 (- (syntax-e #'v.length) (syntax-e #'n.expanded)))))
+      #:with n+ (gensym 'n)
+      #:with v+ (gensym 'v)
+      (unless (<= (syntax-e #'n.expanded) (syntax-e #'v.length))
+        (vector-bounds-error 'op-name #'v
+          (if 'take? (if 'left? (syntax-e #'hi) (syntax-e #'lo))
+                     (if 'left? (syntax-e #'lo) (syntax-e #'hi)))))
+      (syntax-property
+        (syntax/loc stx
+          (let ([v+ v.expanded]
+                [n+ (-: 'hi 'lo)])
+            (build-vector n+ (lambda ([i : Integer]) (unsafe-vector-ref v+ (+: i 'lo))))))
+        vector-length-key
+        (syntax-e #'v.length))]
+     [(_ v n:int/expand)
+      (vector-bounds-error 'op-name #'v (syntax-e #'n.expanded))]
+     [_:id
+      (syntax/loc stx op-name)]
+     [(_ e* (... ...))
+      (syntax/loc stx (op-name e* (... ...)))]))))
+
+(define-syntax vector-take:       (make-slice-op vector-take       #t #t))
+(define-syntax vector-take-right: (make-slice-op vector-take-right #f #t))
+(define-syntax vector-drop-right: (make-slice-op vector-drop-right #f #f))
+(define-syntax vector-drop:       (make-slice-op vector-drop       #t #f))
 
 ;; -----------------------------------------------------------------------------
 

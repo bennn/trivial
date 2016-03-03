@@ -262,6 +262,42 @@
         (check-equal? (vector-ref v 2) 9)))
   ;)
 
+  ;(test-suite "vector-take"
+    (test-case "take basis"
+      (let-vector: ([v (vector 2 3 1)])
+        (check-equal? (vector-take: v 3) v)
+        (check-equal? (vector-take: v 2) (vector 2 3))
+        (check-equal? (vector-take: v 1) (vector 2))
+        (check-equal? (vector-take: v 0) (vector))))
+  ;)
+
+  ;(test-suite "vector-take-right"
+    (test-case "take-right basic"
+      (let-vector: ([v (vector 2 3 1)])
+        (check-equal? (vector-take-right: v 3) v)
+        (check-equal? (vector-take-right: v 2) (vector 3 1))
+        (check-equal? (vector-take-right: v 1) (vector 1))
+        (check-equal? (vector-take-right: v 0) (vector))))
+  ;)
+
+  ;(test-suite "vector-drop-right"
+    (test-case "drop-right basic"
+      (let-vector: ([v (vector 2 3 1)])
+        (check-equal? (vector-drop-right: v 0) v)
+        (check-equal? (vector-drop-right: v 1) (vector 2 3))
+        (check-equal? (vector-drop-right: v 2) (vector 2))
+        (check-equal? (vector-drop-right: v 3) (vector))))
+  ;)
+
+  ;(test-suite "vector-drop"
+    (test-case "drop basic"
+      (let-vector: ([v (vector 2 3 1)])
+        (check-equal? (vector-drop: v 0) v)
+        (check-equal? (vector-drop: v 1) (vector 3 1))
+        (check-equal? (vector-drop: v 2) (vector 1))
+        (check-equal? (vector-drop: v 3) (vector))))
+  ;)
+
   ;; -- define-vector:
   (let ()
     (define-vector: v (vector 1 1 2 2))
