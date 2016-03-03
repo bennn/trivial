@@ -10,13 +10,16 @@
   vector-set!:
   vector-map:
   vector-map!:
-  ;vector-append:
-  ;vector->list
-  ;vector->immutable-vector
-  ;vector-fill!
-  ;
-
-  ;; TODO and a few more
+  vector-append:
+  vector->list:
+  vector->immutable-vector:
+  vector-fill!:
+  ;vector-take
+  ;vector-take-right
+  ;vector-drop
+  ;vector-drop-right
+  ;vector-split-at
+  ;vector-split-at-right
 
   ;; --- private
   (for-syntax parse-vector-length)
@@ -116,18 +119,19 @@
    [(_ f v:vector/length)
     #:with (i* ...) (for/list ([i (in-range (syntax-e #'v.length))]) i)
     #:with f+ (gensym 'f)
-    #:with v+ (syntax-property
-                (if (small-vector-size? (syntax-e #'v.length))
-                  (syntax/loc stx
-                    (let ([f+ f])
-                      (vector (f+ (unsafe-vector-ref v.expanded 'i*)) ...)))
-                  (syntax/loc stx
-                    (let ([f+ f])
-                      (build-vector 'v.length (lambda ([i : Integer])
-                                                (f+ (vector-ref: v.expanded i)))))))
-                vector-length-key
-                (syntax-e #'v.length))
-    (syntax/loc stx v+)]
+    #:with v+ (gensym 'v)
+    #:with v++ (syntax-property
+                 (if (small-vector-size? (syntax-e #'v.length))
+                   (syntax/loc stx
+                     (let ([f+ f] [v+ v.expanded])
+                       (vector (f+ (unsafe-vector-ref v+ 'i*)) ...)))
+                   (syntax/loc stx
+                     (let ([f+ f] [v+ v.expanded])
+                       (build-vector 'v.length (lambda ([i : Integer])
+                                                 (f+ (vector-ref: v+ i)))))))
+                 vector-length-key
+                 (syntax-e #'v.length))
+    (syntax/loc stx v++)]
    [_:id
     (syntax/loc stx vector-map)]
    [(_ e* ...)
@@ -137,23 +141,105 @@
   (syntax-parse stx
    [(_ f v:vector/length)
     #:with f+ (gensym 'f)
-    #:with v+ (syntax-property
-                #'(let ([f+ f])
-                    (for ([i (in-range 'v.length)])
-                      (unsafe-vector-set! v.expanded i (f+ (unsafe-vector-ref v.expanded i))))
-                    v.expanded)
-                vector-length-key
-                (syntax-e #'v.length))
-    (syntax/loc stx v+)]
+    #:with v+ (gensym 'v)
+    #:with v++ (syntax-property
+                 #'(let ([f+ f]
+                         [v+ v.expanded])
+                     (for ([i (in-range 'v.length)])
+                       (unsafe-vector-set! v+ i (f+ (unsafe-vector-ref v+ i))))
+                     v+)
+                 vector-length-key
+                 (syntax-e #'v.length))
+    (syntax/loc stx v++)]
    [_:id
     (syntax/loc stx vector-map!)]
    [(_ e* ...)
     (syntax/loc stx (vector-map! e* ...))]))
 
+(define-syntax (vector-append: stx)
+  (syntax-parse stx
+   [(_ v1:vector/length v2:vector/length)
+    #:with v1+ (gensym 'v1)
+    #:with v2+ (gensym 'v2)
+    (define l1 (syntax-e #'v1.length))
+    (define l2 (syntax-e #'v2.length))
+    (syntax-property
+      (if (and (small-vector-size? l1)
+               (small-vector-size? l2))
+        (with-syntax ([(i1* ...) (for/list ([i (in-range l1)]) i)]
+                      [(i2* ...) (for/list ([i (in-range l2)]) i)])
+          (syntax/loc stx
+            (let ([v1+ v1.expanded]
+                  [v2+ v2.expanded])
+              (vector (vector-ref: v1+ i1*) ...
+                      (vector-ref: v2+ i2*) ...))))
+        (quasisyntax/loc stx
+          (let ([v1+ v1.expanded]
+                [v2+ v2.expanded])
+            (build-vector
+              #,(+ l1 l2)
+              (lambda (i)
+                (if (< i '#,l1)
+                  (unsafe-vector-ref v1+ i)
+                  (unsafe-vector-ref v2+ i)))))))
+      vector-length-key
+      (+ l1 l2))]
+   [_:id
+    (syntax/loc stx vector-append)]
+   [(_ e* ...)
+    (syntax/loc stx (vector-append e* ...))]))
+
+(define-syntax (vector->list: stx)
+  (syntax-parse stx
+   [(_ v:vector/length)
+    #:with v+ (gensym 'v)
+    (define len (syntax-e #'v.length))
+    (if (small-vector-size? len)
+      (with-syntax ([(i* ...) (for/list ([i (in-range len)]) i)])
+        (syntax/loc stx
+          (let ([v+ v.expanded])
+            (list (unsafe-vector-ref v+ i*) ...))))
+      (syntax/loc stx
+        (let ([v+ v.expanded])
+          (build-list 'v.length (lambda (i) (unsafe-vector-ref v+ i))))))]
+   [_:id
+    (syntax/loc stx vector->list)]
+   [(_ e* ...)
+    (syntax/loc stx (vector->list e* ...))]))
+
+(define-syntax (vector->immutable-vector: stx)
+  (syntax-parse stx
+   [(_ v:vector/length)
+    (syntax-property
+      (syntax/loc stx (vector->immutable-vector v.expanded))
+      vector-length-key
+      (syntax-e #'v.length))]
+   [_:id
+    (syntax/loc stx vector->immutable-vector)]
+   [(_ e* ...)
+    (syntax/loc stx (vector->immutable-vector e* ...))]))
+
+(define-syntax (vector-fill!: stx)
+  (syntax-parse stx
+   [(_ v:vector/length val)
+    #:with v+ (gensym 'v)
+    (define len (syntax-e #'v.length))
+    (syntax-property
+      (syntax/loc stx
+        (let ([v+ v.expanded])
+          (for ([i (in-range 'v.length)])
+            (unsafe-vector-set! v+ i val))))
+      vector-length-key
+      (syntax-e #'v.length))]
+   [_:id
+    (syntax/loc stx vector->fill!)]
+   [(_ e* ...)
+    (syntax/loc stx (vector->fill! e* ...))]))
+
 ;; -----------------------------------------------------------------------------
 
 (define-for-syntax (small-vector-size? n)
-  (< n 101))
+  (< n 20))
 
 ;; Assume `stx` is creating a vector; get the length of the vector to-be-made
 (define-for-syntax (parse-vector-length stx)

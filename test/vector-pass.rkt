@@ -179,6 +179,87 @@
  ;)
 
   ;(test-suite "vector-map!:"
+   (test-case "vector/length map!"
+     (check-equal? (vector-map!: add1 (vector 1)) (vector 2)))
+
+   (test-case "vector/length map! via let"
+     (check-equal?
+       (let ()
+         (: v (Vectorof (Vectorof Integer)))
+         (define-vector: v (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
+         (vector-map!: (lambda ([x : (Vectorof Integer)]) (vector (vector-length: x)))  v))
+       '#(#(1) #(2) #(3) #(4))))
+
+   (test-case "map!^3"
+     (check-equal?
+       (vector-map!: add1 (vector-map!: add1 (vector-map!: add1 (vector 0 0 0))))
+       (vector 3 3 3)))
+
+   (test-case "plain map!"
+     (check-equal?
+       ((lambda ([v : (Vectorof (Vectorof Any))])
+         (vector-map!: (lambda ([x : (Vectorof Any)]) (vector (vector-ref: x 0)))  v))
+        (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
+       '#(#(1) #(2) #(3) #(4))))
+
+   (test-case "large vector"
+     (let-vector: ([v* (ann (make-vector 200 #f) (Vectorof Boolean))])
+       (vector-map!: not v*)
+       (check-true (for/and ([v (in-vector v*)]) v))))
+
+   (test-case "higher-order map! pass"
+     (check-equal?
+       ((lambda ([f : (-> (-> Symbol Symbol) (Vectorof Symbol) (Vectorof Symbol))])
+         (f (lambda (x) 'hi) (vector 'x 'yy 'z)))
+        vector-map!:)
+       (vector 'hi 'hi 'hi)))
+
+   (test-case "higher-order map! fail"
+     (check-exn exn:fail:contract?
+       (lambda ()
+         ((lambda ([f : (-> (-> Integer Integer) (Vectorof Integer) (Vectorof Integer))])
+           (vector-ref: (f add1 (vector 0 0)) 3))
+          vector-map!:))))
+  ;)
+
+  ;(test-suite "vector-append:"
+    (test-case "append"
+      (let-vector: ([v (vector 0 0 8)]
+                    [v2 (vector 1 2)])
+        (check-equal?
+          (vector-ref: (vector-append: v2 v) 4)
+          8)))
+  ;)
+
+  ;(test-suite "vector->list:"
+    (test-case "vector->list basic"
+      (let-vector: ([v (vector 8 8 8 1 8)])
+        (check-equal?
+          (vector->list: v)
+          '(8 8 8 1 8))))
+
+    (test-case "large vector->list"
+      (check-equal?
+        (vector->list: (ann (make-vector 300 '()) (Vectorof (Listof Any))))
+        (build-list 300 (lambda (i) '()))))
+  ;)
+
+  ;(test-suite "vector->immutable-vector"
+    (test-case "vector->immutable, basic"
+      (check-equal?
+        (vector-ref: (vector->immutable-vector: (vector 'a 'd 'e)) 0)
+        'a))
+    (test-case "vector->immutable"
+      (check-equal?
+        (vector-ref: (vector->immutable-vector: (vector 9 9 4)) 0)
+        9))
+  ;)
+
+  ;(test-suite "vector-fill!"
+    (test-case "vfill basic"
+      (let-vector: ([v (vector 2 3 1)])
+        (check-equal? (vector-fill!: v 9) (void))
+        (check-equal? (vector-ref v 2) 9)))
   ;)
 
   ;; -- define-vector:

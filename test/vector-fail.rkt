@@ -34,6 +34,11 @@
     (vector-map!: add1 (vector-map!: add1 (vector-map!: add1 (vector 0 0 0))))
     3)
 
+  (let-vector: ([v (vector 0 0 0)]
+                [v2 (vector 1 2)])
+    (vector-ref: (vector-append: v2 v) 8))
+
+  (vector-ref: (vector->immutable-vector: (vector 1 2 1)) 3)
 )))
 
 ;; -----------------------------------------------------------------------------
