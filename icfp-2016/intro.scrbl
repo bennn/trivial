@@ -74,7 +74,7 @@ All this is clear from the program text to the programmer; our contribution
 
 A macro system provides a general framework for transforming and analyzing
  program syntax.
-Languages with strong macro systems are surprisingly expressive@~cite[f-scp-1991].
+Languages with strong macro systems are surprisingly expressive. @;@~cite[f-scp-1991].
 Case in point, Herman and Meunier demonstrated how macros can propogate
  information embedded in string values and syntax patterns to a
  static analyzer@~cite[hm-icfp-2004].
