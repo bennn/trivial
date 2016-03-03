@@ -2,7 +2,7 @@
 
 @(require "common.rkt")
 
-@authorinfo["Ben Greenman and Matthias Felleisen"
+@authorinfo["Ben Greenman"
             "Northeastern University, Boston, USA"
             ""]
 
