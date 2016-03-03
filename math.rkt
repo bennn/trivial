@@ -9,6 +9,12 @@
   ;;  but try to simplify arguments during expansion.
 
   expt:
+
+  ;; --
+  (for-syntax
+    nat/expand
+    int/expand
+    number/expand)
 )
 
 (require (for-syntax
@@ -21,6 +27,12 @@
 ))
 
 ;; =============================================================================
+
+(begin-for-syntax
+  (define-syntax-class/predicate nat/expand exact-nonnegative-integer?)
+  (define-syntax-class/predicate int/expand integer?)
+  (define-syntax-class/predicate number/expand number?)
+)
 
 (define-syntax make-numeric-operator
   (syntax-parser
@@ -47,15 +59,9 @@
 
 (define-syntax (expt: stx)
   (syntax-parse stx
-   [(_ e1 e2)
-    #:with e1+ (expand-expr #'e1)
-    #:with e2+ (expand-expr #'e2)
-    (let ([n1 (quoted-stx-value? #'e1+)]
-          [n2 (quoted-stx-value? #'e2+)])
-      (if (and (number? n1)
-               (number? n2))
-        (quasisyntax/loc stx #,(expt n1 n2))
-        (syntax/loc stx (expt e1+ e2+))))]
+   [(_ n1:number/expand n2:number/expand)
+    #:with n (expt (syntax-e #'n1.expanded) (syntax-e #'n2.expanded))
+    (syntax/loc stx 'n)]
    [_:id
     (syntax/loc stx expt)]
    [(_ e* ...)
@@ -87,7 +93,6 @@
             ;; Watch for division-by-zero
             (if (and (zero? v) (eq? / op))
               (division-by-zero stx)
-              ;(loop v (cons prev acc) (cdr e*))
               (loop (op prev v) acc (cdr e*)))
             (loop v acc (cdr e*)))
           ;; else: save value in acc
