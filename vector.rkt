@@ -301,9 +301,7 @@
             (_ make-vector n e* ...)
             (build-vector n e* ...)
             (_ build-vector n e* ...))
-       (if (syntax-transforming?)
-         (quoted-stx-value? (expand-expr #'n))
-         (and (exact-nonnegative-integer? (syntax-e #'n)) (syntax-e #'n)))]
+       (and (exact-nonnegative-integer? (syntax-e #'n)) (syntax-e #'n))]
       [_
        #f])]))
 
