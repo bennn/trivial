@@ -1,13 +1,14 @@
 #lang racket/base
+(require
+  trivial/private/test-common
+  (only-in typed/racket/base ann lambda One Zero -> : Natural Exact-Rational))
 
 ;; Math expressions that fail to typecheck
 
-(define (expr->typed-module expr)
-  #`(module t typed/racket/base
-      (require trivial/math)
-      #,expr))
 
-(define TEST-CASE* (map expr->typed-module '(
+(module+ test (test-compile-error
+  #:require trivial/math
+  #:exn #rx"/:|Type Checker"
   (ann (let ([n 2]) (+: n -2)) Zero)
   (ann (let ([n 2]) (-: 2 n)) Zero)
   (ann (let ([n 5]) (*: n 1/5 1)) One)
@@ -22,19 +23,4 @@
   ;; -- dividing by zero => caught statically
   (/: 1 1 0)
   (/: 1 1 (+: 4 -2 -2))
-)))
-
-;; -----------------------------------------------------------------------------
-
-(module+ test
-  (require
-    rackunit)
-
-  (define (math-eval stx)
-    (lambda () ;; For `check-exn`
-      (compile-syntax stx)))
-
-  (for ([rkt (in-list TEST-CASE*)])
-    (check-exn #rx"/:|Type Checker"
-      (math-eval rkt)))
-)
+))

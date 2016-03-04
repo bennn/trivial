@@ -1,15 +1,16 @@
 #lang racket/base
+(require
+  trivial/private/test-common
+  (only-in typed/racket/base
+    ann : -> String Listof List U Bytes))
 
 ;; Ill-typed `regexp:` expressions
-;;
 ;; TODO why can't I catch errors for (ann ... (List String))? WhydoI need #f?
 
-(define (expr->typed-module expr)
-  #`(module t typed/racket/base
-      (require trivial/regexp)
-      #,expr))
 
-(define TEST-CASE* (map expr->typed-module '(
+(module+ test (test-compile-error
+  #:require trivial/regexp
+  #:exn #rx"Type Checker"
   (ann (regexp-match: "hi" "hi")
        (U #f (List String String String)))
   (ann (regexp-match: #rx"(h)(i)" "hi")
@@ -41,20 +42,4 @@
   ;; --- Can't handle |, yet
   (ann (regexp-match: "this(group)|that" "that")
        (U #f (List String String)))
-)))
-
-;; -----------------------------------------------------------------------------
-
-(module+ test
-  (require
-    rackunit)
-
-  (define (regexp-eval stx)
-    (lambda () ;; For `check-exn`
-      (compile-syntax stx)))
-
-  (for ([rkt (in-list TEST-CASE*)])
-    (check-exn #rx"Type Checker"
-      (regexp-eval rkt)))
-
-)
+))

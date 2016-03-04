@@ -53,7 +53,7 @@
     #:with (arg+* ...)
       (for/list ([a (in-syntax #'(arg* ...))]
                  [t (in-syntax #'fmt.type*)])
-        (if t (quasisyntax/loc #'f (ann #,a #,t)) a))
+        (if (syntax-e t) (quasisyntax/loc #'f (ann #,a #,t)) a))
     (syntax/loc #'f (format 'fmt.expanded arg+* ...))]
    [f:id
     (syntax/loc #'f format)]

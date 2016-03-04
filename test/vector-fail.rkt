@@ -1,11 +1,11 @@
 #lang racket/base
+(require
+  trivial/private/test-common)
 
-(define (expr->typed-module expr)
-  #`(module t typed/racket/base
-      (require trivial/vector)
-      #,expr))
+(module+ test (test-compile-error
+  #:require trivial/vector trivial/math
+  #:exn #rx"out-of-bounds|Type Checker"
 
-(define TEST-CASE* (map expr->typed-module '(
   (vector-ref: (vector 1) 3)
 
   (let-vector: ([v (vector 1 2 3)])
@@ -60,19 +60,4 @@
   (vector-drop-right: (vector 1 2) 4)
   (vector-drop-right: (vector 'a) -1)
 
-)))
-
-;; -----------------------------------------------------------------------------
-
-(module+ test
-  (require
-    rackunit)
-
-  (define (vector-eval stx)
-    (lambda () ;; For `check-exn`
-      (compile-syntax stx)))
-
-  (for ([rkt (in-list TEST-CASE*)])
-    (check-exn #rx"out-of-bounds|Type Checker"
-      (vector-eval rkt)))
-)
+))
