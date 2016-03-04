@@ -3,7 +3,7 @@
 @(require "common.rkt")
 
 @authorinfo["Ben Greenman"
-            "Northeastern University, Boston, USA"
+            "PLT @ Northeastern University, Boston, USA"
             ""]
 
 @title{Functional Pearl: Do you see what I see?}
@@ -29,13 +29,13 @@
 @;@keywords{Gradual typing, performance evaluation}
 
 @include-section{intro.scrbl}
-@include-section{solution.scrbl}
-@include-section{usage.scrbl}
-@include-section{experience.scrbl} @; Merge with usage?
-@include-section{implementation.scrbl}
-@include-section{correctness.scrbl}
-@include-section{related.scrbl}
-@include-section{conclusion.scrbl}
+@;@include-section{solution.scrbl}
+@;@include-section{usage.scrbl}
+@;@include-section{experience.scrbl} @; Merge with usage?
+@;@include-section{implementation.scrbl}
+@;@include-section{correctness.scrbl}
+@;@include-section{related.scrbl}
+@;@include-section{conclusion.scrbl}
 
 @section[#:style 'unnumbered]{Acknowledgments}
 
