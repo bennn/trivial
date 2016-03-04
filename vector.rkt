@@ -290,17 +290,17 @@
    [(identifier? stx)
     (free-id-table-ref id+vector-length stx #f)]
    [else
-     (syntax-parse stx #:literals (vector make-vector build-vector)
+     (syntax-parse stx #:literals (#%plain-app vector make-vector build-vector)
       [(~or '#(e* ...)
             #(e* ...)
             ;; TODO #{} #[] #6{} ...
-            (_ vector e* ...) ;; TODO the _ should be matching #%app
+            (#%plain-app vector e* ...)
             (vector e* ...))
        (length (syntax->list #'(e* ...)))]
       [(~or (make-vector n e* ...)
-            (_ make-vector n e* ...)
+            (#%plain-app make-vector n e* ...)
             (build-vector n e* ...)
-            (_ build-vector n e* ...))
+            (#%plain-app build-vector n e* ...))
        (and (exact-nonnegative-integer? (syntax-e #'n)) (syntax-e #'n))]
       [_
        #f])]))
