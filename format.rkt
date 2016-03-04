@@ -20,31 +20,41 @@
 
 (require
   (for-syntax
+    trivial/private/common
     typed/racket/base
     syntax/parse
     racket/sequence))
 
 ;; =============================================================================
 
+(begin-for-syntax
+(define-syntax-class/predicate string/expanded string?)
+(define-syntax-class string/format
+  #:attributes (expanded type*)
+  (pattern e:string/expanded
+   #:with maybe-type* (template->type* #'e.expanded)
+   #:when (syntax-e #'maybe-type*)
+   #:attr type* #'maybe-type*
+   #:attr expanded #'e.expanded))
+)
+
 (define-syntax format:
   (syntax-parser
-   [(f template:str arg* ...)
+   [(f fmt:string/format arg* ...)
     ;; 1. Parse expected types from the template
-    (let* ([type* (template->type* (syntax-e #'template) #:src #'f)]
-           [num-expected (length type*)]
-           [num-given (for/sum ([a (in-syntax #'(arg* ...))]) 1)])
-      (unless (= num-expected num-given)
-        (apply raise-arity-error
-          (syntax-e #'f)
-          num-expected
-          (for/list ([a (in-syntax #'(arg* ...))]) (syntax->datum a))))
-      ;; 2. If any types left obligations, use `ann` to typecheck the args
-      (let ([arg+*
-                    (for/list ([a (in-syntax #'(arg* ...))]
-                               [t (in-list type*)])
-                      (if t (quasisyntax/loc #'f (ann #,a #,t)) a))])
-        (quasisyntax/loc #'f
-          (format template #,@arg+*))))]
+    #:when (let ([num-expected (length (syntax-e #'fmt.type*))]
+                 [num-given (length (syntax-e #'(arg* ...)))])
+             (unless (= num-expected num-given)
+               (apply raise-arity-error
+                 (syntax-e #'f)
+                 num-expected
+                 (map syntax->datum (syntax-e #'(arg* ...))))))
+    ;; 2. If any types left obligations, use `ann` to typecheck the args
+    #:with (arg+* ...)
+      (for/list ([a (in-syntax #'(arg* ...))]
+                 [t (in-syntax #'fmt.type*)])
+        (if t (quasisyntax/loc #'f (ann #,a #,t)) a))
+    (syntax/loc #'f (format 'fmt.expanded arg+* ...))]
    [f:id
     (syntax/loc #'f format)]
    [(f tmp arg* ...)
@@ -65,8 +75,10 @@
 ;;   Example: If result is '(#f Integer), then
 ;;   - The format string expects 2 arguments
 ;;   - First argument has no type constraints, second must be an Integer
-;; (: count-format-escapes (->* [String] [#:src (U #f Syntax)] (Listof (U #f Syntax))))
-(define-for-syntax (template->type* str #:src [stx #f])
+;; (: template->type (->* [Syntax] (Listof (U #f Syntax))))
+(define-for-syntax (template->type* stx)
+  (define str (syntax-e stx))
+  (unless (string? str) (error 'template->type "Internal error: ~a" str))
   (define last-index (- (string-length str) 1))
   (let loop ([i 0] [acc '()])
     (cond
