@@ -39,6 +39,18 @@
 (define-for-syntax errloc-key     'regexp-match:)
 (define-for-syntax id+num-groups (make-free-id-table))
 
+(begin-for-syntax (define-syntax-class pattern/groups
+  #:attributes (expanded num-groups type)
+  (pattern e
+    #:with e+ (expand-expr #'e)
+    #:with (g . t) (count-groups #'e+)
+    #:when (syntax-e #'g)
+    #:attr expanded #'e+
+    #:attr num-groups #'g
+    #:attr type #'t)))
+
+;; -----------------------------------------------------------------------------
+
 ;; (define-matcher f)
 ;; Expand to two forms:
 ;; - (f: arg)
@@ -57,38 +69,31 @@
           (syntax-parser
            [g:id
             (syntax/loc #'g f)]
-           [(_ pat-stx)
-            #:with pat-stx+ (expand-expr #'pat-stx)
-            #:with (num-groups . T) (count-groups #'pat-stx+)
-            (syntax-property #'(f pat-stx+)
+           [(_ pat:pattern/groups)
+            (syntax-property #'(f pat.expanded)
               num-groups-key
-              (cons (syntax-e #'num-groups) #'T))]
+              (cons (syntax-e #'pat.num-groups) #'pat.type))]
            [(_ arg* (... ...))
             #'(f arg* (... ...))]))
         ;; For lets, (let-regexp: ([id val]) ...)
         (define-syntax let-f:
           (syntax-parser
-           [(_ ([name*:id pat-stx*] (... ...)) e* (... ...))
-            #:with (pat-stx+* (... ...)) (stx-map expand-expr #'(pat-stx* (... ...)))
-            #:with ((num-groups* . T*) (... ...)) (stx-map count-groups #'(pat-stx+* (... ...)))
-            #'(let ([name* pat-stx+*] (... ...))
+           [(_ ([name*:id pat*:pattern/groups] (... ...)) e* (... ...))
+            #'(let ([name* pat*.expanded] (... ...))
                 (let-syntax ([name* (make-rename-transformer
-                                     (syntax-property #'name*
-                                                      num-groups-key
-                                                      (cons 'num-groups* #'T*)))] (... ...))
+                                      (syntax-property #'name* num-groups-key
+                                        (cons 'pat*.num-groups #'pat*.type)))] (... ...))
                   e* (... ...)))]
            [(_ arg* (... ...))
             #'(let arg* (... ...))]))
         ;; For definitions, (define-regexp: id val)
         (define-syntax define-f:
           (syntax-parser
-           [(_ name:id pat-stx)
-            #:with pat-stx+ (expand-expr #'pat-stx)
-            #:with (num-groups . T) (count-groups #'pat-stx+)
+           [(_ name:id pat:pattern/groups)
             (free-id-table-set! id+num-groups
                                 #'name
-                                (cons (syntax-e #'num-groups) #'T))
-            #'(define name pat-stx+)]
+                                (cons (syntax-e #'pat.num-groups) #'pat.type))
+            #'(define name pat.expanded)]
            [(_ arg* (... ...))
             #'(define arg* (... ...))]))) ]))
 
@@ -99,17 +104,14 @@
 
 (define-syntax regexp-match:
   (syntax-parser
-   [(f pat-stx arg* ...)
-    #:with pat-stx+ (expand-expr #'pat-stx)
-    #:with (num-groups . T) (count-groups #'pat-stx+)
-    #:when (syntax-e #'num-groups)
-    #:with (index* ...) #`#,(for/list ([i (in-range (syntax-e #'num-groups))]) i)
-    #'(let ([maybe-match (regexp-match pat-stx+ arg* ...)])
+   [(f pat:pattern/groups arg* ...)
+    #:with (index* ...) (for/list ([i (in-range (syntax-e #'pat.num-groups))]) i)
+    #'(let ([maybe-match (regexp-match pat.expanded arg* ...)])
         (if maybe-match
-          (let ([m : (Listof (Option T)) maybe-match])
+          (let ([m : (Listof (Option pat.type)) maybe-match])
             (list (car maybe-match)
                   (begin (set! m (cdr m))
-                         (or (car m) (error 'regexp-match: (format "Internal error at result index ~a, try using Racket's regexp-match" index*))))
+                         (or (car m) (error 'regexp-match: (format "Internal error at result index ~a, try using Racket's regexp-match" 'index*))))
                   ...))
           #f))]
    [f:id
