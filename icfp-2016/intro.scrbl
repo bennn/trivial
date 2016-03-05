@@ -1,4 +1,12 @@
-#lang scribble/sigplan
+#lang scribble/sigplan @onecolumn
+
+@; TODO need a word for these 'observable properties'
+@; - regexp groups
+@; - format characters
+@; - procedure arity
+@; - tuple size
+@; - vector length
+@; - database schema
 
 @; Tuples in Haskell http://hackage.haskell.org/package/tuple
 @; Regexp
@@ -31,109 +39,78 @@ That is, once some basic structure of the input is fixed, the general
  problem becomes a much simpler, specific problem.
 If ever a 16-argument function needs currying, we can write a new function for
  the task.
-@; This pearl explains how ...
-By creating the specific @racket[curry] or @racket[first] for each size of
- function or tuple value in a program, we 
 
-In general, we consider functions like @racket[curry] and @racket[first] for
- arbitrarily-sized 
+Regular expression patterns are another common value whose structure is not
+ expressed by conventional type systems.
+Consider the function @racket[regexp-match] from Typed Racket:
 
-@; Introduce name? Talk about indexed families?
+@interaction[
+  (regexp-match #rx"types" "types@ccs.neu.edu")
 
+  (regexp-match #rx"lambda" "types@ccs.neu.edu")
 
-
-@;These functions behave in a straightforward manner, but depend on
-@; characteristics of their input that most type systems do not express generically.
-
-
-
-
-Many workarounds = polydots, pi-types, printf-types, ...
-
-
-@; Suppose @racket[regexp-match] is a function for matching a
-@;  regular expression pattern against a string value.
-@; If the match succeeds then the function returns a list containing the
-@;  part of the string that was matched and all matched groups
-@;  corresponding to parenthesized sub-patterns of the regular expression.
-@; Otherwise, it returns a value indicating the match failed.
-@; @; TODO Specify the type system?
-@; Suppose also that @racket[pattern] and @racket[group] are variables
-@;  bound to string values at run-time.
-@; Given these premises, what is the type of this expression?
-@; 
-@; @racketblock[
-@;   (regexp-match pattern str)
-@; ]
-@; 
-@; One simple answer is @racket[(Option (Listof String))].
-@; If all goes well the resulting value will be a list of strings (of unspecified
-@;  length), but we know ahead of time that the match may fail.
-@; 
-@; In a programming language with the full power of dependent types, we can encode
-@;  the relationship between @racket[pattern] and @racket[str] and give a very
-@;  specific type relating the number of groups in @racket[pattern] to the number
-@;  of elements in the result list.
-@; Dependent types, however, typically require strategic use of type annotations
-@;  and carefully-selected data representations.
-@; One relatively simple type for the expression above is
-@;  @racket[(Option (List[N] String))] where @racket[N] is the number of groups
-@;  in @racket[pattern], but this requires the type @racket[List] to carry length
-@;  information and a type for regular expressions that counts groups.
-@; Building the infrastructure necessary to express that particular type of
-@;  the call to @racket[regexp-match] may give more trouble than relief.
-@; 
-@; This paper explores a solution between simple and dependent types that
-@;  should apply in any typed language with sufficiently powerful
-@;  @emph{syntax extensions}, or macros.
-@; The key idea is to refine types based on values apparent in the program text.
-@; When the parameters to @racket[regexp-match] are bound at run-time, we
-@;  conservatively assign the type @racket[(Option (Listof String))].
-@; But if there is more information at hand, we use it.
-@; For instance, both these expressions have the type
-@;  @racket[(Option (List String String))] in our system.@note{Where @racket[List]
-@;   is Typed Racket's type for heterogenous, sized lists; akin to tuple types in ML.}
-@; 
-@; @racketblock[
-@;     (regexp-match "hello(o*)" str)
-@; 
-@;     (let ([pattern "hello(o*)"])
-@;       (regexp-match pattern str))
-@; ]
-@; 
-@; The pattern here has exactly one group, delimited by the parentheses.
-@; Thus if the match succeeds we get a list of two elements: the first being
-@;  the entire matched substring and the second a string matching the regular
-@;  expression @racket{o*}.
-@; All this is clear from the program text to the programmer; our contribution
-@;  is parsing the relevant information and forwarding it to the type checker.
-@; 
-@; @;Additionally replacing @racket[str] with a value gives an even more precise type by
-@; @; evaluating the expression while type checking.
-
-
-@section{Prior & Current Work}
-
-A macro system provides a general framework for transforming and analyzing
- program syntax.
-Languages with strong macro systems are surprisingly expressive. @;@~cite[f-scp-1991].
-Case in point, Herman and Meunier demonstrated how macros can propogate
- information embedded in string values and syntax patterns to a
- static analyzer@~cite[hm-icfp-2004].
-Their illustrative examples were format strings, regular expression patterns,
- and database queries.
-We adapt these examples to a typed programming language
- and give additional examples inspired by the literature on dependent types.
-By inserting type annotations and boolean guards our macros indirectly
- facilitate type-checking.
-Quite often---but not always---the inferred types can remove the need for
- run-time assertions.
-
-Contents:
-@itemlist[
-  @item{A language-agnostic framework for value-dependent macros (Section 2).}
-  @item{Diverse motivating examples, from a type-safe @racket[printf] to a basic typeclass system (Section 3).}
-  @item{Description and evaluation of a Typed Racket implementation (Section 4).}
-  @item{Correctness requirements for transformations (Section 5).}
-  @item{Related work and conclusion (Section 6).}
+  (regexp-match #rx"(.*)@(.*)" "types@ccs.neu.edu")
 ]
+@; TODO note that nested groups cannot fail.
+
+When called with a pattern @racket[p] and string @racket[s] to match with,
+ @racket[(regexp-match p s)] returns a list of all substrings in @racket[s]
+ matching groups in the pattern @racket[p].
+The pattern itself counts for one group and parentheses within @racket[p]
+ delimit nested groups.
+Hence the third example returns a list of three elements.
+A match can also fail, in which case the value @racket[#f] is returned.
+
+Although Typed Racket's @racket[regexp-match] has the type@note{Assuming that a
+    successful match implies that all nested groups successfully match.}
+ @racket[(Regexp String -> (U #f (Listof String)))], the number of strings
+ in the result list is determined by the number of groups in the input regular
+ expression.
+Like the arity of a function or the size of a tuple, the number of groups
+ in a pattern is often clear to the programmer.
+We could imagine using
+ an indexed family of @racket[regexp-match] functions for patterns of
+ two, three, or more groups.
+Ideally though, the programming language should understand
+ these unconventional or domain-specific flavors of polymorphism.
+
+This pearl describes a technique for extending a simple type system with
+ a value-indexed form of polymorphism.
+By analyzing the syntactic structure of values and partially evaluating
+ constant expressions before typechecking, we specialize the types of functions
+ like @racket[curry], @racket[first], and @racket[regexp-match] at their
+ call-sites when possible.
+Whereas the general type of @racket[curry] is @racket[(⊥ -> ⊤)],
+ our system infers when it is safe to use a subtype instead.
+For instance:
+
+@racketblock[
+ (curry (λ (x y) x))
+]
+
+generates the type constraint
+
+@racketblock[
+ curry : ((A B -> A) -> (A -> B -> A))
+]
+
+The technique does not require any changes to the underlying type system
+ or annotations from the programmer.
+Instead, we leverage existing tools for writing syntax extensions.
+Our implementation happens to use Racket's macro system, but (at least)
+ Clojure,
+ Haskell,
+ JavaScript,
+ OCaml,
+ Rust,
+ and Scala
+ are equally capable.
+
+@section{Coming Attractions}
+
+Section 2 describes our approach,
+ Section 3 gives applications.
+Section 4 presents the code
+ and Section 5 reports on practical experience.
+We conclude with related work and reflections.
+
