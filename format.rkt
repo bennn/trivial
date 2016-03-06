@@ -51,8 +51,8 @@
                  (map syntax->datum (syntax-e #'(arg* ...))))))
     ;; 2. If any types left obligations, use `ann` to typecheck the args
     #:with (arg+* ...)
-      (for/list ([a (in-syntax #'(arg* ...))]
-                 [t (in-syntax #'fmt.type*)])
+      (for/list ([a (in-list (syntax-e #'(arg* ...)))]
+                 [t (in-list (syntax-e #'fmt.type*))])
         (if (syntax-e t) (quasisyntax/loc #'f (ann #,a #,t)) a))
     (syntax/loc #'f (format 'fmt.expanded arg+* ...))]
    [f:id
