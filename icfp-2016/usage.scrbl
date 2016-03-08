@@ -11,16 +11,7 @@
 
 @section{Database}
 @; db
-
-In the years since 2004, language-integrated query has been a popular
- topic.
-Languages like Scala, @tt{C#}, and @tt{F*} have fast and type-safe
- interfaces for working with SQL databases.
-
-@; SO WHAT ARE WE DOING HERE
-
-@; Hey, Racket / typed Racket does not fit with the overalll story of
-@; dependent-like types
+@; TODO Ocaml, Haskell story
 
 Racket's @racket[db] library provides a direct connection to the database,
  modulo some important safety checks.
@@ -63,3 +54,8 @@ Calls to generic operations like @racket[query-row] are then specialized to
 @; - lightweight
 @; - no changes to underlying library / type system
 @; - compile-time validation of query strings
+
+While light years away from LINQ, this technique provides at least basic
+ safety guarantees for an existing library and demonstrates the generality of
+ our technique.
+
