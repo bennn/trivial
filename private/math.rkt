@@ -111,7 +111,7 @@
 (make-numeric-operator *)
 (make-numeric-operator /)
 
-(define-syntax expt: (make-alias 'expt
+(define-syntax expt: (make-alias #'expt
   (lambda (stx) (syntax-parse stx
    [(_ n1 n2)
     (let ([v1 (stx->num #'n1)]
