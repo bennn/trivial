@@ -20,7 +20,9 @@
 ;  vector-split-at-right:
 
   ;; --- private
-  (for-syntax parse-vector-length)
+  (for-syntax
+    parse-vector-length
+    vector-length-key)
 )
 
 ;; -----------------------------------------------------------------------------
