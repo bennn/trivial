@@ -221,23 +221,6 @@
       (U #f (Listof (U #f String))))
     '("hellooo" "ll" "ooo"))
 
-  ;; -- let-pregexp:
-  (check-equal?
-    (ann
-      (let-pregexp: ([rx #px"he(l*)(o*)"])
-        (regexp-match: rx "helllooo"))
-      (U #f (List String String String)))
-    '("helllooo" "lll" "ooo"))
-
-  ;; -- define-pregexp:
-  (check-equal?
-    (ann
-      (let ()
-        (define-pregexp: rx #px"he(l*)(o*)")
-        (regexp-match: rx "helllooo"))
-      (U #f (List String String String)))
-    '("helllooo" "lll" "ooo"))
-
   (check-equal?
     (ann
       (let ()
@@ -247,32 +230,7 @@
 
   (check-equal?
     (ann
-      (let ()
-        (define-pregexp: rx (pregexp: "he(l*)(o*)"))
-        (regexp-match: rx "hellooo"))
-      (U #f (List String String String)))
-    '("hellooo" "ll" "ooo"))
-
-  (check-equal?
-    (ann
       (regexp-match: #rx#"he(l*)(o*)" #"helllooo")
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"helllooo" #"lll" #"ooo"))
-
-  ;; -- let-byte-regexp:
-  (check-equal?
-    (ann
-      (let-byte-regexp: ([rx #rx#"he(l*)(o*)"])
-        (regexp-match: rx #"helllooo"))
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"helllooo" #"lll" #"ooo"))
-
-  ;; -- define-byte-regexp:
-  (check-equal?
-    (ann
-      (let ()
-        (define-byte-regexp: rx #rx#"he(l*)(o*)")
-        (regexp-match: rx #"helllooo"))
       (U #f (List Bytes Bytes Bytes)))
     '(#"helllooo" #"lll" #"ooo"))
 
@@ -285,32 +243,7 @@
 
   (check-equal?
     (ann
-      (let ()
-        (define-byte-regexp: rx (byte-regexp: #"he(l*)(o*)"))
-        (regexp-match: rx "hellooo"))
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"hellooo" #"ll" #"ooo"))
-
-  (check-equal?
-    (ann
       (regexp-match: #px#"he(l*)(o*)" "helllooo")
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"helllooo" #"lll" #"ooo"))
-
-  ;; -- let-byte-pregexp:
-  (check-equal?
-    (ann
-      (let-byte-pregexp: ([rx #px#"he(l*)(o*)"])
-        (regexp-match: rx "helllooo"))
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"helllooo" #"lll" #"ooo"))
-
-  ;; -- define-byte-pregexp:
-  (check-equal?
-    (ann
-      (let ()
-        (define-byte-pregexp: rx #px#"he(l*)(o*)")
-        (regexp-match: rx "helllooo"))
       (U #f (List Bytes Bytes Bytes)))
     '(#"helllooo" #"lll" #"ooo"))
 
@@ -318,14 +251,6 @@
     (ann
       (let ()
         (regexp-match: (byte-pregexp: #"he(l*)(o*)") "hellooo"))
-      (U #f (List Bytes Bytes Bytes)))
-    '(#"hellooo" #"ll" #"ooo"))
-
-  (check-equal?
-    (ann
-      (let ()
-        (define-byte-pregexp: rx (byte-pregexp: #"he(l*)(o*)"))
-        (regexp-match: rx "hellooo"))
       (U #f (List Bytes Bytes Bytes)))
     '(#"hellooo" #"ll" #"ooo"))
 

@@ -1,6 +1,7 @@
 #lang racket/base
 
 ;; Common helper functions
+;; TODO make-set!-transformer
 
 (provide
 
@@ -40,10 +41,10 @@
    #:attributes (evidence expanded)
    (pattern e
     #:with e+ (expand-expr #'e)
-    #:with p+ (p? (syntax/loc #'e e+))
+    #:with p+ (p? #'e+)
     #:when (syntax-e #'p+)
-    #:attr evidence (syntax/loc #'e p+)
-    #:attr expanded (syntax/loc #'e e+))))
+    #:attr evidence #'p+
+    #:attr expanded #'e+)))
 
 (define (expand-expr stx)
   (local-expand stx 'expression '()))
