@@ -59,12 +59,8 @@
           (loop (+ i 1) acc)]))]
      [else #f]))
 
-  (define-values (
-    _key
-    fmt?
-    _define
-    _let
-   ) (make-value-property 'string:format format-parser))
+  (define-values (_key fmt? _define _let)
+    (make-value-property 'string:format format-parser))
 
   (define-syntax-class/predicate string/format fmt?)
 )
