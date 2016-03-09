@@ -19,6 +19,17 @@
     (ann ((lambda ([f : (-> Integer Integer Integer)]) (f 0 0)) +:) Integer)
     0)
 
+  (check-equal?
+    (let-num: ([n -4] [m 5])
+      (ann (+: m n -1) Zero))
+    0)
+
+  (check-equal?
+    (let ()
+      (define-num: n 6)
+      (define-num: m -8)
+      (ann (+: n 2 m) Zero))
+    0)
 
   ;; -- -:
   (check-equal? (ann (-: 0 0) Zero) 0)
@@ -31,6 +42,17 @@
     (ann ((lambda ([f : (-> Integer Integer Integer)]) (f 0 0)) -:) Integer)
     0)
 
+  (check-equal?
+    (let-num: ([n 4] [m 5])
+      (ann (-: m n 1) Zero))
+    0)
+
+  (check-equal?
+    (let ()
+      (define-num: n 6)
+      (define-num: m -8)
+      (ann (-: n m 14) Zero))
+    0)
 
   ;; -- *:
   (check-equal? (ann (*: 0 1315) Zero) 0)
@@ -43,6 +65,18 @@
     (ann ((lambda ([f : (-> Integer Integer Integer)]) (f 0 0)) *:) Integer)
     0)
 
+  (check-equal?
+    (let-num: ([n 4] [m 5])
+      (ann (-: (*: m n) 20) Zero))
+    0)
+
+  (check-equal?
+    (let ()
+      (define-num: n 2)
+      (define-num: m -8)
+      (ann (-: (*: n -2 m) 32) Zero))
+    0)
+
 
   ;; -- /:
   (check-equal? (ann (/: 0 1) Zero) 0)
@@ -53,6 +87,18 @@
   (check-equal?
     (ann ((lambda ([f : (-> Integer Integer Exact-Rational)]) (f 1 1)) /:) Real)
     1)
+
+  (check-equal?
+    (let-num: ([n 4] [m 12])
+      (ann (-: (/: m n) 3) Zero))
+    0)
+
+  (check-equal?
+    (let ()
+      (define-num: n 2)
+      (define-num: m -8)
+      (ann (+: (/: m n) 4) Zero))
+    0)
 
 
   ;; -- Nested
@@ -90,7 +136,20 @@
     (ann (expt: (+: 5 -5) 78) Zero)
     0)
   (check-equal?
-    (ann (expt: (*: 2 2) (expt: 2 2)) Index)
+    (ann (-: (expt: (*: 2 2) (expt: 2 2)) 256) Zero)
+    0)
+  (check-equal?
+    (ann (expt: (* 2 2) (expt: 2 2)) Natural) ;; Not an index
     256)
+  (check-equal?
+    (let-num: ([n1 5] [n2 4])
+      (ann (-: (expt: n1 n2) 625) Zero))
+    0)
+  (check-equal?
+    (let ()
+      (define-num: n1 8)
+      (define-num: n2 2)
+      (ann (-: (expt: n1 n2) 64) Zero))
+    0)
 
 )

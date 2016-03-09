@@ -11,7 +11,10 @@
   ;; Otherwise, return #f.
 
   define-syntax-class/predicate
-  ;; (stx-> Identifier (-> Any Boolean) SyntaxClassDef)
+  ;; TODO
+
+  lift-predicate
+  ;; TODO
 
   make-value-property
   ;; TODO
@@ -25,7 +28,9 @@
   syntax/parse
   syntax/id-table
   (for-syntax (only-in typed/racket/base let let-syntax #%app))
-  (for-template (only-in typed/racket/base quote)))
+  (for-template
+    (prefix-in r: (only-in racket/base quote))
+    (prefix-in tr: (only-in typed/racket/base quote))))
 
 ;; =============================================================================
 
@@ -34,10 +39,10 @@
    #:attributes (evidence expanded)
    (pattern e
     #:with e+ (expand-expr #'e)
-    #:with p+ (p? #'e+)
-    #:when (if (syntax-e #'p+) #t (begin (printf "ERROR we failed iwth ~a\n" (syntax->datum #'e+)) #f)) ;; TODO remove this
-    #:attr evidence #'p+
-    #:attr expanded #'e+)))
+    #:with p+ (p? (syntax/loc #'e e+))
+    #:when (syntax-e #'p+)
+    #:attr evidence (syntax/loc #'e p+)
+    #:attr expanded (syntax/loc #'e e+))))
 
 (define (expand-expr stx)
   (local-expand stx 'expression '()))
@@ -45,9 +50,18 @@
 (define (quoted-stx-value? stx)
   (and
     (syntax? stx)
-    (syntax-case stx (quote)
-     [(quote v)
+    (syntax-parse stx #:literals (r:quote tr:quote) #:datum-literals (quote)
+     [((~or r:quote tr:quote quote) v)
       (syntax-e #'v)]
+     [else #f])))
+
+(define (lift-predicate p?)
+  (lambda (stx)
+    (cond
+     [(p? stx) stx]
+     [(p? (syntax-e stx)) (syntax-e stx)]
+     [(p? (quoted-stx-value? stx))
+      stx]
      [else #f])))
 
 ;; In:
@@ -77,28 +91,28 @@
     (lambda (stx)
       (syntax-parse stx
        [(_ name:id v)
-        #:with v+ (expand-expr #'v)
-        #:when (syntax-e #'v+)
-        #:with m (f-parse #'v+)
-        #:when (syntax-e #'m)
-        (free-id-table-set! #'name (syntax-e #'m))
+        #:with v+ (expand-expr (syntax/loc stx v))
+        #:when (syntax-e (syntax/loc stx v+))
+        #:with m (f-parse (syntax/loc stx v+))
+        #:when (syntax-e (syntax/loc stx m))
+        #:with define-stx (format-id stx "define")
+        (free-id-table-set! tbl #'name (syntax-e #'m))
         (syntax/loc stx
-          (define name v+))]
+          (define-stx name v+))]
        [_ #f])))
   (define f-let
     (lambda (stx)
       (syntax-parse stx
        [(_ ([name*:id v*] ...) e* ...)
-        #:with (v+* ...) (map expand-expr (syntax-e #'(v* ...)))
-        #:when (andmap syntax-e (syntax-e #'(v+* ...)))
-        #:with (m* ...) (map f-parse (syntax-e #'(v+* ...)))
-        #:when (andmap syntax-e (syntax-e #'(m* ...)))
+        #:with (v+* ...) (map expand-expr (syntax-e (syntax/loc stx (v* ...))))
+        #:with (m* ...) (map f-parse (syntax-e (syntax/loc stx (v+* ...))))
+        #:when (andmap syntax-e (syntax-e (syntax/loc stx (m* ...))))
         #:with let-stx (format-id stx "let")
         #:with let-syntax-stx (format-id stx "let-syntax")
         (quasisyntax/loc stx
           (let-stx ([name* v+*] ...)
             (let-syntax-stx ([name* (make-rename-transformer
-                                  (syntax-property #'name* '#,key 'm* ...))] ...)
+                                      (syntax-property #'name* '#,key 'm*))] ...)
               e* ...)))]
        [_ #f])))
   (values
@@ -107,8 +121,13 @@
     f-define
     f-let))
 
-(define ((make-alias id-stx parser) stx)
+(define ((make-alias id-sym parser) stx)
   (or (parser stx)
     (syntax-parse stx
-     [_:id       (quasisyntax/loc stx #,id-stx)]
-     [(_ e* ...) (quasisyntax/loc stx (#,id-stx e* ...))])))
+     [_:id
+      #:with id-stx (format-id stx "~a" id-sym)
+      (syntax/loc stx id-stx)]
+     [(_ e* ...)
+      #:with id-stx (format-id stx "~a" id-sym)
+      #:with app-stx (format-id stx "#%app")
+      (syntax/loc stx (app-stx id-stx e* ...))])))
