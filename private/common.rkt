@@ -20,6 +20,7 @@
   ;; TODO
 
   make-alias
+  make-keyword-alias
   ;; TODO
 )
 
@@ -125,9 +126,16 @@
   (or (parser stx)
     (syntax-parse stx
      [_:id
-      #:with id-stx (format-id stx "~a" id-sym)
+      #:with id-stx (format-id id-sym "~a" (syntax-e id-sym))
       (syntax/loc stx id-stx)]
      [(_ e* ...)
-      #:with id-stx (format-id stx "~a" id-sym)
+      #:with id-stx (format-id id-sym "~a" (syntax-e id-sym))
       #:with app-stx (format-id stx "#%app")
       (syntax/loc stx (app-stx id-stx e* ...))])))
+
+(define ((make-keyword-alias id-sym parser) stx)
+  (or (parser stx)
+    (syntax-parse stx
+     [(_ e* ...)
+      #:with id-stx (format-id stx "~a" id-sym)
+      (syntax/loc stx (id-stx e* ...))])))

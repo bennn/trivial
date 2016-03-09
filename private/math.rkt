@@ -3,8 +3,6 @@
 ;; Constant-folding math operators.
 ;; Where possible, they simplify their arguments.
 
-;; TODO the or- stuff is not so pretty, but it's working anyway
-
 (provide
   +: -: *: /:
   ;; Same signature as the racket/base operators,
@@ -16,6 +14,7 @@
 
   ;; --
   (for-syntax
+    stx->num
     nat/expand
     int/expand
     num/expand)
@@ -36,6 +35,14 @@
   (define (division-by-zero stx)
     (raise-syntax-error '/ "division by zero" stx))
 
+  (define (stx->num stx)
+    (syntax-parse stx
+     [v:num/expand
+      (if (identifier? #'v.expanded)
+        (quoted-stx-value? #'v.evidence)
+        (quoted-stx-value? #'v.expanded))]
+     [_ #f]))
+
   ;; Simplify a list of expressions using an associative binary operator.
   ;; Return either:
   ;; - A numeric value
@@ -53,21 +60,18 @@
             prev
             (reverse (if prev (cons prev acc) acc)))
           ;; else: pop the next argument from e*, fold if it's a constant
-          (syntax-parse (car e*)
-           [v:num/expand
-            (define v (or (quoted-stx-value? #'v.expanded)
-                          (quoted-stx-value? #'v.evidence)))
-            ;; then: reduce the number
-            (if prev
-              ;; Watch for division-by-zero
-              (if (and (zero? v) (eq? / op))
-                (division-by-zero stx)
-                (loop (op prev v) acc (cdr e*)))
-              (loop v acc (cdr e*)))]
-           [v
-            ;; else: save value in acc
-            (let ([acc+ (cons (car e*) (if prev (cons prev acc) acc))])
-              (loop #f acc+ (cdr e*)))])))]
+          (let ([v (stx->num (car e*))])
+            (if v
+              ;; then: reduce the number
+              (if prev
+                ;; Watch for division-by-zero
+                (if (and (zero? v) (eq? / op))
+                  (division-by-zero stx)
+                  (loop (op prev v) acc (cdr e*)))
+                (loop v acc (cdr e*)))
+              ;; else: save value in acc
+              (let ([acc+ (cons (car e*) (if prev (cons prev acc) acc))])
+                (loop #f acc+ (cdr e*)))))))]
      [else  #f]))
 
   (define-values (nat-key nat? nat-define nat-let)
@@ -85,8 +89,8 @@
 
 ;; -----------------------------------------------------------------------------
 
-(define-syntax define-num: (make-alias 'define num-define))
-(define-syntax let-num: (make-alias 'let num-let))
+(define-syntax define-num: (make-keyword-alias 'define num-define))
+(define-syntax let-num: (make-keyword-alias 'let num-let))
 
 (define-syntax make-numeric-operator
   (syntax-parser
@@ -109,11 +113,9 @@
 
 (define-syntax expt: (make-alias 'expt
   (lambda (stx) (syntax-parse stx
-   [(_ n1:num/expand n2:num/expand)
-    (let ([v1 (or (quoted-stx-value? #'n1.expanded)
-                  (quoted-stx-value? #'n1.evidence))]
-          [v2 (or (quoted-stx-value? #'n2.expanded)
-                  (quoted-stx-value? #'n2.evidence))])
+   [(_ n1 n2)
+    (let ([v1 (stx->num #'n1)]
+          [v2 (stx->num #'n2)])
       (and v1 v2 ;; Should never fail
         (quasisyntax/loc stx #,(expt v1 v2))))]
    [_ #f]))))
