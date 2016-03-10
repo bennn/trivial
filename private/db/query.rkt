@@ -10,6 +10,7 @@
 (require
   trivial/private/common
   trivial/private/db/schema
+  trivial/private/db/postgres
   (only-in racket/port with-input-from-string)
   (only-in racket/format ~a)
   (only-in racket/string string-replace)

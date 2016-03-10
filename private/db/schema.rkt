@@ -7,17 +7,20 @@
 
 
 (provide
+  condition*->type*
+  resolve-wildcard
+  row-mem
+  table-mem
+  ;; --
   schema-def
   schema-let
+  schema/expand
 )
 
 (require
   trivial/private/common
+  trivial/private/db/postgres
   (only-in racket/string string-split)
-  (for-syntax
-    typed/racket/base
-    racket/syntax
-    syntax/parse)
 )
 
 ;; =============================================================================
@@ -46,37 +49,6 @@
 (define-values (schema-key schema? schema-def schema-let)
   (make-value-property 'db:schema schema-parser))
 (define-syntax-class/predicate schema/expand schema?)
-
-;; -----------------------------------------------------------------------------
-;; sql basics, belongs in a new file?
-
-(define (symbol-ci=? s1 s2)
-  (and
-   (symbol? s1)
-   (symbol? s2)
-   (string-ci=? (symbol->string s1) (symbol->string s2))))
-
-(define-syntax (define-sql-keyword-predicate stx)
-  (syntax-parse stx
-   [(_ kwd*:id ...)
-    #:with (kwd?* ...) (for/list ([kwd (in-list (syntax-e #'(kwd* ...)))])
-                         (format-id stx "~a?" (syntax-e kwd)))
-    (syntax/loc stx
-      (begin (define (kwd?* v) (symbol-ci=? v 'kwd*)) ...))]))
-
-(define-sql-keyword-predicate
-  select
-  from
-  where
-  and)
-
-;; Check for query parameters. Currently only for Postgres.
-(define (sql-variable? s)
-  (define str (if (string? s) s (symbol->string s)))
-  (and
-    (= 2 (string-length str))
-    (eq? #\$ (string-ref str 0))
-    (string->number (string (string-ref str 1)))))
 
 ;; -----------------------------------------------------------------------------
 
@@ -135,7 +107,7 @@
         (raise-syntax-error 'query-row:
           "Failed to resolve type for row" (syntax->datum stx) condition))
       (define val (cdr condition))
-      (define varnum (sql-variable? val))
+      (define varnum (postgres-parameter? val))
       (if varnum
         (cons (cons typ varnum) acc)
         acc)))
@@ -163,74 +135,6 @@
    [#'(quote ((Foo ())))]
    [#'(quote ((Foo ((Bar . Baz)))))]
   )
-
-  (check-apply* symbol-ci=?
-   ['a 'a
-    => #t]
-   ['a 'A
-    => #t]
-   ['yellow 'YeLLOW
-    => #t]
-   ['wait 'forME
-    => #f]
-   ['x 'y
-    => #f]
-   ["A" 'A
-    => #f]
-   [315 "bage"
-    => #f]
-  )
-
-  (check-apply* select?
-   ['select
-    => #t]
-   ['SELECT
-    => #t]
-   ['yolo
-    => #f]
-  )
-
-  (check-apply* from?
-   ['from
-    => #t]
-   ['FROM
-    => #t]
-   ['yolo
-    => #f]
-  )
-
-  (check-apply* where?
-   ['where
-    => #t]
-   ['WHERE
-    => #t]
-   ['yolo
-    => #f]
-  )
-
-  (check-apply* and?
-   ['and
-    => #t]
-   ['AND
-    => #t]
-   ['yolo
-    => #f]
-  )
-
-  (check-apply* sql-variable?
-   ["$1"
-    => 1]
-   ['$1
-    => 1]
-   ["$125"
-    => #f]
-   ['$555
-    => #f]
-   ['wepa
-    => #f]
-  )
-  (check-exn exn:fail:contract?
-    (lambda () (sql-variable? 3)))
 
   (check-apply* table-mem
    ['((a ((b . c)))) 'a
