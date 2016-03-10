@@ -120,6 +120,14 @@
         (syntax->datum stx)))
     (car typ+num)))
 
+;; -----------------------------------------------------------------------------
+;; TODO , but it's more work than I can do now (2016-03-09)
+;(define (schema->sql schema)
+;  (map tbl-schema->sql schema))
+;
+;(define (tbl-schema->sql tbl-schema)
+;  (format "CREATE TABLE ~a" 'foo))
+
 ;; =============================================================================
 
 (module+ test

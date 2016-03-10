@@ -4,6 +4,7 @@
 
 (provide
   (all-from-out db)
+  Connection
 
   ;(rename-out [quasiquote DB]) ;; TODO try using struct types
 
