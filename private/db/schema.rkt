@@ -66,7 +66,8 @@
 
 (define (resolve-wildcard tbl-schema row)
   (cond
-   [(eq? row '*)
+   [(or (eq? row '*)
+        (and (list? row) (not (null? row)) (null? (cdr row)) (eq? '* (car row))))
     (map car tbl-schema)]
    [(list? row)
     row]
