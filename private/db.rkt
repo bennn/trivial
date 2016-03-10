@@ -3,12 +3,16 @@
 ;; TODO do not use this library, it's just for demonstration
 
 (provide
-  (all-from-out db)
+  start-transaction
+  rollback-transaction
+  query-exec
   Connection
 
   ;(rename-out [quasiquote DB]) ;; TODO try using struct types
 
+  let-schema:
   define-schema:
+  let-connection:
   define-connection:
   postgresql-connect:
 
@@ -41,6 +45,10 @@
   (postgresql-connect (->* [#:user String #:database String] [] Connection))
   (query-row (-> Connection String Any * (Vectorof Any)))
   (query-maybe-row (-> Connection String Any * (Option (Vectorof Any))))
+  ;; ---
+  (start-transaction (-> Connection Void))
+  (rollback-transaction (-> Connection Void))
+  (query-exec (-> Connection String Any * Void))
 )
 
 ;; =============================================================================

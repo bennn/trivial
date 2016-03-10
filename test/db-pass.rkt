@@ -12,11 +12,6 @@
     trivial/vector
     trivial/private/db)
 
-  (require/typed db
-    (start-transaction (-> Connection Void))
-    (rollback-transaction (-> Connection Void))
-    (query-exec (-> Connection String Any * Void)))
-
   (define-type Id Natural)
 
   ;; -- create fake database
@@ -111,6 +106,9 @@
         (ann (vector-length: v) One)
         1))
 
-  ;(query-row: c "SELECT * FROM word WHERE word.word = $1 word.id = $2" "blossom")
-  ;(query-row: c "SELECT * FROM word WHERE word.word = $1 word.id = $4" "blossom" 2)
+    (let-vector: ([v (query-row: conn "SELECT id, weight FROM fish WHERE fish.name = 'Dorado'")])
+      (check-equal? (vector-ref: v 0) 3)
+      (check-equal? (vector-ref: v 1) (fish-weight f3))
+      (check-equal? (vector-length: v) 2))
+
 )))
