@@ -14,6 +14,9 @@ before_install:
 
 install: raco pkg install --deps search-auto $TRAVIS_BUILD_DIR
 
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
+
 script:
  - raco setup --check-pkg-deps trivial
  - raco test $TRAVIS_BUILD_DIR
