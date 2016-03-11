@@ -30,6 +30,7 @@
 (define/short icfp "ICFP" (string-append ACM International Conference "on Functional Programming"))
 (define/short pldi "PLDI" (string-append ACM Conference "on Programming Language Design and Implementation"))
 (define/short popl "POPL" (string-append ACM Symposium "on Principles of Programming Languages"))
+(define/short icse "ICSE" "International Conference on Software Engineering")
 (define/short lncs "LNCS" "Lecture Notes in Computer Science")
 (define/short sigplan-notices "SIGPLAN Notices" (string-append ACM "SIGPLAN Notices"))
 (define/short scheme-workshop "SFP" (string-append "Scheme and Functional Programming Workshop"))
@@ -1051,3 +1052,34 @@
    #:title "Improving the Static Analysis of Embedded Languages via Partial Evaluation"
    #:location (proceedings-location icfp) ;#:pages '()
    #:date 2004))
+
+(define fi-jfp-2000
+  (make-bib
+   #:title "Do we need dependent types?"
+   #:author "Daniel Friedlander and Mia Indrika"
+   #:location (journal-location jfp
+                                #:volume 10
+                                #:number 4
+                                #:pages '(409 415))
+   #:date 2000))
+
+(define lb-sigplan-2014
+  (make-bib
+   #:title "Hasochism: The Pleasure and Pain of Dependently Typed Programming"
+   #:author "Sam Lindley and Conor McBride"
+   #:location (proceedings-location sigplan-notices #:pages '(81 92))
+   #:date 2014))
+
+(define ddems-icse-2011
+  (make-bib
+   #:title "Building and Using Pluggable Type Checkers"
+   #:author (authors "W. Dietl" "S. Dietzel" "M. D. Ernst" "K. Muslu" "T. W. Schiller")
+   #:location (proceedings-location icse)
+   #:date 2011))
+
+(define a-icfp-1999
+  (make-bib
+   #:title "Cayenne --- a language with dependent types"
+   #:author "Lennart Augustsson"
+   #:location (proceedings-location icfp #:pages '(239 250))
+   #:date 1998))

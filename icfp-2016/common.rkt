@@ -1,6 +1,7 @@
 #lang at-exp racket/base
 
 (provide (all-from-out "bib.rkt")
+         (all-from-out "gradual-bib.rkt")
          (all-from-out scriblib/footnote)
          (all-from-out scriblib/figure)
          (all-from-out scribble/eval)
@@ -20,6 +21,7 @@
          )
 
 (require "bib.rkt"
+         "gradual-bib.rkt"
          racket/class
          racket/require
          scribble/core

@@ -1,5 +1,9 @@
 #lang scribble/sigplan @onecolumn
 
+@; Two things going on:
+@; - attach & propogate type++ information at COMPILE time
+@; -infer type++ info from value forms
+
 @; TODO need a word for these 'observable properties'
 @; - regexp groups
 @; - format characters
@@ -16,101 +20,114 @@
 @require["common.rkt"]
 
 
-@title{Introduction}
+@title[#:tag "sec:intro"]{The Spirit and Letter of the Law}
 @; tautology checker
 @; curry
 @; deep
 @; regexp match
 
-Many useful functions do not have simple types.
-For example, one cannot write a general procedure for currying functions
- or accessing the first element of an arbitrarily-sized tuple in OCaml or Haskell.
-@; TODO don't mention ML/Hask ... use System F?
-Nevertheless, specialized versions of @racket[curry] and @racket[first] are
- easy to define and type.
+Well-typed programs @emph{do} go wrong.
+All the time, in fact:
 
-@racketblock[
-    > curry (λ (x y) x)           > first (x, y)
-    (λ (x) (λ (y) x))             x
+@codeblock{
+    Prelude> [0,1,2] !! 3
+    *** Exception: Prelude.!!: index too large
+    Prelude> 1 `div` 0
+    *** Exception: divide by zero
+    Prelude> import Text.Printf
+    Prelude Text.Printf> printf "%d"
+    *** Exception: printf: argument list ended prematurely
+}
 
-]
+Of course, Milner's catchphrase was about preventing type errors.
+The above are all @emph{value errors} that depend on properties not expressed
+ by Haskell's standard list, integer, and string datatypes.
+Even so, it is obvious to the programmer that the expressions will go wrong
+ and there have been many proposals for detecting these and other value
+ errors@~cite[a-icfp-1999 ddems-icse-2011 lb-sigplan-2014].
+What stands between these proposals and their adoption is the complexity or
+ annotation burden they impose on language users.
 
-That is, once some basic structure of the input is fixed, the general
- problem becomes a much simpler, specific problem.
-If ever a 16-argument function needs currying, we can write a new function for
- the task.
+Likewise, there are useful functions that many type systems cannot express.
+Simple examples include a @racket[first] function for tuples of arbitrary size
+ and a @racket[curry] function for procedures that consume such tuples.
+The standard work-around@~cite[fi-jfp-2000] is to write size-indexed families of functions to handle
+ the common cases, for instance:
 
-Regular expression patterns are another common value whose structure is not
- expressed by conventional type systems.
-Consider the function @racket[regexp-match] from Typed Racket:
+@codeblock{
+    Prelude> let curry_3 f = \ x y z -> f (x,y,z)
+}
+@;    Prelude> let first_3 (x, y, z) = x
 
-@interaction[
-  (regexp-match #rx"types" "types@ccs.neu.edu")
+This pearl describes a technique for statically detecting value errors and
+ statically generalizing value-indexed functions.
+We catch all the above-mentioned wrong programs and offer a single implementation
+ of @racket[curry] that obviates the need to copy/paste and manage size-indexed
+ versions.
+Furthermore, we demonstrate applications to regular expression matching,
+ vectorized operations, and querying a database.
 
-  (regexp-match #rx"lambda" "types@ccs.neu.edu")
+The key to our success--and also our weakness---is that we specialize
+ procedure call sites based on compile-time constant values.
+Run-time input foils our technique, but nonetheless we have found the idea useful
+ for many common programming tasks.
+Moreover, our approach may be implemented as a library and used as a drop-in
+ fix for existing code.
+Simply importing the library overrides standard procedures with our specialized
+ ones.
+No further annotations are necessary; if specialization fails we default to
+ the program's original behavior.
+Put another way, our technique interprets the @emph{letter}
+ of programs before the type system conducts its coarser, type-of-values analysis.
+Like Shakespeare's Portia, we understand that the phrase ``pound of flesh''
+ says nothing about drawing blood and specialize accordingly.
+@; Like XXX laborers who did work-to-rule ...
 
-  (regexp-match #rx"(.*)@(.*)" "types@ccs.neu.edu")
-]
-@; TODO note that nested groups cannot fail.
-
-When called with a pattern @racket[p] and string @racket[s] to match with,
- @racket[(regexp-match p s)] returns a list of all substrings in @racket[s]
- matching groups in the pattern @racket[p].
-The pattern itself counts for one group and parentheses within @racket[p]
- delimit nested groups.
-Hence the third example returns a list of three elements.
-A match can also fail, in which case the value @racket[#f] is returned.
-
-Although Typed Racket's @racket[regexp-match] has the type@note{Assuming that a
-    successful match implies that all nested groups successfully match.}
- @racket[(Regexp String -> (U #f (Listof String)))], the number of strings
- in the result list is determined by the number of groups in the input regular
- expression.
-Like the arity of a function or the size of a tuple, the number of groups
- in a pattern is often clear to the programmer.
-We could imagine using
- an indexed family of @racket[regexp-match] functions for patterns of
- two, three, or more groups.
-Ideally though, the programming language should understand
- these unconventional or domain-specific flavors of polymorphism.
-
-This pearl describes a technique for extending a simple type system with
- a value-indexed form of polymorphism.
-By analyzing the syntactic structure of values and partially evaluating
- constant expressions before typechecking, we specialize the types of functions
- like @racket[curry], @racket[first], and @racket[regexp-match] at their
- call-sites when possible.
-Whereas the general type of @racket[curry] is @racket[(⊥ -> ⊤)],
- our system infers when it is safe to use a subtype instead.
-For instance:
-
-@racketblock[
- (curry (λ (x y) x))
-]
-
-generates the type constraint
-
-@racketblock[
- curry : ((A B -> A) -> (A -> B -> A))
-]
-
-The technique does not require any changes to the underlying type system
- or annotations from the programmer.
-Instead, we leverage existing tools for writing syntax extensions.
-Our implementation happens to use Racket's macro system, but (at least)
- Clojure,
+Our implementation happens to be for Typed Racket, but
+ Typed Clojure,
  Haskell,
- JavaScript,
  OCaml,
  Rust,
  and Scala
- are equally capable.
+ would have been equally suitable hosts.
+The main requirement is that the language provides a means of altering the syntax
+ of a program before type checking.
+Such tools are more formally known as @emph{macro} or @emph{syntax extension}
+ systems.
+At any rate, we sketch implementations for the five languages
+ listed above in our conclusion.
 
-@section{Coming Attractions}
+Until that time when we must part, this pearl first describes our general
+ approach in @Secref{sec:solution} and then illustrates the approach with
+ specific examples in @Secref{sec:usage}.
+We briefly report on practical experiences with our library
+ in @Secref{sec:experience}.
+Adventurous readers may enjoy learning about the details of our implementation
+ in @Secref{sec:implementation}, but everyone else is invited to skip to the
+ end and try implementing a letter-of-values analysis in their language of choice.
 
-Section 2 describes our approach,
- Section 3 gives applications.
-Section 4 presents the code
- and Section 5 reports on practical experience.
-We conclude with related work and reflections.
 
+@; =============================================================================
+
+@parag{On Lineage}
+
+Herman and Meunier demonstrated how Racket macros can propagate
+ information embedded in string values and syntax patterns to a
+ static analyzer@~cite[hm-icfp-2004].
+Their illustrative examples were format strings, regular expressions,
+ and database queries.
+Relative to their pioneering work, our contribution is adapting Herman & Meunier's
+ transformations to a typed programming language.
+By inserting type annotations and boolean guards, our transformations indirectly
+ cooperate with the type checker without significantly changing the program's
+ syntax.
+We also give a modern description of Racket's macro system and handle definitions
+ as well as in-line constants.
+
+
+@parag{Eager Evaluation}
+
+Our implementation is freely available as a Racket package.
+To install the library, download Racket and then run @racket[raco pkg install trivial].
+The source code is on Github at: @url["https://github.com/bennn/trivial"].
+Suggestions for a new package name are welcome.
