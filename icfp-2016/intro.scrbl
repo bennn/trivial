@@ -1,30 +1,15 @@
 #lang scribble/sigplan @onecolumn
+@; TODO
+@; - stephen: too vague!
+@; - sam    : too vague!
+@;          : can you give more example?
+@;          : too generous to other languages -- why didn't you do the entire paper in hs?
 
-@; Two things going on:
-@; - attach & propogate type++ information at COMPILE time
-@; -infer type++ info from value forms
-
-@; TODO need a word for these 'observable properties'
-@; - regexp groups
-@; - format characters
-@; - procedure arity
-@; - tuple size
-@; - vector length
-@; - database schema
-
-@; Tuples in Haskell http://hackage.haskell.org/package/tuple
-@; Regexp
-@; - ocaml http://caml.inria.fr/pub/docs/manual-ocaml/libref/Str.html
-@; - haskell https://hackage.haskell.org/package/regex-compat/docs/Text-Regex.html
 
 @require["common.rkt"]
 
 
 @title[#:tag "sec:intro"]{The Spirit and Letter of the Law}
-@; tautology checker
-@; curry
-@; deep
-@; regexp match
 
 Well-typed programs @emph{do} go wrong.
 All the time, in fact:
@@ -72,7 +57,7 @@ The key to our success--and also our weakness---is that we specialize
 Run-time input foils the technique, but nonetheless we have found the idea useful
  for many common programming tasks.
 Moreover, the approach may be implemented as a library and used as a drop-in
- fix for existing code.
+ solution for existing code.
 Simply importing the library overrides standard procedures with specialized ones.
 No further annotations are necessary; if specialization fails we default to
  the program's original behavior.
