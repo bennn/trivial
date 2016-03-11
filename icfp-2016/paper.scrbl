@@ -2,9 +2,10 @@
 
 @(require "common.rkt")
 
-@authorinfo["Ben Greenman and Stephen Chang"
-            "PLT @ Northeastern University, Boston, USA"
-            ""]
+@authorinfo["???" "???" ""]
+@;@authorinfo["Ben Greenman and Stephen Chang"
+@;            "PLT @ Northeastern University, Boston, USA"
+@;            ""]
 
 @title{Functional Pearl: Do you see what I see?}
 @; @subtitle{Improving a simple type system with dependent macros}

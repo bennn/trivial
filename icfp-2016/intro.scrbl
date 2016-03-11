@@ -128,6 +128,6 @@ We also give a modern description of Racket's macro system and handle definition
 @parag{Eager Evaluation}
 
 Our implementation is freely available as a Racket package.
-To install the library, download Racket and then run @racket[raco pkg install trivial].
-The source code is on Github at: @url["https://github.com/bennn/trivial"].
+To install the library, download Racket and then run @racket[raco pkg install ???].
+The source code is on Github at: @url["https://github.com/???/???"].
 Suggestions for a new package name are welcome.
