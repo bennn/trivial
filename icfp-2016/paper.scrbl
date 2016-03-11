@@ -8,21 +8,26 @@
 
 @title{Functional Pearl: Do you see what I see?}
 @; @subtitle{Improving a simple type system with dependent macros}
-@; should say "value-dependent"?
+@; @subtitle{Value-based partial evaluation}
+@; @subtitle{Read-time constant folding}
 @; TODO subtitle doesn't appear in the right place
 
 @abstract{
-  TBA @; Be Positive, not negative
-  @;A simple type system with macros is nearly as good as a dependent type
-  @; system, at least for some common programming tasks.
-  @;By analyzing program syntax and propogating constants
-  @; before type-checking, we can express many of the practical
-  @; motivations for dependent types without any programmer annotations
-  @; or extensions to the underlying type system.
+  A static type system is a compromise between rejecting all bad programs
+   and approving all good programs, where @emph{bad} and @emph{good} are
+   formalized in terms of a language's untyped operational semantics.
+  Consequently, every useful type system rejects some well-behaved programs
+   and approves other programs that go wrong at runtime.
+  Improving the precision of a language's type system is difficult for
+   everyone involved---designers, implementors, and users.
 
-  @;Our syntax-dependent subtypes are not proving theorems,
-  @; but they detect certain run-time errors at compile-time and
-  @; cooperate with type inference.
+  This pearl presents a simple, elaboration-based technique for refining the
+   analysis of an existing type system; that is,
+   we approve more good programs and reject more bad ones.
+  The technique may be implemented as a library and requires no annotations
+   from the programmer.
+  A straightforward (yet immoral) extension of the technique is shown to
+   improve the performance of numeric and vector operations.
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]
@@ -30,7 +35,7 @@
 @;@keywords{Gradual typing, performance evaluation}
 
 @include-section{intro.scrbl}
-@;@include-section{solution.scrbl}
+@include-section{solution.scrbl}
 @;@include-section{usage.scrbl}
 @;@include-section{experience.scrbl} @; Merge with usage?
 @;@include-section{implementation.scrbl}
@@ -38,12 +43,13 @@
 @;@include-section{related.scrbl}
 @;@include-section{conclusion.scrbl}
 
-@section[#:style 'unnumbered]{Acknowledgments}
-
-Sam Tobin-Hochstadt for reminding us that Typed Racket is macro-extensible,
-Stephen Chang for teaching us syntax properties and rename transformers,
-Ryan Culpepper for macrology advice,
-Asumu Takikawa and Leif Andersen for helpful discussions,
-Jack Firth for using the library,
+@;@section[#:style 'unnumbered]{Acknowledgments}
+@;
+@;We thank
+@;Sam Tobin-Hochstadt for reminding us that Typed Racket is macro-extensible,
+@;Ryan Culpepper for divulging secrets of the Racket macro system,
+@;Asumu Takikawa and Leif Andersen for rejecting some earlier designs,
+@;Matthias Felleisen for sharing his worldview,
+@;and Northeastern PLT for comments on an earlier draft.
 
 @generate-bibliography[#:sec-title "References"]
