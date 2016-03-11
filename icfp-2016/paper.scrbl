@@ -37,8 +37,8 @@
 
 @include-section{intro.scrbl}
 @include-section{solution.scrbl}
-@;@include-section{usage.scrbl}
-@;@include-section{experience.scrbl} @; Merge with usage?
+@include-section{usage.scrbl}
+@include-section{experience.scrbl} @; Merge with usage?
 @;@include-section{implementation.scrbl}
 @;@include-section{correctness.scrbl}
 @;@include-section{related.scrbl}
