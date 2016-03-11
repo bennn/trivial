@@ -35,6 +35,7 @@
 (define/short sigplan-notices "SIGPLAN Notices" (string-append ACM "SIGPLAN Notices"))
 (define/short scheme-workshop "SFP" (string-append "Scheme and Functional Programming Workshop"))
 (define/short jfp "JFP" (string-append Journal "Functional Programming"))
+(define/short jsl "JSL" (string-append Journal "of Symbolic Logic"))
 (define/short hosc "HOSC" "Higher-Order and Symbolic Programming")
 (define/short lfp "LFP" "LISP and Functional Programming")
 (define/short lsc "LSC" "LISP and Symbolic Computation")
@@ -1083,3 +1084,20 @@
    #:author "Lennart Augustsson"
    #:location (proceedings-location icfp #:pages '(239 250))
    #:date 1998))
+
+(define f-popl-2016
+  (make-bib
+   #:title "Bindings as Sets of Scopes"
+   #:author "Matthew Flatt"
+   #:location (proceedings-location popl #:pages '(705 717))
+   #:date 2016))
+
+(define c-jsl-1997
+  (make-bib
+   #:title "Three Uses of the Herbrand-Gentzen theorem in relating model theory and proof theory"
+   #:author "William Craig"
+   #:location (journal-location jsl
+                                #:volume 22
+                                #:number 3
+                                #:pages '(269 285))
+   #:date 1957))

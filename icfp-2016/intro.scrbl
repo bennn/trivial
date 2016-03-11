@@ -69,12 +69,11 @@ Furthermore, we demonstrate applications to regular expression matching,
 
 The key to our success--and also our weakness---is that we specialize
  procedure call sites based on compile-time constant values.
-Run-time input foils our technique, but nonetheless we have found the idea useful
+Run-time input foils the technique, but nonetheless we have found the idea useful
  for many common programming tasks.
-Moreover, our approach may be implemented as a library and used as a drop-in
+Moreover, the approach may be implemented as a library and used as a drop-in
  fix for existing code.
-Simply importing the library overrides standard procedures with our specialized
- ones.
+Simply importing the library overrides standard procedures with specialized ones.
 No further annotations are necessary; if specialization fails we default to
  the program's original behavior.
 Put another way, our technique interprets the @emph{letter}
@@ -95,21 +94,21 @@ The main requirement is that the language provides a means of altering the synta
 Such tools are more formally known as @emph{macro} or @emph{syntax extension}
  systems.
 At any rate, we sketch implementations for the five languages
- listed above in our conclusion.
+ listed above in the conclusion.
 
 Until that time when we must part, this pearl first describes our general
  approach in @Secref{sec:solution} and then illustrates the approach with
  specific examples in @Secref{sec:usage}.
 We briefly report on practical experiences with our library
  in @Secref{sec:experience}.
-Adventurous readers may enjoy learning about the details of our implementation
+Adventurous readers may enjoy learning about implementation details
  in @Secref{sec:implementation}, but everyone else is invited to skip to the
  end and try implementing a letter-of-values analysis in their language of choice.
 
 
 @; =============================================================================
 
-@parag{On Lineage}
+@parag{Lineage}
 
 Herman and Meunier demonstrated how Racket macros can propagate
  information embedded in string values and syntax patterns to a
@@ -127,7 +126,7 @@ We also give a modern description of Racket's macro system and handle definition
 
 @parag{Eager Evaluation}
 
-Our implementation is freely available as a Racket package.
+Our implementation is available as a Racket package.
 To install the library, download Racket and then run @racket[raco pkg install ???].
 The source code is on Github at: @url["https://github.com/???/???"].
 Suggestions for a new package name are welcome.

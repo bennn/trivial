@@ -1,6 +1,7 @@
 % Better horizontal rules
 \usepackage{booktabs}
 \usepackage{listings}
+\usepackage{stmaryrd}
 \lstset{language=ML}
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{multicol}
@@ -28,3 +29,8 @@
 \let\llcorner\relax
 \let\lrcorner\relax
 \usepackage{amssymb}
+
+\newcommand{\interp}{\llbracket\emph{interp}\rrbracket}
+\newcommand{\untyped}[1]{\lfloor #1 \rfloor}
+\newcommand{\trans}{\llbracket\emph{transform}\rrbracket}
+\newcommand{\subt}{\mathbf{<:\,}}
