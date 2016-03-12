@@ -24,4 +24,10 @@
   ;; -- dividing by zero => caught statically
   (/: 1 1 0)
   (/: 1 1 (+: 4 -2 -2))
+  ;; -- redefine ops => fail
+  (ann (let ([+: (lambda (x y) "hello")]) (+: 1 1)) Integer)
+  (ann (let ([-: (lambda (x y) "hello")]) (-: 1 1)) Integer)
+  (ann (let ([/: (lambda (x y) "hello")]) (/: 1 1)) Integer)
+  (ann (let ([*: (lambda (x y) "hello")]) (*: 1 1)) Integer)
+  (ann (let ([expt: (lambda (x y) "hello")]) (expt: 1 1)) Integer)
 ))
