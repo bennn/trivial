@@ -42,4 +42,7 @@
   ;; --- Can't handle |, yet
   (ann (regexp-match: "this(group)|that" "that")
        (U #f (List String String)))
+  ;; --- can't handle starred groups
+  (ann (regexp-match: "(a)*(b)" "b")
+       (U #f (List String String)))
 ))

@@ -62,6 +62,10 @@
             (loop (+ i 1) (cons i in-paren) num-groups))]
          [(#\))
           (cond
+           [(and (< i last-index)
+                 (eq? #\* (string-ref str (+ i 1))))
+            ;; Group is starred, can't predict num. matches statically
+            #f]
            [(null? in-paren)
             (group-error str (format "')' at index ~a" i))]
            [(eq? #f (car in-paren))
