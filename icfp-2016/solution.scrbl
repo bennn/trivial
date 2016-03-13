@@ -1,5 +1,6 @@
 #lang scribble/sigplan @onecolumn
-
+@; TODO semantic brackets for translations, but not for sets
+@; TODO something like semantic brackets for interpretations?
 
 @require["common.rkt"]
 
@@ -9,29 +10,29 @@ The out-of-bounds reference in @code{[0,1,2] !! 3} is evident from the
  definition of @code{!!} and the values passed to it.
 We also know that @code{1 `div` 0} will go wrong because division by zero is
  mathematically undefined.
-Similar reasoning based on the meaning of @racket{%d} and the number of variables
- bound by anonymous functions like @code{\ x y z -> x} can determine the correctness
+Similar reasoning about the meaning of @racket{%d} and the variables
+ bound in @code{(\ x y z -> x)} can determine the correctness
  of calls to @racket[printf] and @racket[curry].
 
-In general, our analysis begins with a class of predicates for extracting
- meta-information from expressions; for example the length of a
- list value or arity of a procedure.
+Generalizing these observations, our analysis begins with a class of
+ predicates for extracting meta-information from expressions;
+ for example deriving the length of a list value or arity of a procedure value.
 
-    @exact|{$$\interp\ : \big\{\emph{expr} \rightarrow \emph{Maybe(value)}\big\}$$}|
+    @exact|{$$\interp\ : \big\{\emph{expr} \rightarrow \emph{Maybe\,(value)}\big\}$$}|
 
-Applying a function @code{f} @exact|{$\in \interp\ $}| to a syntactically
+Applying a function @exact|{${\tt f} \in \interp\ $}| to a syntactically
  well-formed expression should either yield a value describing some aspect
  of the input expression or return a failure result.@note{The name @emph{interp}
   is a mnemonic for @emph{interpret} or @emph{interpolant}@~cite[c-jsl-1997].}
 Correct predicates @code{f} should recognize expressions with some common
- structure (not necessarily the expressions' type) and apply a uniform algorithm
+ structure (not necessarily a common type) and apply a uniform algorithm
  to computer their result.
 The reason for specifying @exact|{$\interp\ $}| over expressions rather than
  values will be made clear in @Secref{sec:usage}.
 
 Once we have predicates for extracting data from the syntax of expressions,
  we can use the data to guide program transformations.
-The main result of this pearl is defining a compelling set of such transformations.
+@; The main result of this pearl is defining a compelling set of such transformations.
 
     @exact|{$$\trans : \big\{ \emph{expr} \rightarrow \emph{expr}\big\} $$}|
 
@@ -40,39 +41,46 @@ Each @exact|{${\tt g} \in \trans$}| is a partial function such that @exact|{${\t
  error.
 These transformations should be applied to expressions @exact|{${\tt e}$}| before
  type-checking; the critera for correct transformations can then be given
- in terms of the language's typing judgment @exact|{$\vdash {\tt e} : \tau$}|
- and untyped evaluation relation @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}|,
+ in terms of the language's typing judgment @exact|{$~\vdash {\tt e} : \tau$}|
+ and evaluation relation @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}|,
  where @exact|{$\untyped{{\tt e}}$}| is the untyped erasure of @exact|{${\tt e}$}|.
 We also assume a subtyping relation @exact|{$\subt$}| on types.
 
 @itemlist[
   @item{@emph{
-    If @exact|{$\vdash {\tt e} : \tau$}| and @exact|{$\vdash {\tt e'} : \tau'$}|
-     then @exact|{$\tau' \subt \tau$}| and both
+    If @exact|{$~\vdash {\tt e} : \tau$}| and @exact|{$~\vdash {\tt e'} : \tau'$}|
+    @exact|{\\}|
+    then @exact|{$\tau' \subt \tau$}|
+    @exact|{\\}|
+    and both
      @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}| and
      @exact|{$\untyped{{\tt e'}} \Downarrow {\tt v}$}|.
   }}
   @; e:t e':t' => t' <: t /\ e <=> e'
 
   @item{@emph{
-    If @exact|{$\not\vdash {\tt e} : \tau$}| but @exact|{$\vdash {\tt e'} : \tau'$}|
+    If @exact|{$~\not\vdash {\tt e} : \tau$}| but @exact|{$~\vdash {\tt e'} : \tau'$}|
+     @exact|{\\}|
      then @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}| and
      @exact|{$\untyped{{\tt e'}} \Downarrow {\tt v}$}|.
   }}
   @; -e:t e':t' => e <=> e'
 
   @item{@emph{
-    If @exact|{$\vdash {\tt e} : \tau$}| but @exact|{${\tt e'} = \bot$}|
-     or @exact|{$\not\vdash {\tt e'} : \tau'$}|
-     then @exact|{$\untyped{{\tt e}} \Downarrow \mathsf{wrong}$}| or diverges.
+    If @exact|{$~\vdash {\tt e} : \tau$}| but @exact|{${\tt e'} = \bot$}|
+     or @exact|{$~\not\vdash {\tt e'} : \tau'$}|
+     @exact|{\\}|
+     then @exact|{$\untyped{{\tt e}} \Downarrow \mathsf{wrong}$}| or
+     @exact|{$\untyped{{\tt e}}$}| diverges.
   }}
   @; e:t -e':t' => e^
 ]
 
 If neither @exact|{${\tt e}$}| nor @exact|{${\tt e'}$}| type checks, then we have no guarantees
  about the run-time behavior of either term.
-The hope is that both diverge, but proving this fact in a realistic language is
- more trouble than it is worth.
+In a perfect world both would diverge, but the fundamental limitations of
+ static typing@~cite[fagan-dissertation-1992] and computability apply to our
+ humble system.
 
 @; Erasure, moral, immoral
 Finally, we say that a translation @exact|{${\tt (g~e) = e'}$}| is @emph{moral} if
@@ -80,6 +88,7 @@ Finally, we say that a translation @exact|{${\tt (g~e) = e'}$}| is @emph{moral} 
 Otherwise, the tranlation has altered more than just type annotations and is
  @emph{immoral}.
 All our examples in @Secref{sec:intro} can be implemented as moral translations.
+@; @todo{really, even curry? well it's just picking from an indexed family}
 Immoral translations are harder to show correct, but also much more useful.
 
 

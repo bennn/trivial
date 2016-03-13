@@ -78,3 +78,30 @@ A submission you wish to have treated as a pearl must be marked as such
 These steps will alert reviewers to use the appropriate evaluation criteria.
 Pearls will be combined with ordinary papers, however,
  for the purpose of computing the conference’s acceptance rate.
+
+
+
+Overflow
+---
+
+This pearl describes a technique for extending a simple type system with
+ a value-indexed form of polymorphism.
+By analyzing the syntactic structure of values and partially evaluating
+ constant expressions before typechecking, we specialize the types of functions
+ like @racket[curry], @racket[first], and @racket[regexp-match] at their
+ call-sites when possible.
+Whereas the general type of @racket[curry] is @racket[(⊥ -> ⊤)],
+ our system infers when it is safe to use a subtype instead.
+For instance:
+
+@racketblock[
+ (curry (λ (x y) x))
+]
+
+generates the type constraint
+
+@racketblock[
+ curry : ((A B -> A) -> (A -> B -> A))
+]
+
+

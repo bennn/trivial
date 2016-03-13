@@ -10,6 +10,7 @@
                      author)
          ~cite
          citet
+         second
          etal
          exact
          generate-bibliography
@@ -138,3 +139,7 @@
 
 (define (todo . x*)
   (make-element 'bold (cons "TODO:" x*)))
+
+(define (second)
+  (make-element (make-style "relax" '(exact-chars))
+                "$2^\\emph{nd}$"))

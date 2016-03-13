@@ -32,6 +32,7 @@
 (define/short popl "POPL" (string-append ACM Symposium "on Principles of Programming Languages"))
 (define/short icse "ICSE" "International Conference on Software Engineering")
 (define/short lncs "LNCS" "Lecture Notes in Computer Science")
+(define/short sigmod "SIGMOD" (string-append ACM "SIGMOD" International Conference "on Management of Data"))
 (define/short sigplan-notices "SIGPLAN Notices" (string-append ACM "SIGPLAN Notices"))
 (define/short scheme-workshop "SFP" (string-append "Scheme and Functional Programming Workshop"))
 (define/short jfp "JFP" (string-append Journal "Functional Programming"))
@@ -1101,3 +1102,24 @@
                                 #:number 3
                                 #:pages '(269 285))
    #:date 1957))
+
+(define wmpk-algol-1968
+  (make-bib
+   #:title "Report on the Algorithmic Language ALGOL 68"
+   #:author (authors "A. van Wijngaarden" "B. J. Mailloux" "J.E.L. Peck" "C.H.A. Koster")
+   #:date 1968))
+
+(define s-lisp-1990
+  (make-bib
+   #:title "Common Lisp the Language"
+   #:author "Guy L. Steele"
+   #:location (book-location #:edition "2nd" #:publisher "Digital Press")
+   #:is-book? #t
+   #:date 1990))
+
+(define mbb-sigmod-2006
+  (make-bib
+   #:title "LINQ: reconciling object, relations and XML in the .NET framework"
+   #:author (authors "Erik Meijer" "Brain Beckman" "Gavin Bierman")
+   #:location (proceedings-location sigmod #:pages '(706 706))
+   #:date 2006))
