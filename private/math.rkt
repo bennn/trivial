@@ -17,7 +17,9 @@
     stx->num
     nat/expand
     int/expand
-    num/expand)
+    num/expand
+    num-define
+    num-let)
 )
 
 (require (for-syntax

@@ -5,6 +5,7 @@
 ;; - 
 ;; - vectorized ops
 ;; - (TODO) improve apply/map? ask Leif
+;; - TODO get types, not arity
 
 (provide
   curry:

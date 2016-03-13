@@ -11,6 +11,10 @@
   let-regexp:
 
   regexp-match:
+
+  (for-syntax
+    rx-define
+    rx-let)
 )
 
 (require
@@ -104,7 +108,7 @@
   (define parse-groups/byte-pregexp
     parse-groups/byte-regexp)
 
-  (define-values (num-groups-key rx? def-rx let-rx)
+  (define-values (num-groups-key rx? rx-define rx-let)
     (make-value-property 'rx:groups parse-groups))
   (define-syntax-class/predicate pattern/groups rx?)
 )
@@ -128,8 +132,8 @@
 
 (define-matcher* regexp pregexp byte-regexp byte-pregexp)
 
-(define-syntax define-regexp: (make-keyword-alias 'define def-rx))
-(define-syntax let-regexp: (make-keyword-alias 'let let-rx))
+(define-syntax define-regexp: (make-keyword-alias 'define rx-define))
+(define-syntax let-regexp: (make-keyword-alias 'let rx-let))
 
 (define-syntax regexp-match: (make-alias #'regexp-match
   (lambda (stx) (syntax-parse stx

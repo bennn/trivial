@@ -255,6 +255,11 @@
     '(#"hellooo" #"ll" #"ooo"))
 
   ;; -- special cases / miscellaneous
+  (check-equal?
+    (ann
+      (regexp-match: "((a)b)" "ab")
+      (U #f (List String String String)))
+    '("ab" "ab" "a"))
 
   ;; --- Can't handle |, yet
   (check-equal?

@@ -21,6 +21,8 @@
 
   ;; --- private
   (for-syntax
+    vec-define
+    vec-let
     parse-vector-length
     vector-length-key)
 )
@@ -58,6 +60,7 @@
            #(e* ...)
            ;; TODO #{} #[] #6{} ...
            (#%plain-app vector e* ...)
+           (#%plain-app vector e* ...)
            (vector e* ...))
       (length (syntax-e #'(e* ...)))]
      [(~or (make-vector n e* ...)
@@ -80,7 +83,7 @@
 (define-syntax let-vector: (make-keyword-alias 'let vec-let))
 
 (define-syntax vector-length: (make-alias #'vector-length
-  (lambda (stx) (syntax-parse stx
+  (lambda (stx) (printf "hehhl ~a\n" (syntax->datum stx)) (syntax-parse stx
    [(_ v:vector/length)
     (syntax/loc stx 'v.evidence)]
    [_ #f]))))

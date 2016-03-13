@@ -1,6 +1,7 @@
 #lang typed/racket/base
 
 ;; TODO do not use this library, it's just for demonstration
+;; TODO confusing row/column
 
 (provide
   start-transaction
