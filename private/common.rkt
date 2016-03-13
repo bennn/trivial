@@ -80,7 +80,7 @@
 ;; - syntax property key
 ;; Put transformers here too? Then the id table never escapes
 (define (make-value-property sym parser)
-  (define key (gensym sym))
+  (define key sym)
   (define tbl (make-free-id-table))
   (define f-parse
     (lambda (stx)
@@ -123,16 +123,14 @@
     f-define
     f-let))
 
-(define ((make-alias id-sym parser) stx)
+(define ((make-alias id-stx parser) stx)
   (or (parser stx)
-    (syntax-parse stx
-     [_:id
-      #:with id-stx (format-id id-sym "~a" (syntax-e id-sym))
-      (syntax/loc stx id-stx)]
-     [(_ e* ...)
-      #:with id-stx (format-id id-sym "~a" (syntax-e id-sym))
-      #:with app-stx (format-id stx "#%app")
-      (syntax/loc stx (app-stx id-stx e* ...))])))
+      (syntax-parse stx
+       [_:id
+        id-stx]
+       [(_ e* ...)
+        #:with app-stx (format-id stx "#%app")
+        #`(app-stx #,id-stx e* ...)])))
 
 (define ((make-keyword-alias id-sym parser) stx)
   (or (parser stx)

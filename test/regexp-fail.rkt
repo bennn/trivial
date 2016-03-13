@@ -34,15 +34,26 @@
          (define rx "he(l*)(o*)")
          (regexp-match: rx "helloooooooo"))
        (U #f (List String String String)))
-  ;; -- set! problems
-  (ann (let-regexp: ([a #rx"(b)(B)"])
-         (set! a #rx"")
-         (regexp-match: a "hai"))
-       (List String String String))
   ;; --- Can't handle |, yet
   (ann (regexp-match: "this(group)|that" "that")
        (U #f (List String String)))
   ;; --- can't handle starred groups
   (ann (regexp-match: "(a)*(b)" "b")
        (U #f (List String String)))
+) (test-compile-error
+  #:require trivial/regexp
+  #:exn #rx"mutation not allowed"
+  ;; -- set! problems
+  (ann (let-regexp: ([a #rx"(b)(B)"])
+         (set! a #rx"")
+         (regexp-match: a "hai"))
+       (List String String String))
+  (let ()
+    (define-regexp: a #rx"h(i)")
+    (set! a #rx"hi")
+    (regexp-match a "hi"))
+
+  (let-regexp: ([a #rx"h(i)"])
+    (set! a #rx"(h)(i)")
+    (regexp-match a "hi"))
 ))

@@ -8,24 +8,6 @@
     trivial/regexp
     typed/rackunit)
 
-  ;; -- set! ruins everything
-  (check-equal?
-    (ann
-      (let ()
-        (define-regexp: a #rx"h(i)")
-        (set! a #rx"hi")
-        (regexp-match a "hi"))
-      (U #f (Pairof String (Listof (U #f String)))))
-    (list "hi"))
-
-  (check-equal?
-    (ann
-      (let-regexp: ([a #rx"h(i)"])
-        (set! a #rx"(h)(i)")
-        (regexp-match a "hi"))
-      (U #f (Pairof String (Listof (U #f String)))))
-    (list "hi" "h" "i"))
-
   ;; -- regexp-match:
   (check-equal?
     (ann

@@ -83,7 +83,7 @@
 (define-syntax let-vector: (make-keyword-alias 'let vec-let))
 
 (define-syntax vector-length: (make-alias #'vector-length
-  (lambda (stx) (printf "hehhl ~a\n" (syntax->datum stx)) (syntax-parse stx
+  (lambda (stx) (syntax-parse stx
    [(_ v:vector/length)
     (syntax/loc stx 'v.evidence)]
    [_ #f]))))

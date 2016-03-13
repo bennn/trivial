@@ -250,6 +250,15 @@
   (let ()
     (define-vector: v (vector 1 1 2 2))
     (check-equal? (vector-ref: v 0) 1))
+  (let ()
+    (define-vector: v (vector 2 1 3))
+    (define w (vector 2 1 3))
+    (check-equal? (vector-length: v) 3)
+    (check-equal? (vector-length: w) 3)
+    (check-equal?
+      ((lambda ([z : (Vectorof Integer)])
+        (vector-length: z)) v)
+      3))
   ;; -- let-vector:
 )
 
