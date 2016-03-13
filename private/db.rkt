@@ -24,6 +24,10 @@
   ;; define schema
   ;; start connection
   ;; query-exec
+
+  ;; --
+  (for-syntax
+    connection-key)
 )
 
 ;; -----------------------------------------------------------------------------

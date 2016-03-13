@@ -13,6 +13,7 @@
   regexp-match:
 
   (for-syntax
+    rx-key
     rx-define
     rx-let)
 )
@@ -108,7 +109,7 @@
   (define parse-groups/byte-pregexp
     parse-groups/byte-regexp)
 
-  (define-values (num-groups-key rx? rx-define rx-let)
+  (define-values (rx-key rx? rx-define rx-let)
     (make-value-property 'rx:groups parse-groups))
   (define-syntax-class/predicate pattern/groups rx?)
 )
@@ -126,7 +127,7 @@
            [(_ pat:pattern/groups)
             (syntax-property
               (syntax/loc stx (f* pat.expanded))
-              num-groups-key
+              rx-key
               #'pat.evidence)]
            [_ #f])))) ...)]))
 

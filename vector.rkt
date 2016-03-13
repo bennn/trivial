@@ -1,6 +1,7 @@
 #lang typed/racket/base
 
 (provide
+  set!
   (all-from-out racket/vector)
 
   define-vector:
@@ -26,6 +27,7 @@
 
 (require
   racket/vector
+  trivial/private/set-bang
   (only-in trivial/private/vector
     define-vector:
     let-vector:

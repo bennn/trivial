@@ -3,6 +3,7 @@
 ;; Stronger types for regular expression matching.
 
 (provide
+  set!
   regexp:       define-regexp:       let-regexp:
   pregexp:
   byte-regexp:
@@ -20,4 +21,7 @@
   ;; Will raise a compile-time exception if the pattern contains unmatched groups.
 )
 
-(require trivial/private/regexp)
+(require
+  trivial/private/regexp
+  trivial/private/set-bang
+)

@@ -11,8 +11,11 @@
   expt:
 
   define-num: let-num:
+
+  set!
 )
 
 (require
+  trivial/private/set-bang
   (only-in trivial/private/math
     +: -: *: /: expt: let-num: define-num:))

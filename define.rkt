@@ -2,9 +2,11 @@
 
 (provide
   define: let:
+  (all-from-out trivial/private/set-bang)
 )
 
 (require
+  trivial/private/set-bang
   (for-syntax
     trivial/private/common
     racket/base)
