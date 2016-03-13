@@ -1,7 +1,6 @@
 #lang typed/racket/base
 
-(provide (rename-out
-  [define: define]
-  [let: let]))
+;; TODO Can't yet remove the colon from define: and let:, its breaking things
 
+(provide (all-from-out trivial/define))
 (require trivial/define)
