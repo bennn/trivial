@@ -32,7 +32,7 @@
 (define/short popl "POPL" (string-append ACM Symposium "on Principles of Programming Languages"))
 (define/short icse "ICSE" "International Conference on Software Engineering")
 (define/short lncs "LNCS" "Lecture Notes in Computer Science")
-(define/short sigmod "SIGMOD" (string-append ACM "SIGMOD" International Conference "on Management of Data"))
+(define/short sigmod "SIGMOD" (string-append ACM "SIGMOD " International Conference "on Management of Data"))
 (define/short sigplan-notices "SIGPLAN Notices" (string-append ACM "SIGPLAN Notices"))
 (define/short scheme-workshop "SFP" (string-append "Scheme and Functional Programming Workshop"))
 (define/short jfp "JFP" (string-append Journal "Functional Programming"))
@@ -1123,3 +1123,11 @@
    #:author (authors "Erik Meijer" "Brain Beckman" "Gavin Bierman")
    #:location (proceedings-location sigmod #:pages '(706 706))
    #:date 2006))
+
+(define c-dissertation-2010
+  (make-bib
+   #:title "Refining Syntactic Sugar: Tools for Supporting Macro Development"
+   #:author "Ryan Culpepper"
+   #:location (dissertation-location #:institution "Northeastern University")
+   #:date 2010))
+

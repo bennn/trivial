@@ -4,6 +4,7 @@
 @; - sam    : too vague!
 @;          : can you give more example?
 @;          : too generous to other languages -- why didn't you do the entire paper in hs?
+@; - a note on macro-land? where truthy & boolean monads are king?
 
 
 @require["common.rkt"]

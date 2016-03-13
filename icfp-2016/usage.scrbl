@@ -71,6 +71,8 @@ Think of this convention as removing the oyster shell to get a clear view of the
 Using infix @tt{:} for type annotations, for instance @racket[(x : Integer)].
 These are normally written as @racket[(ann x Integer)].
 
+sql is short for postgresql
+
 
 @; =============================================================================
 @section{String Formatting}
@@ -303,7 +305,7 @@ These transformations are most effective when applied bottom-up, from the
 
 
 @; =============================================================================
-@section{Sized Data Structures}
+@section[#:tag "sec:vector"]{Sized Data Structures}
 
 Vector bounds errors are always frustrating to debug, especially since
  their cause is rarely deep.
