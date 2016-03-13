@@ -40,7 +40,6 @@
 @include-section{usage.scrbl}
 @include-section{experience.scrbl} @; Merge with usage?
 @include-section{implementation.scrbl}
-@;@include-section{correctness.scrbl}
 @;@include-section{related.scrbl}
 @;@include-section{conclusion.scrbl}
 

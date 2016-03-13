@@ -1,0 +1,16 @@
+\newcommand{\twoline}[2]{\parbox[s]{1.44cm}{\flushright\hfill #1\newline#2}}
+\newcommand{\mod}[1]{$\mathsf{#1}$}
+\begin{tabular}{l r r r}
+  Module             & LOC & $\interp$ & $\trans$ \\\hline
+  \mod{db}           & 263 &   2  (78) &  2 (101) \\
+  \mod{format}       &  66 &   1  (33) &  1  (21) \\
+  \mod{function}     &  31 &   1   (8) &  1  (11) \\
+  \mod{math}         &  90 &   1   (3) &  5  (46) \\
+  \mod{regexp}       & 122 &   4  (60) &  5  (33) \\
+  \mod{vector}       & 228 &   1  (19) & 13 (163) \\\hline
+  {\bf Total}        & 800 &  10 (201) & 27 (375) \\
+\end{tabular}
+%% AVG
+% loc : 228.5
+% int : 33.5
+% trn : 62.5
