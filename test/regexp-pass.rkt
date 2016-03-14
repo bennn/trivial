@@ -250,4 +250,13 @@
       (U #f (Listof (U #f String))))
     '("that" #f))
 
+  (let-regexp: ([NODE_REGEXP
+    #rx"^\\\\node *\\(([0-9]+)\\) *(\\[.*\\])? *\\{\\\\rkt\\{([0-9]+)\\}\\{(.+)\\}\\};$"])
+    (regexp-match: NODE_REGEXP "hai")
+    (void))
+
+  (let-regexp: ([EDGE_REGEXP
+    #rx"^\\\\draw\\[.*\\]? *\\(([0-9]+)\\)[^(]*\\(([0-9]+)\\);$"])
+    (regexp-match: EDGE_REGEXP "bye")
+    (void))
 )

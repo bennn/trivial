@@ -82,8 +82,11 @@
            [(#\))
             (cond
              [(and (< i last-index)
-                   (eq? #\* (string-ref str (+ i 1))))
+                   (or
+                    (eq? #\? (string-ref str (+ i 1)))
+                    (eq? #\* (string-ref str (+ i 1)))))
               ;; Group is starred, can't predict num. matches statically
+              ;; or ?'d 
               #f]
              [(null? in-paren)
               (group-error str (format "')' at index ~a" i))]
