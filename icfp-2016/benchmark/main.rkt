@@ -5,7 +5,8 @@
 (require
   (for-syntax racket/base syntax/parse)
   glob
-  racket/list
+  (only-in racket/list last)
+  (only-in racket/format ~r)
   racket/runtime-path
   racket/port
   racket/string
@@ -113,15 +114,40 @@
   (values (loc-one pre)
           (loc-one post)))
 
+(define (bytes-one d)
+  (define ls-l*
+    (with-output-to-string
+      (lambda () (system/assert "ls -l ~a/compiled/*.zo" d))))
+  ;; bytes is 5th
+  (for/sum ([line (in-list (string-split ls-l* "\n"))])
+    (string->number (car (cddddr (string-split line))))))
+
+(define (test-bytes d)
+  (define-values (pre post) (dir->pre/post d))
+  (values (bytes-one pre)
+          (bytes-one post)))
+
+(define (test-diff d)
+  ;; TODO get actual differences, not just diff size
+  (define-values (pre post) (dir->pre/post d))
+  (define out
+    (with-output-to-string
+      (lambda () (system/assert "diff ~a ~a | wc -l" pre post))))
+  (string->number (string-trim out)))
+
 (define (run-tests dir*)
-  (printf "(   ;; DIR | compile-pre | compile-post | run-pre | run-post | loc-pre | loc-post \n")
+  (printf "(   ;; DIR | compile-pre | compile-post | run-pre | run-post | loc-pre | loc-post | bytes-pre | bytes-post | diff \n")
   (printf "    ;;   all times in milliseconds\n")
   (printf "    ;;   'loc' is lines of code, generated using 'SLOCCount' by David A. Wheeler.\n")
   (for ([d (in-list dir*)])
-    (define-values (c-pre c-post) (test-compile d))
-    (define-values (r-pre r-post) (test-run d))
-    (define-values (l-pre l-post) (test-loc d))
-    (writeln (list d c-pre c-post r-pre r-post l-pre l-post)))
+    ;(define-values (c-pre c-post) (test-compile d))
+    ;(define-values (r-pre r-post) (test-run d))
+    ;(define-values (l-pre l-post) (test-loc d))
+    (define-values (b-pre b-post) (test-bytes d))
+    (define diff (test-diff d))
+    (writeln (list d b-pre b-post diff))
+    ;(writeln (list d c-pre c-post r-pre r-post l-pre l-post b-pre b-post diff))
+    (void))
   (printf ")\n"))
 
 (define (filenames d)
