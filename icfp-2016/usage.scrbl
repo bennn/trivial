@@ -360,6 +360,7 @@ Each operation match the length of its arguments at compile-time and expand
 @section{Database Queries}
 @; db
 @; TODO Ocaml, Haskell story
+@; TODO connect to ew-haskell-2012 os-icfp-2008
 
 Racket's @racket[db] library provides a string-based API for executing SQL
  queries.

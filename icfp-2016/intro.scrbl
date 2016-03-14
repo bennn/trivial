@@ -5,6 +5,7 @@
 @;          : can you give more example?
 @;          : too generous to other languages -- why didn't you do the entire paper in hs?
 @; - a note on macro-land? where truthy & boolean monads are king?
+@;   - also, the untyped style of reasoning, the needing to unfold code
 @; - transf vs. macro
 
 
@@ -116,4 +117,3 @@ We also give a modern description of Racket's macro system and handle definition
 Our implementation is available as a Racket package.
 To install the library, download Racket and then run @racket[raco pkg install ???].
 The source code is on Github at: @url["https://github.com/???/???"].
-Suggestions for a new package name are welcome.

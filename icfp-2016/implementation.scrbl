@@ -496,12 +496,14 @@ Code used to generate a syntax-parse pattern may be run at phase level 2, and
 Phases are explicitly separated.
 By design, it is difficult to share state between two phases.
 Also by design, it is very easy to import bindings from any module at a specific
- phase
+ phase.
 The upshot of this is that one can write and test ordinary, phase-0 Racket code
  but then use it at a higher phase level.
 @; + non-meta programming
 @; + not getting stuck in ascending ladder
 @; + modular development
+@; + don't need to worry about Singletons Haskell duplication
+@;   There is no need to duplicate code for use at different phases.
 
 
 @subsection{Lexical Scope, Source Locations}

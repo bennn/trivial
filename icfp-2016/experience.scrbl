@@ -1,9 +1,11 @@
 #lang scribble/sigplan
+@require["common.rkt"]
 
 @title[#:tag "sec:experience"]{Experience}
-
 @; compile times, running times, binary size
 @; LOC reduction, bugs caught
+
+Coarse measure of usefulness, applied to xxx lines of code.
 
 We used the library to simplify @todo{lines} of database code and @todo{lines}
  of vector code.

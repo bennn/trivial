@@ -104,4 +104,17 @@ generates the type constraint
  curry : ((A B -> A) -> (A -> B -> A))
 ]
 
+---
 
+Readers with a phd in type theory may think: "these are just wannabe dependent types".
+That is correct.
+Readers with a phd in macrology may think: "these are just macros".
+Also correct.
+We think we have found a sweet spot, combining the basic features of macros
+ to get the basic utility of dependent types.
+
+Let the programmers judge.
+
+---
+
+also useful for untyped (goes wihtout saying?)
