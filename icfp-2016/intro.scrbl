@@ -31,7 +31,7 @@ The above are all @emph{value errors} that depend on properties not expressed
  by Haskell's standard list, integer, and string datatypes.
 Even so, it is obvious to the programmer that the expressions will go wrong
  and there have been many proposals for detecting these and other value
- errors@~cite[a-icfp-1999 ddems-icse-2011 lb-sigplan-2014].
+ errors@~cite[a-icfp-1999 ddems-icse-2011 ew-haskell-2012 lb-sigplan-2014].
 What stands between these proposals and their adoption is the complexity or
  annotation burden they impose on language users.
 

@@ -1137,3 +1137,10 @@
    #:author "Matthew Flatt"
    #:location (proceedings-location icfp #:pages '(72 83))
    #:date 2002))
+
+(define ew-haskell-2012
+  (make-bib
+   #:title "Dependently Typed Programming with Singletons"
+   #:author "Richard A. Eisenberg and Stephanie Weirich"
+   #:location (proceedings-location haskell #:pages '(117 130))
+   #:date 2012))
