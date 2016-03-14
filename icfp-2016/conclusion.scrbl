@@ -18,39 +18,35 @@ Each application in @Secref{sec:usage} is a way that constant data
 
 A key thesis behind this work is that the analysis can be implemented
  in a variety of languages using their existing type and syntax extension
- systems. Indeed:
+ systems.
+Indeed:
+@; TODO shorten this
 
 @parag{Typed Clojure} has a flexible macro system derived from Common Lisp.
 Built-in functions @tt{macroexpand} and @tt{with-meta} correspond to Racket's
  @racket[local-expand] and @racket[syntax-property]; with help from a library
  implementing identifier macros,@note{@url["https://github.com/clojure/tools.macro"]}
- we were able to implement a basic prototype in untyped Clojure.
-
-@todo{does TC have macros? can I use macros from untyped code if I type them?}
+ we were able to implement a basic prototype untyped Clojure.
 
 
-@parag{Haskell} Template Haskell
-
+@parag{Template Haskell} could reproduce all the examples in @Secref{sec:usage}
+ as they are written, with constants in-line at each call site.
+We are less sure how to associate and retrieve data regarding bound variables
+ at compile-time, idiomatically.
 
 @parag{OCaml} ppx
 
 
-@parag{Rust} has a stable, pattern-based macro system which unfortunately
- seems too weak to reimplement our analysis.
-As of Rust 1.7,@note{@url["https://doc.rust-lang.org/reference.html"]}
- the basic macros can only specify input/output pairs.
-There is no way to do complex branching within a condition,
- such as throwing an exception if a format string is given too many arguments.
-Just parsing the format string would be challenging.
-
-However Rust also has an interface for writing arbitrarily powerful compiler
- plugins.
-It would be interesting to reproduce our results as a plugin.
+@parag{Rust} has a stable, pattern-based macro system and a powerful API
+ for writing compiler plugins.
+The macro system appears too weak to reimplement our analyses,
+ but it would be interesting to explore the plugin API and try reimplementing
+ ideas like syntax classes and rename transformers.
 
 
-@parag{Scala} users have a few macro systems to choose from.
-@; We investigated Scala Macros and TODO.
-@; https://doc.rust-lang.org/book/compiler-plugins.html
+@parag{Scala} users have at least two macro systems to choose from.
+Both Scala Macros@~cite[b-scala-2013] and Lightweight Modular Staging@~cite[ro-gpce-2010]
+ 
 
 
 With out last words, we look to the future.

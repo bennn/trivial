@@ -30,6 +30,7 @@
 (define/short icfp "ICFP" (string-append ACM International Conference "on Functional Programming"))
 (define/short pldi "PLDI" (string-append ACM Conference "on Programming Language Design and Implementation"))
 (define/short popl "POPL" (string-append ACM Symposium "on Principles of Programming Languages"))
+(define/short plpv "PLPV" (string-append ACM Workshop "Programming Languages meets Program Verification"))
 (define/short icse "ICSE" "International Conference on Software Engineering")
 (define/short lncs "LNCS" "Lecture Notes in Computer Science")
 (define/short sigmod "SIGMOD" (string-append ACM "SIGMOD " International Conference "on Management of Data"))
@@ -57,6 +58,7 @@
 (define/short tlca "TLCA" (string-append International Conference "Typed Lambda Calculi and Applications"))
 (define/short i&c "Info. & Comp." "Information and Computation")
 (define/short haskell "Haskell Workshop")
+(define/short scala "SCALA" (string-append "Workshop on Scala"))
 (define/short tcs "Theoretical Computer Science")
 (define/short tacs (string-append International Symposium "Theoretical Aspects of Computer Science"))
 (define/short ml-workshop "ML Workshop")
@@ -1144,3 +1146,25 @@
    #:author "Richard A. Eisenberg and Stephanie Weirich"
    #:location (proceedings-location haskell #:pages '(117 130))
    #:date 2012))
+
+(define ks-plpv-2006
+  (make-bib
+   #:title "Lightweight static capabilities"
+   #:author "Oleg Kiselyov and Chung-chieh Shan"
+   #:location (proceedings-location plpv)
+   #:date 2006))
+
+(define b-scala-2013
+  (make-bib
+   #:title "Scala Macros: Let our Powers Combine!"
+   #:author "Eugene Burmako"
+   #:location (proceedings-location scala)
+   #:date 2013))
+
+(define ro-gpce-2010
+  (make-bib
+   #:title "Lightweight Modular Staging: A Pragmatic Approach to Runtime Code Generation and Compiled DSLs"
+   #:author (authors "Tiark Rompf" "Martin Odersky")
+   #:location (proceedings-location gpce)
+   #:date 2010))
+
