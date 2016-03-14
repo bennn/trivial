@@ -20,6 +20,8 @@ Generalizing these observations, our analysis begins with a class of
 
     @exact|{$$\interp\ : \big\{\emph{expr} \rightarrow \emph{Maybe\,(value)}\big\}$$}|
 
+@; TODO list footnote, state "predicate" as word of choice (for lack ofa better one)
+
 Applying a function @exact|{${\tt f} \in \interp\ $}| to a syntactically
  well-formed expression should either yield a value describing some aspect
  of the input expression or return a failure result.@note{The name @emph{interp}

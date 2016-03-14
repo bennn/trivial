@@ -41,7 +41,7 @@
 @include-section{experience.scrbl} @; Merge with usage?
 @include-section{implementation.scrbl}
 @;@include-section{related.scrbl}
-@;@include-section{conclusion.scrbl}
+@include-section{conclusion.scrbl}
 
 @;@section[#:style 'unnumbered]{Acknowledgments}
 @;
