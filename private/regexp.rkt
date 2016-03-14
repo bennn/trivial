@@ -53,41 +53,55 @@
   ;; Raise an exception if there are unmatched parens.
   (define (parse-groups/untyped str #:src stx)
     (define last-index (- (string-length str) 1))
+    (define ignore? (box #f))
     (let loop ([i 0] [in-paren '()] [num-groups 0])
       (if (> i last-index)
-        (if (null? in-paren)
-          num-groups
-          (group-error str (format "'(' at index ~a" (car in-paren))))
-        (case (string-ref str i)
-         [(#\()
-          ;; Watch for (? patterns
-          (if (and (< i last-index)
-                   (eq? #\? (string-ref str (+ i 1))))
-            (loop (+ i 2) (cons #f in-paren) num-groups)
-            (loop (+ i 1) (cons i in-paren) num-groups))]
-         [(#\))
-          (cond
-           [(and (< i last-index)
-                 (eq? #\* (string-ref str (+ i 1))))
-            ;; Group is starred, can't predict num. matches statically
-            #f]
-           [(null? in-paren)
-            (group-error str (format "')' at index ~a" i))]
-           [(eq? #f (car in-paren))
-            ;; Matched closing paren, but does not count as a group
-            (loop (+ i 1) (cdr in-paren) num-groups)]
-           [else
-            (loop (+ i 1) (cdr in-paren) (+ 1 num-groups))])]
-         [(#\\)
-          (if (and (< i last-index)
-                   (eq? #\\ (string-ref str (+ i 1))))
-            (loop (+ i 3) in-paren num-groups)
-            (loop (+ i 2) in-paren num-groups))]
-         [(#\|)
-          ;; Nope! Can't handle pipes
-          #f]
+        (cond
+         [(not (null? in-paren))
+          (group-error str (format "'(' at index ~a" (car in-paren)))]
+         [(unbox ignore?)
+          (group-error str (format "'[' at index ~a" (car in-paren)))]
          [else
-          (loop (+ i 1) in-paren num-groups)]))))
+          num-groups])
+        (if (unbox ignore?)
+          (if (eq? #\] (string-ref str i))
+            (begin (set-box! ignore? #f)
+                   (loop (+ i 1) (cdr in-paren) num-groups))
+            (loop (+ i 1) in-paren num-groups))
+          (case (string-ref str i)
+           [(#\[)
+            ;; Ignore things between [ ... ]
+            (set-box! ignore? #t)
+            (loop (+ i 1) (cons i in-paren) num-groups)]
+           [(#\()
+            ;; Watch for (? patterns
+            (if (and (< i last-index)
+                     (eq? #\? (string-ref str (+ i 1))))
+              (loop (+ i 2) (cons #f in-paren) num-groups)
+              (loop (+ i 1) (cons i in-paren) num-groups))]
+           [(#\))
+            (cond
+             [(and (< i last-index)
+                   (eq? #\* (string-ref str (+ i 1))))
+              ;; Group is starred, can't predict num. matches statically
+              #f]
+             [(null? in-paren)
+              (group-error str (format "')' at index ~a" i))]
+             [(eq? #f (car in-paren))
+              ;; Matched closing paren, but does not count as a group
+              (loop (+ i 1) (cdr in-paren) num-groups)]
+             [else
+              (loop (+ i 1) (cdr in-paren) (+ 1 num-groups))])]
+           [(#\\)
+            (if (and (< i last-index)
+                     (eq? #\\ (string-ref str (+ i 1))))
+              (loop (+ i 3) in-paren num-groups)
+              (loop (+ i 2) in-paren num-groups))]
+           [(#\|)
+            ;; Nope! Can't handle pipes
+            #f]
+           [else
+            (loop (+ i 1) in-paren num-groups)])))))
 
   (define (parse-groups/string str #:src stx)
     (let ([ng (parse-groups/untyped str #:src stx)])
