@@ -33,7 +33,8 @@ Changes
                52:(define: default-min-left-length 2)
                53:(define: default-min-right-length 2)
                54:(define: default-joiner #\u00AD)
-- suffixtree : 2 set! to set-box!, 6 lines affected
+- modulegraph : simplified some regexp matching, no more dev assertions
 - morse-code : 1 set!, 12 lines (just ignored the import)
                removed an annotation on regexp-match
+- suffixtree : 2 set! to set-box!, 6 lines affected
 - synth      : had to remove racket/vector imports
