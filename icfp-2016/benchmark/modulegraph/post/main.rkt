@@ -658,7 +658,7 @@
 ;; =============================================================================
 
 (define (main)
-  (for ([fname (in-glob "../data/*.tex")])
+  (for ([fname (in-glob "../base/*.tex")])
     (tex->modulegraph fname)))
 
 

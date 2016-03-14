@@ -5,9 +5,11 @@ Format
 ---
 
 - Benchmark gets dedicated folder
-- 2 folders inside benchmark folder
+- 2 required folders inside benchmark folder
   - `pre`  : code without `trivial`
   - `post` : code after adding `trivial`
+- 1 optional folder
+  - `base` : contains shared data files
 
 
 Test Cases
