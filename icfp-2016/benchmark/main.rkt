@@ -56,7 +56,7 @@
     (string-append dir "/" POST)))
 
 (define (rnd n)
-  (~r n #:precision 2))
+  (string->number (~r n #:precision 2)))
 
 (define (mean+stddev x*)
   (define m (mean x*))
@@ -130,23 +130,39 @@
 (define (test-diff d)
   ;; TODO get actual differences, not just diff size
   (define-values (pre post) (dir->pre/post d))
-  (define out
+  (define diff*
     (with-output-to-string
-      (lambda () (system/assert "diff ~a ~a | wc -l" pre post))))
-  (string->number (string-trim out)))
+      (lambda () (system (format "diff --exclude=compiled -U0 -r ~a ~a" pre post)))))
+  (for/fold ([add 0]
+             [rem 0])
+            ([line (in-list (string-split diff* "\n"))])
+    (cond
+     [(and (string-prefix? line "+")
+           (not (string-prefix? line "+++ ")))
+      (values (+ 1 add) rem)]
+     [(and (string-prefix? line "-")
+           (not (string-prefix? line "--- ")))
+      (values add (+ 1 rem))]
+     [else
+      (values add rem)])))
 
 (define (run-tests dir*)
-  (printf "(   ;; DIR | compile-pre | compile-post | run-pre | run-post | loc-pre | loc-post | bytes-pre | bytes-post | diff \n")
+  (printf "(   ;; DIR | compile-pre | compile-post | run-pre | run-post | loc-pre | loc-post | bytes-pre | bytes-post | diff+ | diff- \n")
   (printf "    ;;   all times in milliseconds\n")
   (printf "    ;;   'loc' is lines of code, generated using 'SLOCCount' by David A. Wheeler.\n")
   (for ([d (in-list dir*)])
-    ;(define-values (c-pre c-post) (test-compile d))
-    ;(define-values (r-pre r-post) (test-run d))
-    ;(define-values (l-pre l-post) (test-loc d))
+    (define-values (c-pre c-post) (test-compile d))
+    (define-values (r-pre r-post) (test-run d))
+    (define-values (l-pre l-post) (test-loc d))
     (define-values (b-pre b-post) (test-bytes d))
-    (define diff (test-diff d))
-    (writeln (list d b-pre b-post diff))
-    ;(writeln (list d c-pre c-post r-pre r-post l-pre l-post b-pre b-post diff))
+    (define-values (diff+ diff-) (test-diff d))
+    ;(writeln (list d b-pre b-post diff))
+    (writeln (list (string->symbol d)
+                   (list c-pre c-post)
+                   (list r-pre r-post)
+                   (list l-pre l-post)
+                   (list b-pre b-post)
+                   (list diff+ diff-)))
     (void))
   (printf ")\n"))
 
