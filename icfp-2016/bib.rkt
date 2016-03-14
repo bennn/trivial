@@ -1131,3 +1131,9 @@
    #:location (dissertation-location #:institution "Northeastern University")
    #:date 2010))
 
+(define f-icfp-2002
+  (make-bib
+   #:title "Composable and Compilable Macros: You Want it When?"
+   #:author "Matthew Flatt"
+   #:location (proceedings-location icfp #:pages '(72 83))
+   #:date 2002))

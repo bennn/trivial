@@ -47,7 +47,7 @@ For instance, the arithmetic operators @racket[+ - * /] are implemented by
 
 
 @; -----------------------------------------------------------------------------
-@section{Implementing Transformations} @; TODO not a great name
+@section[#:tag "sec:impl-trans"]{Implementing Transformations} @; TODO not a great name
 @; @section{Ode to Macros: The Long Version}
 
 At this point, we have carried on long enough talking about the implementation
@@ -193,7 +193,7 @@ The interesting design challenge is making one pattern that covers all
 
 
 @; =============================================================================
-@section{Implementing Interpretations} @; TODO a decidedly bad name
+@section[#:tag "sec:impl-interp"]{Implementing Interpretations} @; TODO a decidedly bad name
 
 By now we have seen two useful syntax classes: @racket[id] and @racket[vector/length].
 In fact, we use syntax classes as the front-end for each function in @exact{$\interp$}.
@@ -344,51 +344,172 @@ The technical tools for this are @racket[rename-transformer]s and @racket[free-i
 Whereas the previous section was a code-first tour of key techniques supporting
  our implementation, this section is a checklist of important meta-programming
  tools provided by the Racket macro system.
-For ease of reference, our discussion proceeds from the most useful feature to
+For ease of reference, our discussion proceeds from the most useful tool to
  the least.
-Each sub-section title is the name of a function or macro.
-Titles marked with an asterisk are essential to our implementation,
- just so other macrosystem users can compare with their toolkit.
-@; TODO why is it all so shitty
+Each sub-section title is a technical term.
+@;Titles marked with an asterisk are essential to our implementation,
+@; others could be omitted without losing the essence.
 
 
 @subsection[#:tag "sec:parse"]{Syntax Parse}
 
-You already know.
-Best way to specify transformations.
+The @racket[syntax/parse] library@~cite[c-dissertation-2010] is a powerful
+ interface for writing macros.
+It provides the @racket[syntax-parse] and @racket[syntax-parser] forms that
+ we have used extensively above.
+From our perspective, the key features are:
+@itemlist[
+  @item{
+    A rich pattern-matching language; including, for example,
+     repetition via @racket[...], @racket[#:when] guards, and matching
+     for identifiers like @racket[λ] (top of @Secref{sec:impl-interp})
+     that respects @exact{$\alpha$}-equivalence.
+  }
+  @item{
+    Freedom to mix arbitrary code between the pattern spec and result,
+     as shown in the definition of @racket[vector-ref]
+     (bottom of @Secref{sec:impl-trans}).
+  }
+]
 
 
-@subsection[#:tag "sec:local-expand"]{Depth-First Expansion (*)}
+@subsection[#:tag "sec:local-expand"]{Depth-First Expansion}
 
-Bottom-up recursion.
+Racket's macro expander normally proceeds in a breadth-first manner, traversing
+ an AST top-down until it finds a macro in head position.
+After expansion, sub-trees are traversed and expanded.
+This ``lazy'' sort of evaluation is normally useful because it lets macro
+ writers specify source code patterns instead of forcing them to reason about
+ the shape of expanded code.
+
+Our transformations, however, are most effective when value information is
+ propogated bottom up from macro-free syntactic values through other combinators.
+This requires depth-first macro expansion; for instance, in the first argument
+ of the @racket[vector-ref] transformation defined in @Secref{sec:impl-trans}.
+Fortunately, we always know which positions to expand depth-first and
+ Racket provides a function @racket[local-expand] that will fully expand
+ a target syntax object.
+In particular, all our syntax classes listed in @Figure-ref{fig:stxclass}
+ locally expand their target.
 
 
 @subsection[#:tag "sec:class"]{Syntax Classes}
 
-Abstracting patterns.
-Honestly non-essential but a pain in the ass without.
+A syntax class encapsulates common parts of a syntax pattern.
+With the syntax class shown at the end of @Secref{sec:impl-interp}
+ we save 2-6 lines of code in each of our transformation functions.
+More importantly, syntax classes provide a clean implementation of the ideas
+ in @Secref{sec:solution}.
+Given a function in @exact{$\interp$} that extracts data from core value/expression
+ forms, we generate a syntax class that applies the function and handles
+ intermediate binding forms.
+Functions in @exact{$\trans$} can branch on whether the syntax class matched
+ instead of parsing data from program syntax.
 
 
-@subsection[#:tag "sec:idmacro"]{Identifier Macros (*)}
+@subsection[#:tag "sec:idmacro"]{Identifier Macros}
+
+Traditional macros may appear only in the head position of an expression.
+For example, the following are illegal uses of the built-in @racket[or]
+ macro:
+@racketblock[
+> or
+or: bad syntax
+> (map or '((#t #f #f) (#f #f)))
+or: bad syntax
+]
+
+Identifier macros are allowed in both higher-order and top-level positions,
+ just like first-class functions.
+This lets us transparently alias built-in functions like @racket[regexp-match]
+ and @racket[vector-length] (see @Secref{sec:impl-trans}).
+The higher-order uses cannot be checked for bugs, but they execute as normal
+ without raising new syntax errors.
 
 
-@subsection[#:tag "sec:def-implementation"]{Syntax Properties (*)}
+@subsection[#:tag "sec:def-implementation"]{Syntax Properties}
 
-Caching information, lets us go beyond constants.
+Syntax properties are the glue that let us chain transformations together.
+For instance, @racket[vector-map] preserves the length of its argument vector.
+By tagging calls to @racket[vector-map] with a syntax property, our system
+ becomes aware of identities like:
+
+@centered[
+  @codeblock{
+    (vector-length v) == (vector-length (vector-map f v))
+  }
+]
+
+Furthermore, syntax properties place few constraints on the type of data
+ used as keys or values.
+This proved useful in our implementation of @racket[query-row], where we stored
+ an S-expression representing a database schema in a syntax property.
 
 
 @subsection[#:tag "sec:rename"]{Rename Transformers, Free Id Tables}
 
-Lets and definitions cannot stop us now.
+Cooperating with @racket[let] and @racket[define] bindings is an important
+ usability concern.
+When testing this library on existing code, we often saw code like:
+
+@(begin
+#reader scribble/comment-reader
+(racketblock
+(define rx-email #rx"^(.*)@(.*)\\.(.*)$")
+
+;; Other code here
+
+(define (get-recipient str)
+  (regexp-match rx-email str))
+))
+
+Similarly for database code and arithmetic constants.
+
+To deal with @racket[let] bindings, we use a @racket[rename-transformer].
+Within the binding's scope, the transformer redirects references from a variable
+ to an arbitrary syntax object.
+For our purposes, we redirect to an annotated version of the same variable:
+
+@racketblock[
+> '(let ([x 4])
+     (+ x 1))
+'(let ([x 4])
+  (let-syntax ([x (make-rename-transformer #'x
+                    secret-key 4)])
+    (+ x 1)))
+]
+
+For definitions, we use a @emph{free-identifier table}.
+This is less fancy--just a hashtable whose keys respect @exact{$\alpha$}-equivalence--but
+ still useful in practice.
 
 
 @subsection[#:tag "sec:phase"]{Phasing}
-Identify @tt{+*-/}
+
+Any code between a @racket[syntax-parse] pattern and the output syntax object
+ is run at compile-time to generate the code that is ultimately run.
+In general terms, the code used to directly generate run-time code
+ executes at @emph{phase level} 1 relative to the enclosing module.
+Code used to generate a syntax-parse pattern may be run at phase level 2, and
+ so on up to as many phases as needed@~cite[f-icfp-2002].
+
+Phases are explicitly separated.
+By design, it is difficult to share state between two phases.
+Also by design, it is very easy to import bindings from any module at a specific
+ phase
+The upshot of this is that one can write and test ordinary, phase-0 Racket code
+ but then use it at a higher phase level.
+@; + non-meta programming
+@; + not getting stuck in ascending ladder
+@; + modular development
 
 
 @subsection{Lexical Scope, Source Locations}
 
-Usability, tooling, debugging.
-
+Perhaps it goes without saying, but having macros that respect lexical scope
+ is important for a good user and developer experience.
+Along the same lines, the ability to propogate source code locations in
+ transformations lets us report syntax errors in terms of the programmer's
+ source code rather than locations inside our library.
 
 
