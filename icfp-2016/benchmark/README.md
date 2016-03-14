@@ -29,6 +29,7 @@ Changes
 
                population.rkt
                42:(define: DEF-COO 2)
+- gregor     : a few arithmetic constants
 - hyphenate  : 1 set!, ignored the import
                hyphenate.rkt
                51:(define: default-min-length 5)
@@ -40,3 +41,10 @@ Changes
                removed an annotation on regexp-match
 - suffixtree : 2 set! to set-box!, 6 lines affected
 - synth      : had to remove racket/vector imports
+
+
+
+Other
+---
+
+shootout was a failure, the code is a little too weird

@@ -8,6 +8,7 @@
   (only-in racket/list last)
   (only-in racket/format ~r)
   racket/runtime-path
+  (only-in racket/file file->value)
   racket/port
   racket/string
   racket/system
@@ -15,6 +16,8 @@
 )
 
 ;; =============================================================================
+
+
 
 (define-runtime-path HERE ".")
 (define PRE "pre")
@@ -195,6 +198,38 @@
 
 (define (run-all-tests)
   (run-tests (filter-tests (directory-list HERE))))
+
+;; -----------------------------------------------------------------------------
+;; -- Extracting data
+
+(define (ctimes d)
+  (define c (cadr d))
+  (cons (caar c)
+        (car (cadr c))))
+
+(define (rtimes d)
+  (define r (caddr d))
+  (cons (caar r)
+        (car (cadr r))))
+
+(define (bytes d)
+  (define b (car (cdddr d)))
+  (cons (car b) (cadr b)))
+
+(define (rnd n)
+  (~r n #:precision '2))
+
+(define (diff x)
+  (define b4 (car x))
+  (define after (cdr x))
+  (rnd
+    (* 100 (/ (- after b4)
+            b4))))
+
+(define (extract)
+  (define x* (file->value "output-albany.rktd"))
+  (for ([d (in-list x*)])
+    (printf "~a  ~a  ~a  ~a\n" (car d) (diff (ctimes d)) (diff (rtimes d)) (diff (bytes d)))))
 
 ;; =============================================================================
 
