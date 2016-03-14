@@ -7,6 +7,7 @@
 @; - a note on macro-land? where truthy & boolean monads are king?
 @;   - also, the untyped style of reasoning, the needing to unfold code
 @; - transf vs. macro
+@; - remove "OUR"
 
 
 @require["common.rkt"]

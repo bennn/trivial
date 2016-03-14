@@ -253,6 +253,8 @@ Our implementation employs the first strategy, but generates a new @racket[curry
  at each call site by folding over the inferred function domain.
 @; Mention this later, or show code?
 
+TODO same goes for zipWith in a language without polydots
+
 
 @; =============================================================================
 @section{Constant Folding}
