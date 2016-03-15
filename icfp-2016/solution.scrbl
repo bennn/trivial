@@ -37,11 +37,8 @@ Correct interpretation functions @exact|{${\tt p?}$}| obey three guidelines:
      value must have some common structure.
   }
   @item{
-    Non-@racket[#false] results @exact|{${\tt (p?~e)}$}| must be computed by a
-     uniform algorithm.
-  }
-  @item{
-    Non-@racket[#false] results must have some common structure.
+    Non-@racket[#false] results @exact|{${\tt (p?~e)}$}| are computed by a
+     uniform algorithm and must have some common structure.
   }
 ]
 
@@ -49,9 +46,9 @@ This vague notion of common structure may be expressible as a type in an
  appropriate type system.
 It is definitely not a type in the target language's type system.
 
-The set @exact|{$\elab$}| of @emph{elaboration} functions contains
- function mapping expressions to expressions.
-We write elaboration functions as @exact{$\elabf$} and their
+Functions in the set @exact|{$\elab$}| of @emph{elaborations}
+ map expressions to expressions.
+We write elaboration functions as @exact{$\elabf$} and their application
  to an expression @exact{$e$} as @exact{$\llbracket e \rrbracket$}.
 Elaborations are allowed to fail raising syntax errors, which we notate as
  @exact|{$\bot$}|.
@@ -100,4 +97,7 @@ If neither @exact|{${\tt e}$}| nor @exact|{${\tt e'}$}| type checks, then we hav
 In a perfect world both would diverge, but the fundamental limitations of
  static typing@~cite[fagan-dissertation-1992] and computability
  keep us imperfect.
-TODO TODO TODO Extra space hierExtra space hierExtra space hierExtra space
+
+At present, these correctness requirements must be checked manually by the
+ author of a function in @exact{$\interp$} or @exact{$\elab$}.
+
