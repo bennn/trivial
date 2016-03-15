@@ -4,6 +4,7 @@
 ;; TODO make-set!-transformer
 
 (provide
+  expand-expr ;; TODO stop providing
 
   quoted-stx-value?
   ;; (-> Any (U #f Syntax))

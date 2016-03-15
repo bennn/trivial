@@ -2,6 +2,7 @@
 
 (provide
   curry:
+  map:
 )
 
 (require trivial/private/function)

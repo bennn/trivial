@@ -17,6 +17,9 @@
   (only-in trivial/private/regexp
     rx-define
     rx-let)
+  (only-in trivial/private/function
+    fun-define
+    fun-let)
   (only-in trivial/private/vector
     vec-define
     vec-let))
@@ -25,10 +28,12 @@
   (lambda (stx)
     (or (num-define stx)
         (rx-define stx)
+        (fun-define stx)
         (vec-define stx)))))
 
 (define-syntax let: (make-keyword-alias 'let
   (lambda (stx)
-    (or (num-let stx)
+    (or (fun-let stx)
+        (num-let stx)
         (rx-let stx)
         (vec-let stx)))))
