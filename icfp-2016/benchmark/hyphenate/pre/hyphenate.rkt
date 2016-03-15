@@ -42,7 +42,7 @@
 ;; bg: changed default from #f
 ;; module data, define now but set! them later (because they're potentially big & slow)
 (: patterns (HashTable String (Listof Index)))
-(define patterns (make-hash))
+(define patterns hashed-patterns)
 (: pattern-cache (HashTable String (Listof Index)))
 (define pattern-cache (make-hash))
 
@@ -64,9 +64,7 @@
 (define (initialize-patterns)
   (when (hash-empty? pattern-cache)
     (for ([e default-exceptions])
-      (add-exception (symbol->string e))))
-  (when (hash-empty? patterns)
-    (set! patterns hashed-patterns)))
+      (add-exception (symbol->string e)))))
 
 ;; Convert the hyphenated pattern into a point array for use later.
 (: add-exception (-> String Void))

@@ -21,7 +21,7 @@
 ;;; @end legal
 
 #lang typed/racket/base
-(require (except-in trivial/no-colon set!))
+(require trivial/no-colon)
 
 ;;; @section Introduction
 ;;;
@@ -79,19 +79,19 @@
           ((zero? b-len) a-len)
           (else
            (let: ((w   : (Vectorof Index) (get-scratch (+ 1 b-len)))
-                 (next : Index 0)) ;;bg changed from #f
+                 (next : (Boxof Index) (box 0))) ;;bg changed from #f
              (let fill ((k b-len))
                (unless (index? k) (error "vl/p/g invariant error"))
                (vector-set! w k k)
                (or (zero? k) (fill (- k 1))))
              (let loop-i ((i 0))
                (if (= i a-len)
-                   next
+                   (unbox next)
                    (let ((a-i (vector-ref a i)))
                      (let loop-j ((j   0)
                                   (cur (+ 1 i)))
                        (if (= j b-len)
-                           (begin (vector-set! w b-len next)
+                           (begin (vector-set! w b-len (unbox next))
                                   (loop-i (+ 1 i)))
                            ;; TODO: Make these costs parameters.
                            (let ((next* (min (+ 1 (vector-ref w (+ 1 j)))
@@ -101,10 +101,10 @@
                                                       (vector-ref w j)
                                                       (+ 1 (vector-ref w j))))))
                                   (unless (index? next*) (error "invariant"))
-                                  (set! next next*)
+                                  (set-box! next next*)
                                   (unless (index? cur) (error "invariant error"))
                                   (vector-set! w j cur)
-                                  (loop-j (+ 1 j) next))))))))))))
+                                  (loop-j (+ 1 j) (unbox next)))))))))))))
 
 ;;; @defproc  vector-levenshtein/predicate a b pred
 ;;; @defprocx vector-levenshtein/eq        a b

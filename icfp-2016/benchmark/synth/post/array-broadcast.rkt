@@ -1,5 +1,6 @@
 #lang typed/racket/base
 (require trivial/no-colon)
+
 (require (only-in racket/fixnum fx<= fxmax fxmodulo)
          (only-in racket/string string-join)
          (only-in racket/list empty? first rest)

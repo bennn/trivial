@@ -433,11 +433,11 @@
 
 ;; For parsing nodes:
 ;;   \node (ID) [pos]? {\rkt{ID}{NAME}};
-(define: NODE_REGEXP
-  #rx"^\\\\node *\\(([0-9]+)\\) *(\\[.*\\]) *\\{\\\\rkt\\{([0-9]+)\\}\\{(.+)\\}\\};$")
+(define NODE_REGEXP
+  #rx"^\\\\node *\\(([0-9]+)\\) *(\\[.*\\])? *\\{\\\\rkt\\{([0-9]+)\\}\\{(.+)\\}\\};$")
 ;; For parsing edges
 ;;   \draw[style]? (ID) edge (ID);
-(define: EDGE_REGEXP
+(define EDGE_REGEXP
   #rx"^\\\\draw\\[.*\\]? *\\(([0-9]+)\\)[^(]*\\(([0-9]+)\\);$")
 
 ;; Parsing
@@ -456,11 +456,14 @@
 (: string->texnode (-> String texnode))
 (define (string->texnode str)
   (define m (regexp-match NODE_REGEXP str))
-  (if m
-     (texnode (string->index (cadr m))
-              (string->index (cadddr m))
-              (cadr (cdddr m)))
-     (parse-error "Cannot parse node declaration '~a'" str)))
+  (match m
+    [(list _ id _ index name)
+     #:when (and id index name)
+     (texnode (or (string->index id) (parse-error "Could not parse integer from node id '~a'" id))
+              (or (string->index index) (parse-error "Could not parse integer from node index '~a'" index))
+              name)]
+    [else
+     (parse-error "Cannot parse node declaration '~a'" str)]))
 
 ;; Parse a string into a tex edge.
 ;; Edges are represented as cons pairs of their source and destination.
@@ -468,11 +471,14 @@
 (: string->texedge (-> String texedge))
 (define (string->texedge str)
   (define m (regexp-match EDGE_REGEXP str))
-  (if m
-     (cons
-           (string->index (cadr m))
-           (string->index (caddr m)))
-     (parse-error "Cannot parse edge declaration '~a'" str)))
+  (match m
+    [(list _ id-src id-dst)
+     #:when (and id-src id-dst)
+     ((inst cons Index Index)
+           (string->index id-src)
+           (string->index id-dst))]
+    [else
+     (parse-error "Cannot parse edge declaration '~a'" str)]))
 
 ;; Convert nodes & edges parsed from a .tex file to a modulegraph struct
 (: texnode->modulegraph (-> String (Listof texnode) (Listof texedge) ModuleGraph))
@@ -548,7 +554,7 @@
           acc))
       acc)))
 
-(define RX-REQUIRE: #rx"require.*\"(.*)\\.rkt\"")
+(define RX-REQUIRE #rx"require.*\"(.*)\\.rkt\"")
 
 ;; Sort an adjacency list in order of transitive indegree, increasing.
 ;; Results are grouped by indegree, i.e.

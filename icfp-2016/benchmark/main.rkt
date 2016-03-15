@@ -216,9 +216,6 @@
   (define b (car (cdddr d)))
   (cons (car b) (cadr b)))
 
-(define (rnd n)
-  (~r n #:precision '2))
-
 (define (diff x)
   (define b4 (car x))
   (define after (cdr x))

@@ -1,5 +1,5 @@
 #lang typed/racket/base
-(require (except-in trivial/no-colon set!))
+(require trivial/no-colon)
 
 ;; bg: removed XML and TxExprs from the original; this only works on strings now
 
@@ -43,15 +43,15 @@
 ;; bg: changed default from #f
 ;; module data, define now but set! them later (because they're potentially big & slow)
 (: patterns (HashTable String (Listof Index)))
-(define patterns (make-hash))
+(define patterns hashed-patterns)
 (: pattern-cache (HashTable String (Listof Index)))
 (define pattern-cache (make-hash))
 
 ;; module default values
-(define: default-min-length 5)
-(define: default-min-left-length 2)
-(define: default-min-right-length 2)
-(define: default-joiner #\u00AD)
+(define default-min-length 5)
+(define default-min-left-length 2)
+(define default-min-right-length 2)
+(define default-joiner #\u00AD)
 
 ;; bg: from racket docs http://docs.racket-lang.org/reference/hashtables.html?q=hash-empty#%28def._%28%28lib._racket%2Fprivate%2Fbase..rkt%29._hash-empty~3f%29%29
 (define-syntax-rule (hash-empty? hash)
@@ -65,9 +65,7 @@
 (define (initialize-patterns)
   (when (hash-empty? pattern-cache)
     (for ([e default-exceptions])
-      (add-exception (symbol->string e))))
-  (when (hash-empty? patterns)
-    (set! patterns hashed-patterns)))
+      (add-exception (symbol->string e)))))
 
 ;; Convert the hyphenated pattern into a point array for use later.
 (: add-exception (-> String Void))

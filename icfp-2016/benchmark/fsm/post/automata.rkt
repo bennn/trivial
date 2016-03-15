@@ -43,9 +43,9 @@
 
 ;; -----------------------------------------------------------------------------
 (: COOPERATE State)
-(define: COOPERATE 0)
+(define COOPERATE 0)
 (: DEFECT State)
-(define: DEFECT    1)
+(define DEFECT    1)
 
 (define-type State Natural)
 (define-type Transition* [Vectorof Transition])
@@ -160,7 +160,7 @@
 ;; -----------------------------------------------------------------------------
 ;; PayoffTable = [Vectorof k [Vectorof k (cons Payoff Payoff)]]
 (: PAYOFF-TABLE [Vectorof [Vectorof (cons Payoff Payoff)]])
-(define: PAYOFF-TABLE
+(define PAYOFF-TABLE
   (vector (vector (cons 3 3) (cons 0 4))
           (vector (cons 4 0) (cons 1 1))))
 

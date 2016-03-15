@@ -1,4 +1,4 @@
-#lang racket/base
+#lang typed/racket/base
 (require trivial/no-colon)
 (require "hyphenate.rkt" typed/rackunit)
 
@@ -20,6 +20,12 @@
   (check-equal? (hyphenate "polymorphism" #\- #:min-left-length 7 #:min-right-length 7) "polymorphism")
   (check-equal? (hyphenate "polymorphism" #\* #:exceptions '("polymo-rphism")) "polymo*rphism")
   
-  (check-equal? (hyphenate "formidable" #\-) "for-mi-da-ble"))
+  (check-equal? (hyphenate "formidable" #\-) "for-mi-da-ble")
+
+  (with-input-from-file "../base/common-words.rktd"
+    (lambda ()
+      (for ([word (in-lines)])
+        (hyphenate word))))
+)
 
 (time (main))

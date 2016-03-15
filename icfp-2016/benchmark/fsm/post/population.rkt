@@ -39,7 +39,7 @@
 ;; Population = (Cons Automaton* Automaton*)
 ;; Automaton* = [Vectorof Automaton]
 
-(define: DEF-COO 2)
+(define DEF-COO 2)
 
 ;; -----------------------------------------------------------------------------
 (define (build-random-population n)

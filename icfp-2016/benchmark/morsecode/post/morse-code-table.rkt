@@ -87,7 +87,8 @@
  (for/list: : (Listof (Pair Char String))
    ([l : String lines])
     (match 
-        (regexp-match #px"^\\| \\{\\{[^|]*\\|[^|]*\\|(.)\\}\\} \\|\\| '''([^']*)'''" l)
+        (ann (regexp-match #px"^\\| \\{\\{[^|]*\\|[^|]*\\|(.)\\}\\} \\|\\| '''([^']*)'''" l)
+             (U False (Pairof String (Listof (U False String)))))
       [#f
        (match 
            (regexp-match #px"^\\| \\[\\[[^]]*\\]\\] \\[([^]]*)\\] \\|\\| '''([^']*)'''" l)

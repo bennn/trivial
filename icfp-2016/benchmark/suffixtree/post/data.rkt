@@ -1,5 +1,6 @@
 #lang typed/racket/base
 (require trivial/no-colon)
+
 (provide
   (struct-out label)
   (struct-out suffix-tree)
