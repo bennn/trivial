@@ -121,7 +121,7 @@ In Typed Racket this function is rather simple because the most common
 Now to use @racket[fmt->types] in an elaboration.
 Given a call to @racket[printf], we check the number of arguments and
  add type annotations using the inferred types.
-For all other syntax patterns, @racket[t-printf] is the identity transformation.
+For all other syntax patterns, @racket[t-printf] is the identity elaboration.
 
 @exact|{
 \hfill\fbox{$\elabf \in \interp$}
@@ -140,7 +140,7 @@ For all other syntax patterns, @racket[t-printf] is the identity transformation.
 }|
 
 The first example is rejected immediately as a syntax error.
-The second is a valid translation, but will lead to a static type error.
+The second is a valid elaboration, but will lead to a static type error.
 Put another way, the format string @racket{~b} specializes the type of
  @racket[printf] from @racket[(String Any * -> Void)] to @racket[(String Integer -> Void)].
 The third example demonstrates that higher-order
@@ -201,9 +201,13 @@ Using this general type is cumbersome for simple patterns
 \end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
 }|
 
-@; TODO
-We implement a parentheses-counting interpretation that parses regular expressions
+
+We alleviate the need for casts and guards in simple patterns
+ with a parentheses-counting
+ interpretation that parses regular expressions
  and returns the number of groups.
+If there is any doubt whether a group will capture, we default to the general
+ @racket[regexp-match] type.
 
 @todo{fbox} @racket[rx->groups] @exact|{$\in \interp$}|
 
@@ -216,7 +220,7 @@ We implement a parentheses-counting interpretation that parses regular expressio
 #false
 ]
 
-The corresponding transformation
+The corresponding elaboration
  inserts casts to subtype the result of calls to @racket[regexp-match].
 It also raises syntax errors when an uncompiled regular expression contains
  unmatched parentheses.
@@ -239,31 +243,45 @@ By tokenizing symbolic λ-expressions, we can interpret their domain
  statically. @todo{fbox} @racket[fun->domain] @exact|{$\in \interp$}|
 
 @racketblock[
-> (fun->arity '(λ (x y z) (x (z y) y)))
+> (fun->domain '(λ (x y z) (x (z y) y)))
 '[Any Any Any]
-> (fun->arity '(λ ([x : Real] [y : Real]) x))
+> (fun->domain '(λ ([x : Real] [y : Real]) x))
 '[Real Real]
 ]
 
-When domain information is available at call sites to a @racket[curry] function,
- we can produce code that will pass typechecking.
-One method is to swap @racket[curry] with an indexed version,
- as demonstrated by @racket[t-swap] @exact|{$\in \trans$}|
+When domain information is available at calls to a @racket[curry] function,
+ we elaborate to a type-correct, indexed version of @racket[curry].
+Conceptually, we give @racket[curry] the unusable type @racket[(⊥ -> ⊤)] and
+ elaboration produces a subtype @racket[curry_i].
+
+@todo{fbox} @exact|{$\in \elab$}|
 
 @racketblock[
-> (t-swap '(curry (λ (x y) x)))
-'(curry_1 (λ (x y) x))
+> ('(curry (λ (x y) x)))
+'(curry_2 (λ (x y) x))
 ]
 
-Another option is to implement @racket[curry] with unsafe tools from
- the language runtime and assign it the trivial type @racket[(⊥ -> ⊤)]
-A transformation would replace this type with a subtype where possible
- and let the type checker reject other calls.
-Our implementation employs the first strategy, but generates a new @racket[curry_i]
- at each call site by folding over the inferred function domain.
-@; Mention this later, or show code?
+@;Our implementation generates each @racket[curry_i] at compile-time by folding
+@; over the interpreted domain.
+This same technique can be used to implement generalized @racket[map] in
+ languages without variable-arity polymorphism@~cite[stf-esop-2009].
 
-TODO same goes for zipWith in a language without polydots
+@racketblock[
+> (define (cite (p : String) (d : String))
+    (printf "~a v. ~a, U.S.\n" p d))
+> (define plaintiff*
+    '("Rasul" "Chisholm"))
+> (define defendant*
+    '("Bush" "Georgia"))
+> (map cite plaintiff* defendant*)
+Rasul v. Bush, U.S.
+Chisholm v. Georgia, U.S.
+]
+
+Leaving out an argument to @racket[printf] or passing an extra list
+ when calling @racket[map] will raise an arity error during elaboration.
+On the other hand, if we modified @racket[cite] to take a third argument
+ then the above call to @racket[map] would fail to compile.
 
 
 @; =============================================================================

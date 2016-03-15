@@ -1203,3 +1203,9 @@
    #:location (journal-location hosc #:volume 25 #:number 1 #:pages '(165 207))
    #:date 2012))
 
+(define stf-esop-2009
+  (make-bib
+   #:title "Practical Variable-Arity Polymorphism"
+   #:author (authors "T. Stephen Strickland" "Sam Tobin-Hochstadt" "Matthias Felleisen")
+   #:location (proceedings-location esop #:pages '(32 46))
+   #:date 2009))

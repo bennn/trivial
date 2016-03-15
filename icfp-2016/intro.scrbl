@@ -84,8 +84,8 @@ For a sense of the practical use-cases we envision, consider the function
 
 @racketblock[
 > (regexp-match #rx"(.*) v\\. (.*),"
-    "Chisom v. Roemer, 501 U.S. 380")
-'("Chisom v. Roemer," "Chisom" "Roemer")
+    "Morrison v. Olson, 487 U.S. 654")
+'("Morrison v. Olson" "Morrison" "Olson")
 ]
 
 The parentheses in the regular expression delimit groups to match and
