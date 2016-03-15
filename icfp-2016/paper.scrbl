@@ -22,9 +22,9 @@
   This pearl presents an elaboration-based technique for refining the
    analysis of an existing type system on existing code
    @emph{from outside} the type system.
-  We have implemented the technique as a Typed Racket library;
-   from the programmers' perspective, simply importing the library makes the type
-   checker more capable---no annotations or new syntax required.
+  We have implemented the technique as a Typed Racket library.
+  From the programmers' perspective, simply importing the library makes the type
+   system more perceptive---no annotations or new syntax required.
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]

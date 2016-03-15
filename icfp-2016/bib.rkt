@@ -186,6 +186,20 @@
    #:title @elem{java.lang.reflect.Proxy}
    #:url "http://download.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html"))
 
+(define clojure-macros
+  (make-bib
+   #:date 2016
+   #:author "Clojure 1.8.0"
+   #:title "Macros"
+   #:url "http://clojure.org/reference/macros"))
+
+(define rust-compiler-plugins
+  (make-bib
+   #:date 2016
+   #:author "Rust 1.7"
+   #:title "Compiler Plugins"
+   #:url "https://doc.rust-lang.org/book/compiler-plugins.html"))
+
 (define gal-firefox
   (make-bib
    #:date 2010
@@ -1167,4 +1181,25 @@
    #:author (authors "Tiark Rompf" "Martin Odersky")
    #:location (proceedings-location gpce)
    #:date 2010))
+
+(define kkt-pldi-2016
+  (make-bib
+   #:title "Occurrence Typing Modulo Theories"
+   #:author (authors "Andrew Kent" "David Kempe" "Sam Tobin-Hochstadt")
+   #:location (proceedings-location pldi)
+   #:date 2016))
+
+(define fcdb-jfp-2012
+  (make-bib
+   #:title "Macros that Work Together: Compile-time bindings, partial expansion, and definition contexts"
+   #:author (authors "Matthew Flatt" "Ryan Culpepper" "David Darais" "Robert Bruce Findler")
+   #:location (proceedings-location jfp #:pages '(181 216))
+   #:date 2012))
+
+(define ramho-hosc-2013
+  (make-bib
+   #:title "Scala-Virtualized: Linguistic Reuse for Deep Embeddings"
+   #:author (authors "Tiark Rompf" "Nada Amin" "Adriaan Moors" "Philipp Haller" "Martin Odersky")
+   #:location (journal-location hosc #:volume 25 #:number 1 #:pages '(165 207))
+   #:date 2012))
 

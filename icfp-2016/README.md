@@ -2,9 +2,15 @@ trivial @ icfp 2016, hopefully
 ===
 
 TODO
-- tighten abstract?
+    "United States v. Hayes, 555 U.S. 415 (2009)")
+>  (regexp-match #rx"(a*)b" "aab")
+'("aab" "aa")
+>  (regexp-match #rx"(a*)b" "ccc")
+#false
 -
 -
+Like Shakespeare's Portia, we understand that the phrase ``pound of flesh''
+ says nothing about drawing blood and specialize accordingly.
 
 ---
 
