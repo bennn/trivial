@@ -102,11 +102,11 @@ The elaborator @emph{also} handles the common case where the regular expression
 
 ; Other code here
 
-(define rxm regexp-match)
+(define r-m regexp-match)
 
 (define (get-plaintiff (s : String)) : String
   (cond
-   [(rxm rx-case s)
+   [(r-m rx-case s)
     => cadr]
    [else "J. Doe"]))
 }
@@ -126,5 +126,5 @@ Their illustrative examples were format strings, regular expressions,
 Relative to their pioneering work, we adapt Herman & Meunier's
  transformations to a typed language by inserting type annotations and boolean
  guards into the programs.
-Our treatment of @racket[define] and @racket[let] forms is also new.
+Our treatment of definition forms is also new.
 

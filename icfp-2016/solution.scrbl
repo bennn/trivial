@@ -6,8 +6,6 @@
 
 @title[#:tag "sec:solution"]{Interpretations, Elaborations}
 
-The main result of this pearl is defining a compelling set of
- @emph{textualist elaborators}.
 A textualist elaborator (henceforth, @emph{elaborator})
  is a specific kind of macro, meant to be run on the syntax of a program
  before the program is type-checked.

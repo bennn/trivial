@@ -10,69 +10,52 @@
 @; | > (f x)
 @; | y
 @; +------------
-@; TODO -- maybe a better title is "what can we learn from values"?
 @; TODO remove all refs to implementation?
 
+@title[#:tag "sec:usage"]{What we can learn from Values}
 
-@title[#:tag "sec:usage"]{Real-World Metaprogramming}
-@;@(define base-eval
-@;  (make-evaluator 'racket/base 
-@;    (sandbox-output 'string)
-@;    (sandbox-error-output 'string)
-@;    (error-display-handler (lambda (x y) (displayln "wepa")))))
-
-We have defined useful letter-of-values transformations for a variety of
+We have defined useful elaborators for a variety of
  common programming tasks ranging from type-safe string formatting to
  constant-folding of arithmetic.
-These transformations are implemented in Typed Racket@~cite[TypedRacket],
- which inherits Racket's powerful macro system@~cite[plt-tr1].
-For us, this means that Typed Racket comes equipped with powerful tools
- for analyzing and transforming the syntax of programs before any type checking
- occurs.
-
-@;Our exposition does not assume any knowledge of Racket or Typed Racket, but
-@; a key design choice of the Typed Racket language model bears mentioning:
-@; evaluation of a Typed Racket program happens across three distinct stages,
-@; shown in @Figure-ref{fig:staging}.
-@;First the program is read and macro-expanded; as expanding a macro introduces
-@; new code, the result is recursively read and expanded until no macros remain.
-@;@; TODO stronger distinction between read/expand and typecheck
-@;Next, the @emph{fully-expanded} Typed Racket program is type checked.
-@;If checking succeeds, types are erased and the program is handed to the Racket
-@; compiler.
-@;
-@;For us, this means that we can implement @exact|{$\trans$}|
-@; functions as macros and rely on the macro expander to invoke our
-@; transformations before the type checker runs.
-@;The transformations can use @exact|{$\interp$}| functions as
-@; needed to complete their analysis.
-@;
-@;@figure["fig:staging"
-@;  @list{Typed Racket language model}
-@;  @exact|{\input{fig-staging}}|
-@;]
-
+These elaborators are implemented in Typed Racket@~cite[TypedRacket], a macro-extensible
+ typed language that compiles into Racket@~cite[plt-tr1].
+An important component of Typed Racket's design is that all macros in a program
+ are fully expanded before type-checking begins.
+This convention lets us implement our elaborators as macros that expand into
+ typed code.
 
 @parag{Conventions}
-Interpretation and transformation functions are defined over syntactic expressions
- and values.
-To make clear the difference between Typed Racket terms and syntactic representations
+@itemlist[
+ @item{
+Interpretation and elaboration functions are defined over symbolic expressions
+ and values; specifically, over @emph{syntax objects}.
+To make clear the difference between Typed Racket terms and representations
  of terms, we quote the latter and typeset it in green.
 Using this notation, @racket[(λ (x) x)] is a term implementing the identity
- function and @racket['(λ (x) x)] is a syntactic object that will evaluate
+ function and @racket['(λ (x) x)] is a representation that will evaluate
  to the identity function.
 Values are typeset in green because their syntax and term representations are identical.
-
+} @item{
 In practice, syntax objects carry lexical information.
-Such information is extremely important, but to simplify our presentation we
- pretend it does not exist.
-Think of this convention as removing the oyster shell to get a clear view of the pearl.
-
-Using infix @tt{:} for type annotations, for instance @racket[(x : Integer)].
-These are normally written as @racket[(ann x Integer)].
-
-sql is short for postgresql
-
+Such information is extremely important, especially for implementing @racket[define]
+ and @racket[let] forms that respect @exact{$\alpha$}-equivalence, but
+ to simplify our presentation we omit it.
+} @item{
+We use an infix @tt{:} to write explicit type annotations and casts,
+ for instance @racket[(x : Integer)].
+These are normally @racket[(ann x Integer)] and @racket[(cast x Integer)],
+ respectively.
+} @item{
+In @Secref{sec:sql}, @tt{sql} is short for @tt{postgresql}, i.e.
+ the code we present in that section is only implemented for the @tt{postgresql}
+ interface.
+} @item{
+Until @Secref{sec:def-overview}, we use @racket[define] and @racket[let] forms sparingly.
+In fact, this practice aligns with our implementation---once the interpretations
+ and elaborations are defined, extending them to handle arbitrary definitions
+ and renamings is purely mechanical.
+}
+]
 
 @; =============================================================================
 @section{String Formatting}
@@ -80,10 +63,9 @@ sql is short for postgresql
 @; TODO add note about the ridiculous survey figure? Something like 4/5 doctors
 Format strings are the world's second most-loved domain-specific language (DSL).
 @; @~cite[wmpk-algol-1968]
-At first glance, a format string is just a string; in particular, any string
- used as the first argument in a call to @racket[printf].
-But between the quotation marks, format strings may contain @emph{format directives}
- that tell @emph{where} and @emph{how} values can be spliced into the format string.
+All strings are valid format strings; additionally, a format string may contain
+ @emph{format directives} describing @emph{where} and @emph{how} values can be
+ spliced into the format string.
 @; TODO scheme or common lisp?
 Racket follows the Lisp tradition@~cite[s-lisp-1990] of using a tilde character (@tt{~})
  to prefix format directives.
@@ -359,7 +341,7 @@ Each operation match the length of its arguments at compile-time and expand
 
 
 @; =============================================================================
-@section{Database Queries}
+@section[#:tag "sec:sql"]{Database Queries}
 @; db
 @; TODO Ocaml, Haskell story
 @; TODO connect to ew-haskell-2012 os-icfp-2008

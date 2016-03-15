@@ -23,7 +23,7 @@
    analysis of an existing type system on existing code
    without changing the type system.
   We have implemented the technique as a Typed Racket library.
-  From the programmers' perspective, simply importing the library makes the type
+  From the programmers' viewpoint, simply importing the library makes the type
    system more perceptive---no annotations or new syntax required.
 }
 

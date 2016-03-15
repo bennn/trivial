@@ -1,7 +1,14 @@
 trivial @ icfp 2016, hopefully
 ===
 
-TODO
+@parag{Eager Evaluation}
+
+Our implementation is available as a Racket package.
+To install the library, download Racket and then run @racket[raco pkg install ???].
+The source code is on Github at: @url["https://github.com/???/???"].
+
+Really, elaboration is the whole story.
+
     "United States v. Hayes, 555 U.S. 415 (2009)")
 >  (regexp-match #rx"(a*)b" "aab")
 '("aab" "aa")
