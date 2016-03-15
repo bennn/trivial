@@ -122,7 +122,7 @@
 ;; Gets a slice of the label on the half-open interval [i, j)
 (: sublabel (case-> (-> label Index label)
                     (-> label Index Index label)))
-(define-values (sublabel)
+(define sublabel
   (case-lambda
     ((label i)
      (sublabel label i (label-length label)))
@@ -137,7 +137,7 @@
 ;; destructively sets the input label to sublabel.
 (: sublabel! (case-> (-> label Index Void)
                      (-> label Index Index Void)))
-(define-values (sublabel!)
+(define sublabel!
   (case-lambda
     ((label i)
      (sublabel! label i (label-length label)))

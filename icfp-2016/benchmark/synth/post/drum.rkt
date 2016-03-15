@@ -30,7 +30,7 @@
     (: ds* In-Indexes)
     (define ds* (vector n-samples))
     (: ds  Indexes)
-    (define-values (ds)
+    (define ds
       (check-array-shape ds*
                          (λ () (raise-argument-error 'name "Indexes" ds))))
     (: vs (Vectorof Flonum))

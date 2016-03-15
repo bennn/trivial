@@ -30,7 +30,7 @@
   syntax/parse
   syntax/id-table
   (for-template
-    (prefix-in tr: (only-in typed/racket/base define let let-syntax quote set!))
+    (prefix-in tr: typed/racket/base)
     (prefix-in r: (only-in racket/base quote))))
 
 ;; =============================================================================
@@ -90,9 +90,9 @@
          [else               (parser stx)]))))
   (define f-define
     (lambda (stx)
-      (syntax-parse stx
+      (syntax-parse stx #:literals (tr:#%plain-lambda)
        [(_ name:id v)
-        #:with v+ (expand-expr (syntax/loc stx v))
+        #:with (tr:#%plain-lambda (_) v+) (expand-expr (syntax/loc stx (tr:lambda (name) v)))
         #:when (syntax-e (syntax/loc stx v+))
         #:with m (f-parse (syntax/loc stx v+))
         #:when (syntax-e (syntax/loc stx m))
