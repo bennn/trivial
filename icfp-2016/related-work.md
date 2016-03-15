@@ -117,3 +117,8 @@ SoundX -- cannot reporduce this because
 [anti-TH](http://stackoverflow.com/questions/10857030/whats-so-bad-about-template-haskell)
 ---
 Not great news for me / metaprogramming
+
+
+[LMS](https://scala-lms.github.io//publications.html)
+---
+The good scala macro system.

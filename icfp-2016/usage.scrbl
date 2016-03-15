@@ -21,7 +21,7 @@ These elaborators are implemented in Typed Racket@~cite[TypedRacket], a macro-ex
  typed language that compiles into Racket@~cite[plt-tr1].
 An important component of Typed Racket's design is that all macros in a program
  are fully expanded before type-checking begins.
-This convention lets us implement our elaborators as macros that expand into
+This protocol lets us implement our elaborators as macros that expand into
  typed code.
 
 @parag{Conventions}
@@ -43,8 +43,14 @@ Such information is extremely important, especially for implementing @racket[def
 } @item{
 We use an infix @tt{:} to write explicit type annotations and casts,
  for instance @racket[(x : Integer)].
-These are normally @racket[(ann x Integer)] and @racket[(cast x Integer)],
- respectively.
+These normally have two different syntaxes, respectively
+ @racket[(ann x Integer)] and @racket[(cast x Integer)].
+} @item{
+  TODO phantom item for space
+  TODO phantom item for space
+  TODO phantom item for space
+  TODO phantom item for space
+  TODO phantom item for space
 } @item{
 In @Secref{sec:sql}, @tt{sql} is short for @tt{postgresql}, i.e.
  the code we present in that section is only implemented for the @tt{postgresql}
@@ -58,9 +64,10 @@ In fact, this practice aligns with our implementation---once the interpretations
 ]
 
 @; =============================================================================
-@section{String Formatting}
+@section{Format Strings}
 
 @; TODO add note about the ridiculous survey figure? Something like 4/5 doctors
+@; TODO note regexp is the first?
 Format strings are the world's second most-loved domain-specific language (DSL).
 @; @~cite[wmpk-algol-1968]
 All strings are valid format strings; additionally, a format string may contain
@@ -72,59 +79,77 @@ Racket follows the Lisp tradition@~cite[s-lisp-1990] of using a tilde character 
 For example, @racket[~s] converts any value to a string and @racket[~b] converts a
  number to binary form.
 
-@interaction[
-    (printf "binary(~s) = ~b" 7 7)
-]
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\Scribtexttt{{\Stttextmore} }\RktPn{(}\RktSym{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{7}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{7}\RktPn{)}
+
+\RktOut{binary(7) = 111}
+
+\begin{SingleColumn}\end{SingleColumn}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 If the format directives do not match the arguments to @racket[printf], most
- languages fail at run-time@~cite[a-icfp-1999].
-This is a simple kind of value error that should be caught statically.
+ languages fail at run-time.
+This is a simple kind of value error that could be caught statically.
 
-@; TODO print errors nicer
-@interaction[
-    (printf "binary(~s) = ~b" "7" "7")
-]
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\Scribtexttt{{\Stttextmore} }\RktPn{(}\RktSym{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"7"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"7"}\RktPn{)}
 
-Detecting inconsistencies between a format string and its arguments is easy
- provided we have a function @racket[fmt->types] @exact|{$\in \interp$}| for
- reading types from a format string.
+\RktErr{printf: format string requires argument of type $<$exact{-}number$>$}
+
+\begin{SingleColumn}\end{SingleColumn}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
+
+Detecting inconsistencies between a format string and its arguments is straightforward
+ if we define an interpretation @racket[fmt->types] @exact|{$\in \interp$}| for
+ reading types from a format string value.
 In Typed Racket this function is rather simple because the most common
- directives accept @code{Any} type of value.
-Such are the joys of uniform syntax---printing is free.
+ directives accept @code{Any} type of value---in a language with uniform syntax,
+ printing comes for free.
 
-@racketblock[
-> (fmt->types "binary(~s) = ~b")
-'[Any Integer]
-> (fmt->types '(λ (x) x))
-#false
-]
+@exact|{
+\hfill\fbox{\RktMeta{fmt->types} $\in \interp$}
 
-Now to use @racket[fmt->types] in a function @racket[t-printf] @exact|{$\in \trans$}|.
-Given a call to @racket[printf], we validate the number of arguments and
- add type annotations derived using @racket[fmt->types].
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{fmt{-}{\Stttextmore}types}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\RktPn{)}
+
+\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{Any}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{]}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{fmt{-}{\Stttextmore}types}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{$\lambda$}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{x}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{x}\RktVal{)}\RktPn{)}
+
+\RktVal{\#false}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
+
+Now to use @racket[fmt->types] in an elaboration.
+Given a call to @racket[printf], we check the number of arguments and
+ add type annotations using the inferred types.
 For all other syntax patterns, @racket[t-printf] is the identity transformation.
 
-@racketblock[
-> (t-printf '(printf "~a"))
-⊥
-> (t-printf '(printf "~b" "2"))
-'(printf "~b" ("2" : Integer))
-> (t-printf printf)
-'printf
-]
+@exact|{
+\hfill\fbox{$\elabf \in \interp$}
+
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$a"}\RktVal{)}\RktPn{)}
+
+\RktSym{$\perp$}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"2"}\RktVal{)}\RktPn{)}
+
+\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{"2"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{)}\RktVal{)}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{printf}\RktPn{)}
+
+\RktVal{{\textquotesingle}}\RktVal{printf}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 The first example is rejected immediately as a syntax error.
-The second is temporarily accepted, but will cause a static type error.
+The second is a valid translation, but will lead to a static type error.
 Put another way, the format string @racket{~b} specializes the type of
  @racket[printf] from @racket[(String Any * -> Void)] to @racket[(String Integer -> Void)].
-The third is slightly more interesting; it demonstrates that higher-order
- uses of @racket[printf] default to the standard behavior.
+The third example demonstrates that higher-order
+ uses of @racket[printf] default to the standard, unspecialized behavior.
 
 
 @; =============================================================================
 @section{Regular Expressions}
-Moving now from the second most-loved DSL to the first, regular expressions
- are often used to capture sub-patterns within a string.
+Regular expressions are often used to capture sub-patterns within a string.
 
 @racketblock[
 > (regexp-match #rx"(.*)@(.*)" "toni@merchant.net")
@@ -138,7 +163,7 @@ Inside the pattern, the parentheses delimit sub-pattern @emph{groups}, the dots 
 The second argument is a string to match against the pattern.
 If the match succeeds, the result is a list containing the entire matched string
  and substrings corresponding to each group captured by a sub-pattern.
-If the match fails, Racket's @racket[regexp-match] returns @racket[#false].
+If the match fails, @racket[regexp-match] returns @racket[#false].
 
 @racketblock[
 > (regexp-match #rx"-(2*)-" "111-222-3333")
@@ -148,34 +173,39 @@ If the match fails, Racket's @racket[regexp-match] returns @racket[#false].
 ]
 
 Certain groups can also fail to capture even when the overall match succeeds.
-This can happen, for example, when a group is followed by a Kleene star.
+This can happen when a group is followed by a Kleene star.
 
 @racketblock[
 > (regexp-match #rx"(a)*(b)" "b")
 '("b" #f "b")
 ]
 
-Therefore, a simple catch-all type for @racket[regexp-match] is
+Therefore, a catch-all type for @racket[regexp-match] is fairly large:
  @racket[(Regexp String -> (U #f (Listof (U #f String))))].
-Using the general type, however, is cumbersome for simple patterns
+Using this general type is cumbersome for simple patterns
  where a match implies that all groups will successfully capture.
 
-@;@(define tr-eval (make-base-eval '(require typed/racket/base racket/list)))
-@racketblock[
-> (define (get-domain [full-name : String]) : String
-    (cond
-     [(regexp-match #rx"(.*)@(.*)" full-name)
-      => third]
-     [else "Match Failed"]))
-]
-@;Error: expected String, got (U #false String)
-@; `third` could not be applied to arguments
-@; Arguments: (Listof (U #false String))
-@; Expected Result: String
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{define}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{get{-}domain}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{[}\RktSym{full{-}name}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{String}\RktPn{]}\RktPn{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{String}
 
-Analysing the parentheses contained in a regular expression pattern can often
- determine the number of groups statically.
-We implement this as a function @racket[rx->groups] @exact|{$\in \interp$}|
+\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktPn{(}\RktSym{cond}
+
+\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktPn{[}\RktPn{(}\RktSym{regexp{-}match}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{\#rx"({\hbox{\texttt{.}}}*)@({\hbox{\texttt{.}}}*)"}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{full{-}name}\RktPn{)}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktSym{={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{third}\RktPn{]}
+
+\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktPn{[}\RktSym{else}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"Match Failed"}\RktPn{]}\RktPn{)}\RktPn{)}
+
+\RktErr{Error: expected $<$String$>$, got $<$(U \#false String)$>$}
+
+\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
+
+@; TODO
+We implement a parentheses-counting interpretation that parses regular expressions
+ and returns the number of groups.
+
+@todo{fbox} @racket[rx->groups] @exact|{$\in \interp$}|
 
 @racketblock[
 > (rx->groups #rx"(a)(b)(c)")
@@ -186,12 +216,12 @@ We implement this as a function @racket[rx->groups] @exact|{$\in \interp$}|
 #false
 ]
 
-@; TODO can we not talk about casts?
 The corresponding transformation
- @racket[t-regexp] @exact|{$\in \trans$}|
- inserts casts to refine the type of results
- produced by @racket[regexp-match].
-It also flags malformed groups in uncompiled regular expressions.
+ inserts casts to subtype the result of calls to @racket[regexp-match].
+It also raises syntax errors when an uncompiled regular expression contains
+ unmatched parentheses.
+
+@todo{fbox}
 
 @racketblock[
 > (t-regexp '(regexp-match #rx"(a)b" str))
@@ -203,12 +233,10 @@ It also flags malformed groups in uncompiled regular expressions.
 
 
 @; =============================================================================
-@section{Procedure Arity}
+@section{Anonymous Functions}
 
-Anonymous functions are another value form whose representation contains
- useful data.
-By tokenizing symbolic λ-expressions, we can parse their domain
- syntactically in a function @racket[fun->domain] @exact|{$\in \interp$}|
+By tokenizing symbolic λ-expressions, we can interpret their domain
+ statically. @todo{fbox} @racket[fun->domain] @exact|{$\in \interp$}|
 
 @racketblock[
 > (fun->arity '(λ (x y z) (x (z y) y)))
@@ -239,7 +267,7 @@ TODO same goes for zipWith in a language without polydots
 
 
 @; =============================================================================
-@section{Constant Folding}
+@section{Numeric Constants}
 
 The identity interpretation is useful for lifting constant values to
  the compile-time environment.

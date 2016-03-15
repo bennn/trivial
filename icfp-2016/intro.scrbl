@@ -44,7 +44,7 @@ The standard work-around@~cite[fi-jfp-2000] is to maintain size-indexed
 }
 @;    Prelude> let first_3 (x, y, z) = x
 
-These problems are well known, and are often used to motive research on
+These problems are well known, and are often used to motivate research on
  dependently typed programming languages@~cite[a-icfp-1999].
 Short of abandoning ship for a completely new type system, languages including
  Haskell, OCaml, Java, and Typed Racket have seen proposals for detecting
@@ -94,7 +94,7 @@ In this example, there are two groups.
 We have written an elaborator for @racket[regexp-match] that will statically
  parse its first argument, count these groups, and refine the
  result type for specific calls to @racket[regexp-match].
-The elaborator @emph{also} handles the common case where the regular expression
+The elaborator also handles the common case where the regular expression
  argument is a compile-time constant and respects @exact{$\alpha$}-equivalence.
 
 @codeblock{
@@ -107,7 +107,7 @@ The elaborator @emph{also} handles the common case where the regular expression
 (define (get-plaintiff (s : String)) : String
   (cond
    [(r-m rx-case s)
-    => cadr]
+    => second]
    [else "J. Doe"]))
 }
 

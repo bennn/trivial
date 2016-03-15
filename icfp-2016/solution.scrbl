@@ -27,8 +27,8 @@ If @exact|{${\tt p?} \in \interp$}| and @exact|{${\tt e} \in \emph{expr}$}|,
  it may be useful to think of
  @exact|{${\tt (p?~e)}$}| as @emph{evidence} that the expression @exact|{${\tt e}$}|
  is recognized by @exact|{${\tt p?}$}|.
-Alternatively, @exact|{${\tt (p?~e)}$}| is a kind of interpolant@~cite[c-jsl-1997]
- representing details about @exact|{${\tt e}$}| relevant for program elaboration.
+Alternatively, @exact|{${\tt (p?~e)}$}| is a kind of interpolant@~cite[c-jsl-1997],
+ representing key data embedded in @exact|{${\tt e}$}|.
 Correct interpretation functions @exact|{${\tt p?}$}| obey three guidelines:
 
 @itemize[
@@ -100,3 +100,4 @@ If neither @exact|{${\tt e}$}| nor @exact|{${\tt e'}$}| type checks, then we hav
 In a perfect world both would diverge, but the fundamental limitations of
  static typing@~cite[fagan-dissertation-1992] and computability
  keep us imperfect.
+TODO TODO TODO Extra space hierExtra space hierExtra space hierExtra space
