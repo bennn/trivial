@@ -29,10 +29,9 @@
   racket/syntax
   syntax/parse
   syntax/id-table
-  (for-syntax (only-in typed/racket/base let let-syntax #%app))
   (for-template
-    (prefix-in r: (only-in racket/base quote))
-    (prefix-in tr: (only-in typed/racket/base quote))))
+    (prefix-in tr: (only-in typed/racket/base define let let-syntax quote set!))
+    (prefix-in r: (only-in racket/base quote))))
 
 ;; =============================================================================
 
@@ -97,10 +96,9 @@
         #:when (syntax-e (syntax/loc stx v+))
         #:with m (f-parse (syntax/loc stx v+))
         #:when (syntax-e (syntax/loc stx m))
-        #:with define-stx (format-id stx "define")
         (free-id-table-set! tbl #'name (syntax-e #'m))
         (syntax/loc stx
-          (define-stx name v+))]
+          (tr:define name v+))]
        [_ #f])))
   (define f-let
     (lambda (stx)
@@ -109,12 +107,10 @@
         #:with (v+* ...) (map expand-expr (syntax-e (syntax/loc stx (v* ...))))
         #:with (m* ...) (map f-parse (syntax-e (syntax/loc stx (v+* ...))))
         #:when (andmap syntax-e (syntax-e (syntax/loc stx (m* ...))))
-        #:with let-stx (format-id stx "let")
-        #:with let-syntax-stx (format-id stx "let-syntax")
         (quasisyntax/loc stx
-          (let-stx ([name* v+*] ...)
-            (let-syntax-stx ([name* (make-rename-transformer
-                                      (syntax-property #'name* '#,key 'm*))] ...)
+          (tr:let ([name* v+*] ...)
+            (tr:let-syntax ([name* (make-rename-transformer
+                                     (syntax-property #'name* '#,key 'm*))] ...)
               e* ...)))]
        [_ #f])))
   (values
@@ -136,5 +132,9 @@
   (or (parser stx)
     (syntax-parse stx
      [(_ e* ...)
-      #:with id-stx (format-id stx "~a" id-sym)
+      #:with id-stx (case id-sym
+                     [(define) #'tr:define]
+                     [(let)    #'tr:let]
+                     [(set!)   #'tr:set!]
+                     [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
       (syntax/loc stx (id-stx e* ...))])))

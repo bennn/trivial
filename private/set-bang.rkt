@@ -24,7 +24,7 @@
 ;   (syntax-property stx rx-key)
 ;   (syntax-property stx vector-length-key)))
 
-(define-syntax set!: (make-keyword-alias #'set!
+(define-syntax set!: (make-keyword-alias 'set!
   (lambda (stx) (syntax-parse stx
    [(_ name val)
     #:when (has-important-syntax-property? #'name)

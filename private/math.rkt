@@ -92,8 +92,8 @@
 
 ;; -----------------------------------------------------------------------------
 
-(define-syntax define-num: (make-keyword-alias #'define num-define))
-(define-syntax let-num: (make-keyword-alias #'let num-let))
+(define-syntax define-num: (make-keyword-alias 'define num-define))
+(define-syntax let-num: (make-keyword-alias 'let num-let))
 
 (define-syntax make-numeric-operator
   (syntax-parser

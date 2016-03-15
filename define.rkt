@@ -9,7 +9,8 @@
   trivial/private/set-bang
   (for-syntax
     trivial/private/common
-    racket/base)
+    syntax/parse
+    typed/racket/base)
   (only-in trivial/private/math
     num-define
     num-let)
@@ -25,6 +26,7 @@
     (or (num-define stx)
         (rx-define stx)
         (vec-define stx)))))
+
 (define-syntax let: (make-keyword-alias 'let
   (lambda (stx)
     (or (num-let stx)
