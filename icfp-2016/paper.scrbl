@@ -46,5 +46,6 @@
 @;Asumu Takikawa and Leif Andersen for rejecting some earlier designs,
 @;Matthias Felleisen for sharing his worldview,
 @;and Northeastern PLT for comments on an earlier draft.
+@; Justin R. Slepak taught us the term ``textualist''.
 
 @generate-bibliography[#:sec-title "References"]
