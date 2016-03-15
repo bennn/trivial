@@ -1,52 +1,71 @@
 #lang scribble/sigplan @onecolumn
-@; TODO semantic brackets for translations, but not for sets
-@; TODO something like semantic brackets for interpretations?
+@; TODO color p?, e
+@; Better notation for erasure, maybe just color differently
 
 @require["common.rkt"]
 
-@title[#:tag "sec:solution"]{Interpretations and Translations}
+@title[#:tag "sec:solution"]{Interpretations, Elaborations}
 
-The out-of-bounds reference in @code{[0,1,2] !! 3} is evident from the
- definition of @code{!!} and the values passed to it.
-We also know that @code{1 `div` 0} will go wrong because division by zero is
- mathematically undefined.
-Similar reasoning about the meaning of @racket{%d} and the variables
- bound in @code{(\ x y z -> x)} can determine the correctness
- of calls to @racket[printf] and @racket[curry].
+The main result of this pearl is defining a compelling set of
+ @emph{textualist elaborators}.
+A textualist elaborator (henceforth, @emph{elaborator})
+ is a specific kind of macro, meant to be run on the syntax of a program
+ before the program is type-checked.
+The behavior of an elaborator is split between two functions: interpretation
+ and elaboration.
 
-Generalizing these observations, our analysis begins with a class of
- predicates for extracting meta-information from expressions;
- for example deriving the length of a list value or arity of a procedure value.
+An @emph{interpretation} function attempts to parse data from an expression.
+In the Lisp tradition, we will use the value @racket[#false] to indicate
+ failure and refer to interpretation functions as @emph{predicates}.
+Using @exact|{\RktMeta{expr}}| to denote the set of syntactically valid, symbolic
+ program expressions
+ and @exact|{\RktVal{val}}| to denote the set of symbolic values,
+ we define the set @exact{$\interp$}
+ of interpretation functions.
 
-    @exact|{$$\interp\ : \big\{\emph{expr} \rightarrow \emph{Maybe\,(value)}\big\}$$}|
+  @exact|{$$\interp\ : \big\{\RktMeta{expr} \rightarrow ({\RktVal{val}} \cup {\tt \RktVal{\#false}})\big\}$$}|
 
-@; TODO list footnote, state "predicate" as word of choice (for lack ofa better one)
+If @exact|{${\tt p?} \in \interp$}| and @exact|{${\tt e} \in \emph{expr}$}|,
+ it may be useful to think of
+ @exact|{${\tt (p?~e)}$}| as @emph{evidence} that the expression @exact|{${\tt e}$}|
+ is recognized by @exact|{${\tt p?}$}|.
+Alternatively, @exact|{${\tt (p?~e)}$}| is a kind of interpolant@~cite[c-jsl-1997]
+ representing details about @exact|{${\tt e}$}| relevant for program elaboration.
+Correct interpretation functions @exact|{${\tt p?}$}| obey three guidelines:
 
-Applying a function @exact|{${\tt f} \in \interp\ $}| to a syntactically
- well-formed expression should either yield a value describing some aspect
- of the input expression or return a failure result.@note{The name @emph{interp}
-  is a mnemonic for @emph{interpret} or @emph{interpolant}@~cite[c-jsl-1997].}
-Correct predicates @code{f} should recognize expressions with some common
- structure (not necessarily a common type) and apply a uniform algorithm
- to computer their result.
-The reason for specifying @exact|{$\interp\ $}| over expressions rather than
- values will be made clear in @Secref{sec:usage}.
+@itemize[
+  @item{
+    The expressions for which @exact|{${\tt p?}$}| returns a non-@racket[#false]
+     value must have some common structure.
+  }
+  @item{
+    Non-@racket[#false] results @exact|{${\tt (p?~e)}$}| must be computed by a
+     uniform algorithm.
+  }
+  @item{
+    Non-@racket[#false] results must have some common structure.
+  }
+]
 
-Once we have predicates for extracting data from the syntax of expressions,
- we can use the data to guide program transformations.
-@; The main result of this pearl is defining a compelling set of such transformations.
+This vague notion of common structure may be expressible as a type in an
+ appropriate type system.
+It is definitely not a type in the target language's type system.
 
-    @exact|{$$\trans : \big\{ \emph{expr} \rightarrow \emph{expr}\big\} $$}|
+The set @exact|{$\elab$}| of @emph{elaboration} functions contains
+ function mapping expressions to expressions.
+We write elaboration functions as @exact{$\elabf$} and their
+ to an expression @exact{$e$} as @exact{$\llbracket e \rrbracket$}.
+Elaborations are allowed to fail raising syntax errors, which we notate as
+ @exact|{$\bot$}|.
 
-Each @exact|{${\tt g} \in \trans$}| is a partial function such that @exact|{${\tt (g~e)}$}|
- returns either a specialized expression @exact|{${\tt e'}$}| or fails due to a value
- error.
-These transformations should be applied to expressions @exact|{${\tt e}$}| before
- type-checking; the critera for correct transformations can then be given
- in terms of the language's typing judgment @exact|{$~\vdash {\tt e} : \tau$}|
- and evaluation relation @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}|,
- where @exact|{$\untyped{{\tt e}}$}| is the untyped erasure of @exact|{${\tt e}$}|.
+    @exact|{$$\elab : \big\{ {\RktMeta{expr}} \rightarrow ({\RktMeta{expr}} \cup \bot)\big\} $$}|
+
+The correctness specification for an elaborator @exact{$\elabf \in \elab$}
+ is defined in terms of the language's typing judgment @exact|{$~\vdash {\tt e} : \tau$}|
+ and evaluation relation @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}|.
+The notation @exact|{$\untyped{{\tt e}}$}| is the untyped erasure of @exact|{${\tt e}$}|.
 We also assume a subtyping relation @exact|{$\subt$}| on types.
+Let @exact|{$\elabfe{{\tt e}} = {\tt e'}$}|:
 
 @itemlist[
   @item{@emph{
@@ -81,29 +100,5 @@ We also assume a subtyping relation @exact|{$\subt$}| on types.
 If neither @exact|{${\tt e}$}| nor @exact|{${\tt e'}$}| type checks, then we have no guarantees
  about the run-time behavior of either term.
 In a perfect world both would diverge, but the fundamental limitations of
- static typing@~cite[fagan-dissertation-1992] and computability apply to our
- humble system.
-
-@; Erasure, moral, immoral
-Finally, we say that a translation @exact|{${\tt (g~e) = e'}$}| is @emph{moral} if
- @exact|{$\untyped{{\tt e}}$}| is @exact|{$\alpha$}|-equivalent to @exact|{$\untyped{{\tt e'}}$}|.
-Otherwise, the tranlation has altered more than just type annotations and is
- @emph{immoral}.
-All our examples in @Secref{sec:intro} can be implemented as moral translations.
-@; @todo{really, even curry? well it's just picking from an indexed family}
-Immoral translations are harder to show correct, but also much more useful.
-
-
-@; @section{Model}
-@; Traditional descriptions of typed calculi follow a two-stage approach.
-@; Expressions are first type-checked, then evaluated.
-@; For our framework we need to introduce a first step, elaboration,
-@;  which takes place before type checking.
-@; 
-@; To this end, we adapt the macro system model from Flatt@~cite[f-popl-2016]
-@;  with a simple type system.
-@; Syntactically-valid expressions in the language are initially untyped.
-@; The first set of 
-
-
-
+ static typing@~cite[fagan-dissertation-1992] and computability
+ keep us imperfect.

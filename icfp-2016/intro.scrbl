@@ -128,9 +128,3 @@ Relative to their pioneering work, we adapt Herman & Meunier's
  guards into the programs.
 Our treatment of @racket[define] and @racket[let] forms is also new.
 
-
-@parag{Eager Evaluation}
-
-Our implementation is available as a Racket package.
-To install the library, download Racket and then run @racket[raco pkg install ???].
-The source code is on Github at: @url["https://github.com/???/???"].
