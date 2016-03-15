@@ -1,6 +1,13 @@
 trivial @ icfp 2016, hopefully
 ===
 
+TODO
+- tighten abstract?
+-
+-
+
+---
+
 1. Intro
    - Simple + Macros ~~~ Dependent
    - Obvious to programmer now obvious to type system
@@ -118,3 +125,11 @@ Let the programmers judge.
 ---
 
 also useful for untyped (goes wihtout saying?)
+
+---
+
+  A static type system is a compromise between rejecting all bad programs
+   and approving all good programs, where @emph{bad} and @emph{good} are
+   formalized in terms of a language's operational semantics.
+  Consequently, every useful type system rejects some well-behaved programs
+   and approves other programs that go wrong at runtime.

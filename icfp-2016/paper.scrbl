@@ -14,21 +14,17 @@
 @; TODO subtitle doesn't appear in the right place
 
 @abstract{
-  A static type system is a compromise between rejecting all bad programs
-   and approving all good programs, where @emph{bad} and @emph{good} are
-   formalized in terms of a language's untyped operational semantics.
-  Consequently, every useful type system rejects some well-behaved programs
-   and approves other programs that go wrong at runtime.
-  Improving the precision of a language's type system is difficult for
-   everyone involved---designers, implementors, and users.
+  A static type system is a compromise between precision and usability.
+  Improving the ability of a type system to distinguish correct and erroneous
+   programs typically requires that programmers restructure their code or
+   provide more type annotations, neither of which are desirable tasks.
 
-  This pearl presents a simple, elaboration-based technique for refining the
-   analysis of an existing type system; that is,
-   we approve more good programs and reject more bad ones.
-  The technique may be implemented as a library and requires no annotations
-   from the programmer.
-  A straightforward (yet immoral) extension of the technique is shown to
-   improve the performance of numeric and vector operations.
+  This pearl presents an elaboration-based technique for refining the
+   analysis of an existing type system on existing code
+   @emph{from outside} the type system.
+  We have implemented the technique as a Typed Racket library;
+   from the programmers' perspective, simply importing the library makes the type
+   checker more capable---no annotations or new syntax required.
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]
@@ -40,7 +36,6 @@
 @include-section{usage.scrbl}
 @include-section{experience.scrbl} @; Merge with usage?
 @include-section{implementation.scrbl}
-@;@include-section{related.scrbl}
 @include-section{conclusion.scrbl}
 
 @;@section[#:style 'unnumbered]{Acknowledgments}
