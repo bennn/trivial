@@ -86,7 +86,7 @@
 (define (test dir f)
   (define-values (pre post) (dir->pre/post dir))
   (values (benchmark pre f)
-          (benchmark pre f)))
+          (benchmark post f)))
 
 (define (test-compile d)
   (define-values (a b) (test d compile/time))
