@@ -29,17 +29,3 @@ Whereas types support reasoning independent of data representations,
 Doing so will catch more errors and enable unconventional forms of polymorphism,
  all without changes to the language's type system or the programmer's code.
 
-@; @; =============================================================================
-@; 
-@; @parag{Lineage}
-@; 
-@; Herman and Meunier demonstrated how Racket macros can propagate
-@;  data embedded in string values and syntax patterns to a
-@;  static analyzer@~cite[hm-icfp-2004].
-@; Their illustrative examples were format strings, regular expressions,
-@;  and database queries.
-@; Relative to their pioneering work, we adapt Herman & Meunier's
-@;  transformations to a typed language by inserting type annotations and boolean
-@;  guards into the programs.
-@; Our treatment of definition forms is also new.
-@; 

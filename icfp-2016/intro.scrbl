@@ -40,7 +40,7 @@ These problems are well known, and are often used to motivate research on
 Short of abandoning ship for a completely new type system, languages including
  Haskell, Java, OCaml, and Typed Racket have seen proposals for detecting
  certain values errors or expressing the polymorphism in functions
- such as @racket[curry] with few (if any) changes to the existing type system@~cite[ddems-icse-2011 ks-plpv-2006 kkt-pldi-2016 lb-sigplan-2014].
+ such as @racket[curry] with few (if any) changes to the existing type system@~cite[ddems-icse-2011 ew-haskell-2012 ks-plpv-2006 kkt-pldi-2016 lb-sigplan-2014].
 What stands between these proposals and their adoption is the complexity or
  annotation burden they impose on language users.
 
@@ -105,4 +105,18 @@ In sum, the code below will compile using our library's @racket[regexp-match]
 
 @Secref{sec:usage} has more examples.
 @Secref{sec:conclusion} concludes.
+
+@; =============================================================================
+
+@parag{Lineage}
+
+Our technique builds on the approach of Herman and Meunier, who first
+ demonstrated how Racket macros can propagate
+ data embedded in string values and syntax patterns to a
+ static analyzer@~cite[hm-icfp-2004].
+Their illustrative examples were format strings, regular expressions,
+ and database queries.
+Relative to their pioneering work, we adapt Herman & Meunier's
+ transformations to a typed language, suggest new applications, and
+ describe how to compose the results of analyses.
 
