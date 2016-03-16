@@ -109,7 +109,7 @@ In Typed Racket this function is rather simple because the most common
 Now to use @racket[fmt->types] in an elaboration.
 Given a call to @racket[printf], we check the number of arguments and
  add type annotations using the inferred types.
-For all other syntax patterns, @racket[t-printf] is the identity elaboration.
+For all other syntax patterns, we perform the identity elaboration.
 
 @exact|{
 \hfill\fbox{$\elabf \in \elab$}
@@ -503,7 +503,7 @@ We parse @tt{SELECT} statements using @racket[sql->constr] and extract
 }|
 
 The schema, connection, and query constraints now come together in elaborations
- such as @exact{$\RktMeta{query-exec} \in \elab$}.
+ such as a wrapper @exact{$\elabf$} over @racket[query-row].
 There is still a non-trivial amount of work to be done resolving wildcards and
  validating row names before the type-annotated result is produced,
  but all the necessary information is available, statically.
