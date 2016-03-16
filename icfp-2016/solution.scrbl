@@ -12,7 +12,8 @@ A textualist elaborator (henceforth, @emph{elaborator})
 The behavior of an elaborator is split between two functions: interpretation
  and elaboration.
 
-An @emph{interpretation} function attempts to parse data from an expression.
+An @emph{interpretation} function attempts to parse data from an expression;
+ for example parsing the number of groups from a regular expression string.
 In the Lisp tradition, we will use the value @racket[#false] to indicate
  failure and refer to interpretation functions as @emph{predicates}.
 Using @exact|{\RktMeta{expr}}| to denote the set of syntactically valid, symbolic
@@ -29,7 +30,7 @@ If @exact|{${\tt p?} \in \interp$}| and @exact|{${\tt e} \in \emph{expr}$}|,
  is recognized by @exact|{${\tt p?}$}|.
 Alternatively, @exact|{${\tt (p?~e)}$}| is a kind of interpolant@~cite[c-jsl-1997],
  representing key data embedded in @exact|{${\tt e}$}|.
-Correct interpretation functions @exact|{${\tt p?}$}| obey three guidelines:
+Correct interpretation functions @exact|{${\tt p?}$}| obey two guidelines:
 
 @itemize[
   @item{
@@ -47,7 +48,8 @@ This vague notion of common structure may be expressible as a type in an
 It is definitely not a type in the target language's type system.
 
 Functions in the set @exact|{$\elab$}| of @emph{elaborations}
- map expressions to expressions.
+ map expressions to expressions, for instance replacing a call to @racket[curry]
+ with a call to @racket[curry_3].
 We write elaboration functions as @exact{$\elabf$} and their application
  to an expression @exact{$e$} as @exact{$\llbracket e \rrbracket$}.
 Elaborations are allowed to fail raising syntax errors, which we notate as
@@ -110,7 +112,7 @@ Suppose we implement a currying operation
  @exact{$\llbracket$}@racket[(curry (λ (x y) x))]@exact{$\rrbracket~=~$}@racket[(curry_2 (λ (x y) x))].
 The arity of @racket[(λ (x y) x)] is clear from its representation.
 The arity of the result could also be derived from its textual representation,
- but it is simpler to @emph{tag} the result such that future elaborations
+ but it is simpler to add a @emph{tag} such that future elaborations
  can retrieve the arity of @racket[(curry_2 (λ (x y) x))].
 
 Our implementation uses a tagging protocol, and this lets us share information

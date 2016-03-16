@@ -15,7 +15,7 @@ All the time, in fact:
   > (/ 1 0)
   ==> /: division by zero
   > (printf "~s")
-  ==> printf: format string requires 1 arguments, given 0
+  ==> printf: format string requires 1 argument
 }
 
 Of course, Milner's catchphrase was about preventing type errors.
