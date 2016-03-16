@@ -38,6 +38,12 @@
 @include-section{implementation.scrbl}
 @include-section{conclusion.scrbl}
 
+@; @section{Code}
+@;
+@; Our implementation is available as a Racket package.
+@; To install the library, download Racket and then run @racket[raco pkg install ???].
+@; The source code is on Github at: @url["https://github.com/???/???"].
+
 @section[#:style 'unnumbered]{Acknowledgments}
 
 To appear
