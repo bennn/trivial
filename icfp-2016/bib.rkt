@@ -1209,3 +1209,10 @@
    #:author (authors "T. Stephen Strickland" "Sam Tobin-Hochstadt" "Matthias Felleisen")
    #:location (proceedings-location esop #:pages '(32 46))
    #:date 2009))
+
+(define ra-icfp-2015
+  (make-bib
+   #:title "Functional Pearl: A SQL to C compiler in 500 Lines of Code"
+   #:author (authors "Tiark Rompf" "Nada Amin")
+   #:location (proceedings-location icfp #:pages '(2 9))
+   #:date 2015))

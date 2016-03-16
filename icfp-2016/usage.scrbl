@@ -367,27 +367,30 @@ We do, however, optimize vector references to unsafe primitives and
 
 Racket's @racket[db] library provides a string-based API for executing SQL
  queries.
-Connecting to a database requires only a username.
-Queries are strings, but may optionally reference query parameters---natural numbers
+After connecting to a database, SQL queries embedded in strings can be run
+ for effects and row values (represented as Racket vectors).
+Queries may optionally contain @emph{query parameters}---natural numbers
  prefixed by a dollar sign (@tt{$}).
 Arguments substituted for query parameters are guarded against SQL injection.
 
+@todo{format the multi-line strings}
 @racketblock[
-> (define C (sql-connect #:user "shylock"
-              #:database "accounts"))
+> (define C (sql-connect #:user "admin"
+                         #:database "SCOTUS"))
 > (query-row C
-    "SELECT amt_owed FROM loans WHERE name = '$1'"
-    "antonio")
-3000
+    "SELECT plaintiff FROM rulings WHERE name = '$1' LIMIT 1"
+    2001)
+#("Kyllo")
 ]
 
-This is a far cry from language-integrated query@~cite[mbb-sigmod-2006], but the interface
+This is a far cry from language-integrated query@~cite[mbb-sigmod-2006] or
+ Scala's LMS@~cite[ra-icfp-2015], but the interface
  is relatively safe and very simple to use.
 
-Typed Racket programmers may use the @racket[db] library by assigning specific
+Typed Racket programmers may use the @racket[db] library by assigning
  type signatures to functions like @racket[query-row].
 This is somewhat tedious, as the distinct operations for querying one value,
- one row, or a lazy sequence of rows each need a type.
+ one row, or a lazy sequence of rows need similar types.
 A proper type signature might express the database library as a functor over the
  database schema, but Typed Racket does not have functors or even existential types.
 Even if it did, the queries-as-strings interface makes it impossible for a standard
@@ -397,122 +400,93 @@ The situation worsens if the programmer uses multiple database connections.
 One can either alias one query function to multiple identifiers (each with a specific type)
  or weaken type signatures and manually type-cast query results.
 
-Our technique provides a solution.
-We associate database connections with a compile-time value representing the
- database schema.
-Operations like @racket[query-row] then extract the schema from a connection
- and interpret type constraints from the query string.
-These constraints are passed to the type system in two forms: as annotations
- on expressions used as query parameters and as casts on the result of a query.
-Note that the casts are not guaranteed to succeed---in particular, the schema
- may differ from the actual types in the database.
+By associating a database schema with each connection, our elaboration technique
+ can provide a uniform solution to these issues.
+We specialize both the input and output of calls to @racket[query-row],
+ helping catch bugs as early as possible.
 
-In total, the solution requires three interpretation functions and at least two
- transformations.
-First, we implement a predicate to recognize schema values.
-A schema is a list of table schemas; a table schema is a tagged list of
- column names and column types.
+Our solution, however, is not entirely annotation-free.
+We need a schema representing the target database; for this, we ask
+ the programmer to supply an S-expression of symbols and types
+ that passes a @exact{$\RktMeta{schema?} \in \interp$} predicate.
 
-(@racket[schema?]@exact{$\,\circ\,$}@racket[id]) @exact{$\in \interp$}
+@; (@racket[schema?]@exact{$\,\circ\,$}@racket[id]) @exact{$\in \interp$}
+
 @racketblock[
-> (schema? '([loans [(id . Natural)
-                     (name . String)
-                     (amt_owed . Integer)]]))
-'([loans ...])
+> (define scotus-schema
+    '([decisions [(id . Natural)
+                  (plaintiff . String)
+                  (defendant . String)
+                  (year . Natural)]]))
 ]
 
-Composed with the identity interpretation, this predicate lifts schema values
- from the program text to the compile-time environment.
+The above schema represents a database with at least one table, called @racket[decisions],
+ which contains at least 4 rows with the specified names and types.
+In general a schema may specify any number of tables and rows.
+We statically disallow access to unspecified ones in our elaborated query operations.
 
-@; TODO this must be clearer
-@; TODO note that this isn't a drop-in replacement
-Next, we need to associate database connections with database schemas.
-We do this by transforming calls to @racket[sql-connect]; connections made
- without an explicit schema argument are rejected.
+In addition to the @exact{$\RktMeta{schema?}$} predicate, we define one more
+ interpretation and two elaborations.
+The first elaboration is for connecting to a database.
+We require a statically-known schema object and elaborate to a normal connection.
 
-(@racket[sc]) @exact{$\in \trans$}
+@exact{$\RktMeta{sql-connect} \in \elab$}
 @racketblock[
-> (sc '(sql-connect #:user "shylock"
-         #:database "accounts"))
+> (sc '(sql-connect #:user "admin"
+                    #:database "SCOTUS"))
 ⊥
-> (sc '(sql-connect ([loans ...])
-         #:user "shylock"
-         #:database "accounts"))
-'(sql-connect #:user "shylock"
-   #:database "accounts")
+> (sc '(sql-connect scotus-schema
+                    #:user "admin"
+                    #:database "SCOTUS"))
+'(sql-connect #:user "admin"
+              #:database "SCOTUS")
 ]
 
-To be consistent with our other examples, we should now describe an
- interpretation from connection objects to schemas.
-That is, we should be able to extract the schema for the @racket{accounts} database
- from the syntactic representation of @racket{shylock}'s connection object.
-Our implementation, however, defines @racket[connection->schema] @exact{$\in \interp$} as
- @racket[(λ (x) #false)].
-Instead, we assume that all connection objects are named and rely on a general
- technique for associating compile-time data with identifiers.
-See @Secref{sec:def-overview} for an overview and @Secref{sec:def-implementation}
- for details.
-
-Our final interpretation function tokenizes query strings and returns
- column and table information.
-In particular, we parse @tt{SELECT} statements and extract
+The next interpretation and elaboration are for reading constraints from
+ query strings.
+We parse @tt{SELECT} statements and extract
 @itemlist[
   @item{the names of selected columns,}
   @item{the table name, and}
   @item{an association from query parameters to column names.}
 ]
-
+@todo{fbox}
 @racketblock[
-> "SELECT amt_owed FROM loans WHERE name = '$1'"
-'[(amt_owed) loans ($1 . name)]
+> "SELECT defendant FROM decisions WHERE plaintiff = '$1'"
+'[(defendant) decisions ($1 . plaintiff)]
 > "SELECT * FROM loans"
-'[* loans ()]
+'[* decisions ()]
 ]
 
-The schema, connection, and query constraints now come together in transformations
- such as @racket[t] @exact{$\in \trans$}.
+The schema, connection, and query constraints now come together in elaborations
+ such as @exact{$\RktMeta{query-exec} \in \elab$}.
 There is still a non-trivial amount of work to be done resolving wildcards and
- validating table and row names before the type-annotated result is produced,
- but all the necessary information is available.
+ validating row names before the type-annotated result is produced,
+ but all the necessary information is available, statically.
 
 @racketblock[
 > (t '(query-row C
-        "SELECT amt_owed FROM loans WHERE name = '$1'"
-        "antonio"))
+        "SELECT plaintiff FROM decisions WHERE year = '$1' LIMIT 1"
+        2006))
 '(cast (query-row C
-        "SELECT amt_owed FROM loans WHERE name = '$1'"
-        ("antonio" : String))
-       (Vector Integer))
+        "SELECT ..."
+        (2006 : Natural))
+       (Vector String))
 > (t '(query-row C
-        "SELECT * FROM loans WHERE name = '$1'"
-        "antonio"))
+        "SELECT * FROM decisions WHERE plaintiff = '$1' LIMIT 1"
+        "United States"))
 '(cast (query-row C
-        "SELECT amt_owed FROM loans WHERE name = '$1'"
-        ("antonio" : String))
-       (Vector Natural String Integer))
-> (t '(query-row C "SELECT * FROM itunes"))
+        "SELECT ..."
+        ("United States" : String))
+       (Vector Natural String String Natural))
+> (t '(query-row C "SELECT foo FROM decisions"))
 ⊥
 ]
 
+Results produced by @racket[query-row] are vectors with a known length;
+ as such they cooperate with our library of vector operations described in
+ @Secref{sec:vector}.
+All these compose seamlessly, without any burden on the user.
 
-@; =============================================================================
-@section[#:tag "sec:def-overview"]{Definitions and Let-bindings}
+@; casts can fail, especially if you wildcard without saying all the rows
 
-Though we described each of the above transformations using in-line constant
- values, our implementation cooperates with definitions and let bindings.
-By means of an example, the difference @racket[(- n m)] in the following program
- is compiled to the value 0.
-
-@racketblock[
-> (define m (* 6 7))
-> (let ([n m])
-    (- m n))
-]
-
-Conceptually, we accomplish this by applying known functions
- @exact{${\tt f} \in \interp$} at definition sites and keeping a compile-time
- mapping from identifiers to interpreted data.
-Thanks to Racket's meta-programming tools, implementing this table in a way
- that cooperates with aliases and lexical scope is simple.
-
-@; TODO set!, for defines and lets
