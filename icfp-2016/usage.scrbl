@@ -94,8 +94,7 @@ Detecting inconsistencies between a format string and its arguments is straightf
  if we define an interpretation @racket[fmt->types] @exact|{$\in \interp$}| for
  reading types from a format string value.
 In Typed Racket this function is rather simple because the most common
- directives accept @code{Any} type of value---in a language with uniform syntax,
- printing comes for free.
+ directives accept @code{Any} type of value.
 
 @exact|{
 \hfill\fbox{\RktMeta{fmt->types} $\in \interp$}
@@ -272,7 +271,7 @@ Chisholm v. Georgia, U.S.
 Leaving out an argument to @racket[printf] or passing an extra list
  when calling @racket[map] will raise an arity error during elaboration.
 On the other hand, if we modified @racket[cite] to take a third argument
- then the above call to @racket[map] would fail to compile.
+ then the above call to @racket[map] would raise a type error.
 
 
 @; =============================================================================
