@@ -24,21 +24,22 @@ Using @exact|{\RktMeta{expr}}| to denote the set of syntactically valid, symboli
 
   @exact|{$$\interp\ : \big\{\RktMeta{expr} \rightarrow ({\RktVal{val}} \cup {\tt \RktVal{\#false}})\big\}$$}|
 
-If @exact|{${\tt p?} \in \interp$}| and @exact|{${\tt e} \in \emph{expr}$}|,
+If @exact|{\RktMeta{p?} $\in \interp$}| and @exact|{\RktMeta{e} $\in \RktMeta{expr}$}|,
  it may be useful to think of
- @exact|{${\tt (p?~e)}$}| as @emph{evidence} that the expression @exact|{${\tt e}$}|
- is recognized by @exact|{${\tt p?}$}|.
-Alternatively, @exact|{${\tt (p?~e)}$}| is a kind of interpolant@~cite[c-jsl-1997],
- representing key data embedded in @exact|{${\tt e}$}|.
-Correct interpretation functions @exact|{${\tt p?}$}| obey two guidelines:
+ @exact|{\RktMeta{(p? e)}}| as @emph{evidence} that the expression @exact|{\RktMeta{e}}|
+ is recognized by @exact|{\RktMeta{p?}}|.
+Alternatively, @exact|{\RktMeta{(p? e)}}| is a kind of interpolant@~cite[c-jsl-1997],
+ representing data embedded in @exact|{\RktMeta{e}}| that justifies a certain
+ program transformation.
+Correct interpretation functions @exact|{\RktMeta{p?}}| obey two guidelines:
 
 @itemize[
   @item{
-    The expressions for which @exact|{${\tt p?}$}| returns a non-@racket[#false]
+    The expressions for which @exact|{\RktMeta{p?}}| returns a non-@racket[#false]
      value must have some common structure.
   }
   @item{
-    Non-@racket[#false] results @exact|{${\tt (p?~e)}$}| are computed by a
+    Non-@racket[#false] results @exact|{\RktMeta{(p? e)}}| are computed by a
      uniform algorithm and must have some common structure.
   }
 ]
@@ -51,50 +52,48 @@ Functions in the set @exact|{$\elab$}| of @emph{elaborations}
  map expressions to expressions, for instance replacing a call to @racket[curry]
  with a call to @racket[curry_3].
 We write elaboration functions as @exact{$\elabf$} and their application
- to an expression @exact{$e$} as @exact{$\llbracket e \rrbracket$}.
+ to an expression @exact|{\RktMeta{e}}| as @exact|{$\llbracket$\RktMeta{e}$\rrbracket$}|.
 Elaborations are allowed to fail raising syntax errors, which we notate as
  @exact|{$\bot$}|.
 
     @exact|{$$\elab : \big\{ {\RktMeta{expr}} \rightarrow ({\RktMeta{expr}} \cup \bot)\big\} $$}|
 
 The correctness specification for an elaborator @exact{$\elabf \in \elab$}
- is defined in terms of the language's typing judgment @exact|{$~\vdash {\tt e} : \tau$}|
- and evaluation relation @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}|.
-The notation @exact|{$\untyped{{\tt e}}$}| is the untyped erasure of @exact|{${\tt e}$}|.
+ is defined in terms of the language's typing judgment @exact|{$~\vdash \RktMeta{e} : \tau$}|
+ and evaluation relation @exact|{$\untyped{\RktMeta{e}} \Downarrow \RktVal{v}$}|.
+The notation @exact|{$\untyped{\RktMeta{e}}$}| is the untyped erasure
+ of @exact|{\RktMeta{e}}|.
 We also assume a subtyping relation @exact|{$\subt$}| on types.
-Let @exact|{$\elabfe{{\tt e}} = {\tt e'}$}|:
+Let @exact|{$\elabfe{\RktMeta{e}} = \RktMeta{e'}$}|:
 
 @itemlist[
   @item{@emph{
-    If @exact|{$~\vdash {\tt e} : \tau$}| and @exact|{$~\vdash {\tt e'} : \tau'$}|
+    If @exact|{$~\vdash \RktMeta{e} : \tau$}| and @exact|{$~\vdash \RktMeta{e'} : \tau'$}|
     @exact|{\\}|
     then @exact|{$\tau' \subt \tau$}|
     @exact|{\\}|
     and both
-     @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}| and
-     @exact|{$\untyped{{\tt e'}} \Downarrow {\tt v}$}|.
+     @exact|{$\untyped{\RktMeta{e}} \Downarrow  \RktVal{v}$}| and
+     @exact|{$\untyped{\RktMeta{e'}} \Downarrow \RktVal{v}$}|.
   }}
-  @; e:t e':t' => t' <: t /\ e <=> e'
 
   @item{@emph{
-    If @exact|{$~\not\vdash {\tt e} : \tau$}| but @exact|{$~\vdash {\tt e'} : \tau'$}|
+    If @exact|{$~\not\vdash \RktMeta{e} : \tau$}| but @exact|{$~\vdash \RktMeta{e'} : \tau'$}|
      @exact|{\\}|
-     then @exact|{$\untyped{{\tt e}} \Downarrow {\tt v}$}| and
-     @exact|{$\untyped{{\tt e'}} \Downarrow {\tt v}$}|.
+     then @exact|{$\untyped{\RktMeta{e}} \Downarrow \RktVal{v}$}| and
+     @exact|{$\untyped{\RktMeta{e'}} \Downarrow \RktVal{v}$}|.
   }}
-  @; -e:t e':t' => e <=> e'
 
   @item{@emph{
-    If @exact|{$~\vdash {\tt e} : \tau$}| but @exact|{${\tt e'} = \bot$}|
-     or @exact|{$~\not\vdash {\tt e'} : \tau'$}|
+    If @exact|{$~\vdash \RktMeta{e} : \tau$}| but @exact|{$\RktMeta{e'} = \bot$}|
+     or @exact|{$~\not\vdash \RktMeta{e'} : \tau'$}|
      @exact|{\\}|
-     then @exact|{$\untyped{{\tt e}} \Downarrow \mathsf{wrong}$}| or
-     @exact|{$\untyped{{\tt e}}$}| diverges.
+     then @exact|{$\untyped{\RktMeta{e}} \Downarrow \RktMeta{wrong}$}| or
+     @exact|{$\untyped{\RktMeta{e}}$}| diverges.
   }}
-  @; e:t -e':t' => e^
 ]
 
-If neither @exact|{${\tt e}$}| nor @exact|{${\tt e'}$}| type checks, then we have no guarantees
+If neither @exact|{\RktMeta{e}}| nor @exact|{\RktMeta{e'}}| type checks, then we have no guarantees
  about the run-time behavior of either term.
 In a perfect world both would diverge, but the fundamental limitations of
  static typing@~cite[fagan-dissertation-1992] and computability
@@ -119,6 +118,6 @@ Our implementation uses a tagging protocol, and this lets us share information
  between unrelated elaboration function in a bottom-up recursive style.
 The same protocol helps us implement binding forms: when interpreting a variable,
  we check for an associated tag.
-Formally speaking, this either changes the codomain of functions in @exact{$\elab$}
+Formally speaking, this changes either the codomain of functions in @exact{$\elab$}
  or introduces an elaboration environment mapping expressions to values.
 
