@@ -453,7 +453,7 @@ For our purposes, we redirect to an annotated version of the same variable:
 ]
 
 For definitions, we use a @emph{free-identifier table}.
-This is less fancy--just a hashtable whose keys respect
+This is less fancy--it is just a hashtable whose keys respect
  @exact{$\alpha$}-equivalence--but still useful in practice.
 
 
