@@ -24,6 +24,12 @@ An important component of Typed Racket's design is that all macros in a program
 This protocol lets us implement our elaborators as macros that expand into
  typed code.
 
+Each elaborator is defined as a @emph{local} transformation on syntax.
+Code produced by an elaboration is associated with compile-time data that
+ other elaborators may access.
+In this way, we handle binding forms and propagate information through
+ @emph{unrelated} program transformations.
+
 @parag{Conventions}
 @itemlist[
  @item{
@@ -46,20 +52,9 @@ We use an infix @tt{:} to write explicit type annotations and casts,
 These normally have two different syntaxes, respectively
  @racket[(ann x Integer)] and @racket[(cast x Integer)].
 } @item{
-  TODO phantom item for space
-  TODO phantom item for space
-  TODO phantom item for space
-  TODO phantom item for space
-  TODO phantom item for space
-} @item{
 In @Secref{sec:sql}, @tt{sql} is short for @tt{postgresql}, i.e.
  the code we present in that section is only implemented for the @tt{postgresql}
  interface.
-} @item{
-Until @Secref{sec:def-overview}, we use @racket[define] and @racket[let] forms sparingly.
-In fact, this practice aligns with our implementation---once the interpretations
- and elaborations are defined, extending them to handle arbitrary definitions
- and renamings is purely mechanical.
 }
 ]
 
@@ -287,107 +282,85 @@ On the other hand, if we modified @racket[cite] to take a third argument
 @; =============================================================================
 @section{Numeric Constants}
 
-The identity interpretation is useful for lifting constant values to
- the compile-time environment.
-@racket[id] @exact|{$\in \interp$}|
+The identity interpretation @exact{$\RktMeta{id} \in \interp$}
+ lifts values to the elaboration environment.
+When composed with a filter, we can recognize types of compile-time constants.
 
+@todo{fbox id-int = int}
 @racketblock[
-> (id 2)
+> (int? 2)
 2
-> (id "~s")
-"~s"
-]
-
-When composed with a filter, we can recognize classes of constants.
-That is, if @racket[int?] is the identity function on integer values
- and the constant function returning @racket[#false] otherwise, we have
- (@racket[int?]@exact{$\,\circ\,$}@racket[id])@exact|{$\,\in \interp$}|
-
-@racketblock[
-> (int? (id 2))
-2
-> (int? (id "~s"))
+> (int? "~s")
 #false
 ]
 
-Using this technique we can detect division by the constant zero and
- implement constant-folding transformation of arithmetic operations.
-@racket[t-arith] @exact{$\in \interp$}
+Constant-folding versions of arithmetic operators are now easy to define
+ in terms of the built-in operations.
+Our implementation re-uses a single fold/elaborate loop to make
+ textualist wrappers over @racket[+], @racket[expt] and others.
+
+@todo{fbox}
+@racketblock[
+> (define a 3)
+> (define b (/ 1 (- a a)))
+Error: division by zero
+]
+
+Partial folds also work as expected.
 
 @racketblock[
-> (t-arith '(/ 1 0))
-⊥
-> (t-arith '(* 2 3 7 z))
+> (* 2 3 7 z)
 '(* 42 z)
 ]
 
-These transformations are most effective when applied bottom-up, from the
- leaves of a syntax tree to the root.
-
-@racketblock[
-> (t-arith '(/ 1 (- 5 5)))
-⊥
-]
-
-@Secref{sec:implementation} describes how we accomplish this recursion scheme
- with the Racket macro system.
-@; The implementation of @racket[t-arith] expects flat/local data.
+Taken alone, this re-implementation of constant folding in an earlier compiler
+ stage is not terribly exciting.
+But our arithmetic elaborators cooperate with other elaborators, for example
+ size-aware vector operations.
 
 
 @; =============================================================================
-@section[#:tag "sec:vector"]{Sized Data Structures}
+@section[#:tag "sec:vector"]{Fixed-Length Structures}
 
-Vector bounds errors are always frustrating to debug, especially since
- their cause is rarely deep.
-In many cases, vectors are declared with a constant size and
- accessed at constant positions, plus or minus an offset.@note{Loops do not
-  fit this pattern, but many languages already provide for/each constructs
-  to streamline common looping patterns.}
-But unless the compiler or runtime system tracks vector bounds, the programmer
- must unfold definitions and manually find the source of the problem.
+Fixed-length data structures are often initialized with a constant or
+ computed-constant length.
+Racket's vectors are one such structure.
+For each built-in vector constructor, we thus define an interpretation:
 
-A second, more compelling reason to track vector bounds is to remove the
- run-time checks inserted by memory-safe languages.
-If we can statically prove that a reference is in-bounds, we should be able
- to optimize it.
-
-Racket provides a few ways to create vectors.
-Length information is explicit in some and derivable for
- others, provided we interpret sub-expressions recursively.
-@racket[vector->length] @exact{$\in \interp$}
-
+@todo{fbox vector->size in interp}
 @racketblock[
-> (vector->length '#(0 1 2 3))
+> (vector->size '#(0 1 2))
 3
-> (vector->length '(make-vector 100 #true))
+> (vector->size '(make-vector 100))
 100
-> (vector->length '(vector-append #(left) #(right)))
-7
-> (vector->length '(vector-drop #(A B C) 2))
-1
+> (vector->size '(make-vector (/ 12 3)))
+4
 ]
 
-Once we have sizes associated with compile-time vectors,
- we can define optimized translations of built-in functions.
-For the following, assume that @racket[unsafe-ref] is an unsafe version of @racket[vector-ref].
-@racket[t-vec] @exact{$\in \trans$}
+After interpreting, we associate the size with the new vector at compile-time.
+Other elaborators can use and propagate these sizes; for instance, we have
+ implemented elaborating layers for thirteen standard vector operations.
+Together, they constitute a length-aware vector library that serves as a
+ drop-in replacement for existing code.
+If size information is missing, the operators default to Typed Racket's behavior.
 
 @racketblock[
-> (t-vec '(vector-ref #(Y E S) 2))
-'(unsafe-ref #(Y E S) 2)
-> (t-vec '(vector-ref #(N O) 2))
+> (vector-ref (make-vector 3) 4)
 ⊥
-> (t-vec '(vector-length (make-vector 100 #true)))
-100
+> (vector-length (vector-append '#(A B) '#(C D)))
+4
+> (vector-ref (vector-map add1 '#(3 3 3)) 4)
+(unsafe-ref (vector-map add1 '#(3 3 3)) 4)
 ]
 
-We can define vectorized arithmetic using similar translations.
-Each operation match the length of its arguments at compile-time and expand
- to an efficient implementation.
+For the most part, these elaborations simply manage sizes and
+ delegate the main work to Typed Racket vector operations.
+We do, however, optimize vector references to unsafe primitives and
+ specialize operations like @racket[vector-length], as shown above.
 
 
 @; =============================================================================
-@section[#:tag "sec:sql"]{Database Queries}
+@section[#:tag "sec:sql"]{Database Schema}
 @; db
 @; TODO Ocaml, Haskell story
 @; TODO connect to ew-haskell-2012 os-icfp-2008
