@@ -26,7 +26,7 @@ Another 145 lines implement common functionality, putting the grand total
 
 Except for @exact|{\mod{db}}| and @exact|{\mod{regexp}}|, each of the
  core modules defines a single interpretation function (in @exact|{$\interp$}|).
-In @exact|{\mod{db}}|, the two functions are the schema predicate and @tt{SQL}
+In @exact|{\mod{db}}|, the two functions are the schema predicate and @tt{sql}
  query parser.
 In @exact|{\mod{regexp}}|, we have six group-parsing functions
  to match the six string-like input types
@@ -423,7 +423,8 @@ By tagging calls to @racket[vector-map] with a syntax property, our system
 @centered[
   @codeblock{
     (vector-length (vector-map f v))
-    == (vector-length v)
+      ==
+    (vector-length v)
   }
 ]
 

@@ -384,13 +384,13 @@ We do, however, optimize vector references to unsafe primitives and
 @; =============================================================================
 @section[#:tag "sec:sql"]{Database Schema}
 
-Racket's @racket[db] library provides a string-based API for executing SQL
+Racket's @racket[db] library provides a string-based API for executing @tt{sql}
  queries.@note{In this section, we use @tt{sql} as an abbreviation for @tt{postgresql}.}
-After connecting to a database, SQL queries embedded in strings can be run
+After connecting to a database, @tt{sql} queries embedded in strings can be run
  to retrieve row values, represented as Racket vectors.
 Queries may optionally contain @emph{query parameters}---natural numbers
  prefixed by a dollar sign (@tt{$}).
-Arguments substituted for query parameters are guarded against SQL injection.
+Arguments substituted for query parameters are guarded against @tt{sql} injection.
 
 @exact|{
 \begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{define}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{C}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{sql{-}connect}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{\#{\hbox{\texttt{:}}}user}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"admin"}

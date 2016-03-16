@@ -38,8 +38,10 @@
 @include-section{implementation.scrbl}
 @include-section{conclusion.scrbl}
 
-@;@section[#:style 'unnumbered]{Acknowledgments}
-@;
+@section[#:style 'unnumbered]{Acknowledgments}
+
+To appear
+
 @;We thank
 @;Sam Tobin-Hochstadt for reminding us that Typed Racket is macro-extensible,
 @;Ryan Culpepper for divulging secrets of the Racket macro system,
