@@ -1,6 +1,4 @@
 #lang scribble/sigplan @onecolumn
-@; TODO color p?, e
-@; Better notation for erasure, maybe just color differently
 
 @require["common.rkt"]
 
@@ -24,22 +22,22 @@ Using @exact|{\RktMeta{expr}}| to denote the set of syntactically valid, symboli
 
   @exact|{$$\interp\ : \big\{\RktMeta{expr} \rightarrow ({\RktVal{val}} \cup {\tt \RktVal{\#false}})\big\}$$}|
 
-If @exact|{\RktMeta{p?} $\in \interp$}| and @exact|{\RktMeta{e} $\in \RktMeta{expr}$}|,
+If @exact|{\RktMeta{f} $\in \interp$}| and @exact|{\RktMeta{e} $\in \RktMeta{expr}$}|,
  it may be useful to think of
- @exact|{\RktMeta{(p? e)}}| as @emph{evidence} that the expression @exact|{\RktMeta{e}}|
- is recognized by @exact|{\RktMeta{p?}}|.
-Alternatively, @exact|{\RktMeta{(p? e)}}| is a kind of interpolant@~cite[c-jsl-1997],
+ @exact|{\RktMeta{(f e)}}| as @emph{evidence} that the expression @exact|{\RktMeta{e}}|
+ is recognized by @exact|{\RktMeta{f}}|.
+Alternatively, @exact|{\RktMeta{(f e)}}| is a kind of interpolant@~cite[c-jsl-1997],
  representing data embedded in @exact|{\RktMeta{e}}| that justifies a certain
  program transformation.
-Correct interpretation functions @exact|{\RktMeta{p?}}| obey two guidelines:
+Correct interpretation functions @exact|{\RktMeta{f}}| obey two guidelines:
 
 @itemize[
   @item{
-    The expressions for which @exact|{\RktMeta{p?}}| returns a non-@racket[#false]
+    The expressions for which @exact|{\RktMeta{f}}| returns a non-@racket[#false]
      value must have some common structure.
   }
   @item{
-    Non-@racket[#false] results @exact|{\RktMeta{(p? e)}}| are computed by a
+    Non-@racket[#false] results @exact|{\RktMeta{(f e)}}| are computed by a
      uniform algorithm and must have some common structure.
   }
 ]
