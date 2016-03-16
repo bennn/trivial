@@ -1,7 +1,7 @@
 #lang scribble/sigplan
 @require["common.rkt"]
 
-@title[#:tag "sec:experience"]{Experience}
+@title[#:tag "sec:experience"]{Backwards Compatibility}
 
 Our initial experience programming with the library has been positive.
 By far the most useful application is to @racket[regexp-match], as
@@ -31,7 +31,7 @@ Removing type annotations and casts made redundant by our library is, however,
 Compiling with our library adds no statistically significant overhead, but
  tends to produce slightly larger bytecode files due to the inserted
  annotations (at most 2% larger).
-Running times we observed were on average unaffected, but one project
+Running times we observed were on largely unaffected, but one project
  exhibited a 2-second slowdown due to added type casts.
 This could be improved by a closer integration with the type checker to
  remove casts guaranteed to succeed.
