@@ -51,10 +51,6 @@ We use an infix @tt{:} to write explicit type annotations and casts,
  for instance @racket[(x : Integer)].
 These normally have two different syntaxes, respectively
  @racket[(ann x Integer)] and @racket[(cast x Integer)].
-} @item{
-In @Secref{sec:sql}, @tt{sql} is short for @tt{postgresql}, i.e.
- the code we present in that section is only implemented for the @tt{postgresql}
- interface.
 }
 ]
 
@@ -366,7 +362,9 @@ We do, however, optimize vector references to unsafe primitives and
 @; TODO connect to ew-haskell-2012 os-icfp-2008
 
 Racket's @racket[db] library provides a string-based API for executing SQL
- queries.
+ queries.@note{Technically, we use @tt{sql} as an abbreviation for @tt{postgresql}.
+   Although the Racket library supports many database systems, we have only implemented
+   a postgres front-end.}
 After connecting to a database, SQL queries embedded in strings can be run
  for effects and row values (represented as Racket vectors).
 Queries may optionally contain @emph{query parameters}---natural numbers
