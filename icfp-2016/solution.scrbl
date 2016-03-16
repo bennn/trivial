@@ -101,3 +101,22 @@ In a perfect world both would diverge, but the fundamental limitations of
 At present, these correctness requirements must be checked manually by the
  author of a function in @exact{$\interp$} or @exact{$\elab$}.
 
+
+@; =============================================================================
+@section{Cooperative Elaboration}
+
+Suppose we implement a currying operation
+ @exact{$\elabf$} such that e.g.
+ @exact{$\llbracket$}@racket[(curry (λ (x y) x))]@exact{$\rrbracket~=~$}@racket[(curry_2 (λ (x y) x))].
+The arity of @racket[(λ (x y) x)] is clear from its representation.
+The arity of the result could also be derived from its textual representation,
+ but it is simpler to @emph{tag} the result such that future elaborations
+ can retrieve the arity of @racket[(curry_2 (λ (x y) x))].
+
+Our implementation uses a tagging protocol, and this lets us share information
+ between unrelated elaboration function in a bottom-up recursive style.
+The same protocol helps us implement binding forms: when interpreting a variable,
+ we check for an associated tag.
+Formally speaking, this either changes the codomain of functions in @exact{$\elab$}
+ or introduces an elaboration environment mapping expressions to values.
+

@@ -1,13 +1,4 @@
 #lang scribble/sigplan @onecolumn
-@; TODO
-@; - stephen: too vague!
-@; - sam    : too vague!
-@;          : can you give more example?
-@;          : too generous to other languages -- why didn't you do the entire paper in hs?
-@; - a note on macro-land? where truthy & boolean monads are king?
-@;   - also, the untyped style of reasoning, the needing to unfold code
-@; - transf vs. macro
-@; - remove "OUR"
 
 
 @require["common.rkt"]
@@ -19,12 +10,12 @@ Well-typed programs @emph{do} go wrong.
 All the time, in fact:
 
 @codeblock{
-  > (vector-ref (build-vector 2 (λ (i) i)) 3)
-  ; vector-ref: index is out of range
+  > (vector-ref (make-vector 2) 3)
+  ==> vector-ref: index is out of range
   > (/ 1 0)
-  ; /: division by zero
+  ==> /: division by zero
   > (printf "~s")
-  ; printf: format string requires 1 arguments, given 0
+  ==> printf: format string requires 1 arguments, given 0
 }
 
 Of course, Milner's catchphrase was about preventing type errors.
@@ -47,7 +38,7 @@ The standard work-around@~cite[fi-jfp-2000] is to maintain size-indexed
 These problems are well known, and are often used to motivate research on
  dependently typed programming languages@~cite[a-icfp-1999].
 Short of abandoning ship for a completely new type system, languages including
- Haskell, OCaml, Java, and Typed Racket have seen proposals for detecting
+ Haskell, Java, OCaml, and Typed Racket have seen proposals for detecting
  certain values errors or expressing the polymorphism in functions
  such as @racket[curry] with few (if any) changes to the existing type system@~cite[ddems-icse-2011 ks-plpv-2006 kkt-pldi-2016 lb-sigplan-2014].
 What stands between these proposals and their adoption is the complexity or
@@ -62,13 +53,13 @@ The key is to run a @emph{textualist}@note{A textualist interprets laws by
  evident from the program syntax to the type checker.
 In terms of the first example in this section, our elaborator infers that the
  @racket[vector-ref] at position @racket[3] is out of bounds because it knows that
- @racket[(build-vector n f)]
+ @racket[(make-vector n)]
  constructs a vector with @racket[n] elements.
 
 Our implementation is a Typed Racket library that shadows functions
  such as @racket[build-vector] with textualist elaborators following the
  guidelines stated in @Secref{sec:solution}.
-We make essential use of Racket's powerful macro system@~cite[fcdb-jfp-2012]
+We make essential use of Racket's macro system@~cite[fcdb-jfp-2012]
  to reason locally, associate inferred data with bound identifiers, and
  cooperate with the rules of lexical scope.
 For the adventurous reader, @Secref{sec:implementation} describes the
@@ -97,11 +88,12 @@ We have written an elaborator for @racket[regexp-match] that will statically
 The elaborator also handles the common case where the regular expression
  argument is a compile-time constant and respects @exact{$\alpha$}-equivalence.
 
+In sum, the code below will compile using our library's @racket[regexp-match]
+ whereas Typed Racket cannot guarantee the call to @racket[second] will produce
+ a string.
+
 @codeblock{
 (define rx-case #rx"(.*) v\\. (.*),")
-
-; Other code here
-
 (define r-m regexp-match)
 
 (define (get-plaintiff (s : String)) : String
@@ -113,18 +105,4 @@ The elaborator also handles the common case where the regular expression
 
 @Secref{sec:usage} has more examples.
 @Secref{sec:conclusion} concludes.
-
-@; =============================================================================
-
-@parag{Lineage}
-
-Herman and Meunier demonstrated how Racket macros can propagate
- data embedded in string values and syntax patterns to a
- static analyzer@~cite[hm-icfp-2004].
-Their illustrative examples were format strings, regular expressions,
- and database queries.
-Relative to their pioneering work, we adapt Herman & Meunier's
- transformations to a typed language by inserting type annotations and boolean
- guards into the programs.
-Our treatment of definition forms is also new.
 
