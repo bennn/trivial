@@ -25,21 +25,21 @@ This protocol lets us implement our elaborators as macros that expand into
  typed code.
 
 Each elaborator is defined as a @emph{local} transformation on syntax.
-Code produced by an elaboration is associated with compile-time data that
- other elaborators may access.
-In this way, we handle binding forms and propagate information through
- @emph{unrelated} program transformations.
+Code produced by an elaboration may be associated with compile-time values
+ for other elaborators to access.
+Using these values, we support variable bindings and propagate information upward through
+ nested elaborations.
 
 @parag{Conventions}
 @itemlist[
  @item{
 Interpretation and elaboration functions are defined over symbolic expressions
  and values; specifically, over @emph{syntax objects}.
-To distinguish terms and syntax objects representing
- terms, we quote the latter and typeset it in green.
-For example, @racket[(λ (x) x)] is a term implementing the identity
- function and @racket['(λ (x) x)] is a representation that will evaluate
- to the identity function.
+To distinguish terms and syntax objects,
+ we quote the latter and typeset it in green.
+Hence @racket[(λ (x) x)] is the identity function
+ and @racket['(λ (x) x)] is a syntax object.
+} @item{
 Values are typeset in @exact|{\RktVal{green}}| because their syntax and
  term representations are identical.
 } @item{
@@ -48,7 +48,7 @@ Syntax objects carry lexical information, but our examples treat them as
 } @item{
 We use an infix @tt{::} to write explicit type annotations and casts,
  for instance @racket[(x :: Integer)].
-These normally have two different syntaxes, respectively
+Annotations and casts normally have two different syntaxes, respectively
  @racket[(ann x Integer)] and @racket[(cast x Integer)].
 }
 ]
@@ -72,7 +72,7 @@ For example, @racket[~s] converts any value to a string and @racket[~b] converts
 @exact|{
 \begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\Scribtexttt{{\Stttextmore} }\RktPn{(}\RktSym{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{7}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{7}\RktPn{)}
 
-\RktOut{binary(7) = 111}
+\evalsto\RktOut{binary(7) = 111}
 
 \begin{SingleColumn}\end{SingleColumn}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
 }|
@@ -84,28 +84,27 @@ This is a simple kind of value error that could be caught statically.
 @exact|{
 \begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\Scribtexttt{{\Stttextmore} }\RktPn{(}\RktSym{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"7"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"7"}\RktPn{)}
 
-\RktErr{printf: format string requires argument of type $<$exact{-}number$>$}
+\evalsto\RktErr{printf: format string requires an exact{-}number}
 
 \begin{SingleColumn}\end{SingleColumn}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
 }|
 
 Detecting inconsistencies between a format string and its arguments is straightforward
- if we define an interpretation @racket[fmt->types] @exact|{$\in \interp$}| for
+ if we define an interpretation @racket[fmt->types] for
  reading types from a format string value.
 In Typed Racket this function is rather simple because the most common
  directives accept @code{Any} type of value.
 
 @exact|{
 \hfill\fbox{\RktMeta{fmt->types} $\in \interp$}
-
-\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{fmt{-}{\Stttextmore}types}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"binary($\sim$s) = $\sim$b"}\RktPn{)}
-
-\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{Any}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{]}
-
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{fmt{-}{\Stttextmore}types}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{$\lambda$}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{x}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{x}\RktVal{)}\RktPn{)}
-
-\RktVal{\#false}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+\vspace{-4mm}
 }|
+@racketblock[
+> (fmt->types "binary(~s) = ~b")
+==> '[Any Integer]
+> (fmt->types '(λ (x) x))
+==> #false
+]
 
 Now to use @racket[fmt->types] in an elaboration.
 Given a call to @racket[printf], we check the number of arguments and
@@ -113,20 +112,17 @@ Given a call to @racket[printf], we check the number of arguments and
 For all other syntax patterns, @racket[t-printf] is the identity elaboration.
 
 @exact|{
-\hfill\fbox{$\elabf \in \interp$}
-
-\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$a"}\RktVal{)}\RktPn{)}
-
-\RktSym{$\perp$}
-
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"2"}\RktVal{)}\RktPn{)}
-
-\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{"2"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{::}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{)}\RktVal{)}
-
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{printf}\RktPn{)}
-
-\RktVal{{\textquotesingle}}\RktVal{printf}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
 }|
+@racketblock[
+> ⟦'(printf "~a")⟧
+==> ⊥
+> ⟦'(printf "~b" 2)⟧
+==> '(printf "~b" (2 :: Integer))
+> ⟦'printf ⟧
+==> 'printf
+]
 
 The first example is rejected immediately as a syntax error.
 The second is a valid elaboration, but will lead to a static type error.
@@ -141,8 +137,10 @@ The third example demonstrates that higher-order
 Regular expressions are often used to capture sub-patterns within a string.
 
 @racketblock[
-> (regexp-match #rx"(.*)@(.*)" "toni@merchant.net")
-'("toni@merchant.net" "toni" "merchant.net")
+> (regexp-match #rx"-(2*)-" "111-222-3333")
+==> '("-222-" "222")
+> (regexp-match #rx"¥(.*)" "$2,000")
+==> #false
 ]
 
 The first argument to @racket[regexp-match] is a regular expression pattern.
@@ -154,19 +152,12 @@ If the match succeeds, the result is a list containing the entire matched string
  and substrings corresponding to each group captured by a sub-pattern.
 If the match fails, @racket[regexp-match] returns @racket[#false].
 
-@racketblock[
-> (regexp-match #rx"-(2*)-" "111-222-3333")
-'("-222-" "222")
-> (regexp-match #rx"¥(.*)" "$2,000")
-#false
-]
-
-Certain groups can also fail to capture even when the overall match succeeds.
+Groups may fail to capture even when the overall match succeeds.
 This can happen when a group is followed by a Kleene star.
 
 @racketblock[
 > (regexp-match #rx"(a)*(b)" "b")
-'("b" #f "b")
+==> '("b" #f "b")
 ]
 
 Therefore, a catch-all type for @racket[regexp-match] is fairly large:
@@ -174,20 +165,18 @@ Therefore, a catch-all type for @racket[regexp-match] is fairly large:
 Using this general type is cumbersome for simple patterns
  where a match implies that all groups will successfully capture.
 
+@racketblock[
+> (define (get-domain (email : String)) : String
+    (cond
+     [(regexp-match #rx"(.*)@(.*)" email)
+      => third]
+     [else "Match Failed"]))
+]
+
 @exact|{
-\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{define}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{get{-}domain}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{[}\RktSym{full{-}name}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{String}\RktPn{]}\RktPn{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{String}
-
-\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktPn{(}\RktSym{cond}
-
-\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktPn{[}\RktPn{(}\RktSym{regexp{-}match}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{\#rx"({\hbox{\texttt{.}}}*)@({\hbox{\texttt{.}}}*)"}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{full{-}name}\RktPn{)}
-
-\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktSym{={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{third}\RktPn{]}
-
-\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktPn{[}\RktSym{else}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"Match Failed"}\RktPn{]}\RktPn{)}\RktPn{)}
-
-\RktErr{Error: expected $<$String$>$, got $<$(U \#false String)$>$}
-
-\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+\vspace{-1mm}%
+$\!\!$\evalsto\RktErr{Type Error: expected String, got (U \#false String)}%
+\vspace{1mm}
 }|
 
 
@@ -198,15 +187,17 @@ We alleviate the need for casts and guards in simple patterns
 If there is any doubt whether a group will capture, we default to the general
  @racket[regexp-match] type.
 
-@todo{fbox} @racket[rx->groups] @exact|{$\in \interp$}|
-
+@exact|{
+\hfill\fbox{$\RktMeta{rx->groups} \in \interp$}
+\vspace{-4mm}
+}|
 @racketblock[
 > (rx->groups #rx"(a)(b)(c)")
-3
+==> 3
 > (rx->groups #rx"((a)b)")
-2
+==> 2
 > (rx->groups #rx"(a)*(b)")
-#false
+==> #false
 ]
 
 The corresponding elaboration
@@ -214,28 +205,36 @@ The corresponding elaboration
 It also raises syntax errors when an uncompiled regular expression contains
  unmatched parentheses.
 
-@todo{fbox}
-
+@exact|{
+\vspace{1mm}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+}|
 @racketblock[
-> (t-regexp '(regexp-match #rx"(a)b" str))
-'((regexp-match #rx"(a)b" str)
-  :: (U #f (List String String)))
-> (t-regexp '(regexp-match "(" str))
-⊥
+> ⟦'(regexp-match #rx"(a)b" str)⟧
+==> '((regexp-match #rx"(a)b" str)
+      :: (U #f (List String String)))
+> ⟦'(regexp-match "(" str)⟧
+==> ⊥
 ]
 
 
 @; =============================================================================
 @section{Anonymous Functions}
 
-By tokenizing symbolic λ-expressions, we can interpret their domain
- statically. @todo{fbox} @racket[fun->domain] @exact|{$\in \interp$}|
+By tokenizing symbolic λ-expressions, we can statically infer their domain.
 
+@exact|{
+\hfill\fbox{$\RktMeta{fun->domain} \in \interp$}
+\vspace{-4mm}
+}|
 @racketblock[
-> (fun->domain '(λ (x y z) (x (z y) y)))
-'[Any Any Any]
-> (fun->domain '(λ ([x : Real] [y : Real]) x))
-'[Real Real]
+> (fun->domain '(λ (x y z)
+                  (x (z y) y)))
+==> '[Any Any Any]
+> (fun->domain '(λ ([x : Real] [y : Real])
+                  x))
+==> '[Real Real]
 ]
 
 When domain information is available at calls to a @racket[curry] function,
@@ -243,15 +242,15 @@ When domain information is available at calls to a @racket[curry] function,
 Conceptually, we give @racket[curry] the unusable type @racket[(⊥ -> ⊤)] and
  elaboration produces a subtype @racket[curry_i].
 
-@todo{fbox} @exact|{$\in \elab$}|
-
+@exact|{
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+}|
 @racketblock[
-> ('(curry (λ (x y) x)))
-'(curry_2 (λ (x y) x))
+> ⟦'(curry (λ (x y) x))⟧
+==> '(curry_2 (λ (x y) x))
 ]
 
-@;Our implementation generates each @racket[curry_i] at compile-time by folding
-@; over the interpreted domain.
 This same technique can be used to implement generalized @racket[map] in
  languages without variable-arity polymorphism@~cite[stf-esop-2009].
 
@@ -263,9 +262,15 @@ This same technique can be used to implement generalized @racket[map] in
 > (define defendant*
     '("Bush" "Georgia"))
 > (map cite plaintiff* defendant*)
-Rasul v. Bush, U.S.
-Chisholm v. Georgia, U.S.
 ]
+
+@exact|{
+\vspace{-1mm}%
+$\!\!$\evalsto\RktOut{Rasul v. Bush, U.S.}\\
+$\hphantom{xxxxx}$\RktOut{Chisholm v. Georgia, U.S.}
+\vspace{1mm}
+}|
+
 
 Leaving out an argument to @racket[printf] or passing an extra list
  when calling @racket[map] will raise an arity error during elaboration.
@@ -280,12 +285,15 @@ The identity interpretation @exact{$\RktMeta{id} \in \interp$}
  lifts values to the elaboration environment.
 When composed with a filter, we can recognize types of compile-time constants.
 
-@todo{fbox id-int = int}
+@exact|{
+\hfill\fbox{$\RktMeta{int?} \circ \RktMeta{id} = \RktMeta{int?} \in \interp$}
+\vspace{-4mm}
+}|
 @racketblock[
 > (int? 2)
-2
+==> 2
 > (int? "~s")
-#false
+==> #false
 ]
 
 Constant-folding versions of arithmetic operators are now easy to define
@@ -293,24 +301,34 @@ Constant-folding versions of arithmetic operators are now easy to define
 Our implementation re-uses a single fold/elaborate loop to make
  textualist wrappers over @racket[+], @racket[expt] and others.
 
-@todo{fbox}
+@exact|{
+\vspace{2mm}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+}|
 @racketblock[
-> (define a 3)
-> (define b (/ 1 (- a a)))
-Error: division by zero
+> (define a ⟦3⟧)
+> (define b ⟦(/ 1 (- a a))⟧)
 ]
+
+@exact|{
+\vspace{-1mm}%
+$\!\!$\evalsto\RktErr{Error: division by zero}%
+\vspace{1mm}
+}|
 
 Partial folds also work as expected.
 
 @racketblock[
 > (* 2 3 7 z)
-'(* 42 z)
+==> '(* 42 z)
 ]
 
 Taken alone, this re-implementation of constant folding in an earlier compiler
- stage is not terribly exciting.
-But our arithmetic elaborators cooperate with other elaborators, for example
- size-aware vector operations.
+ stage is not very exciting.
+But since folded expressions propagate their result upwards to arbitrary
+ analyses, we can combine these elaborations with a size-aware vector library to
+ guard against index errors access at computed locations.
 
 
 @; =============================================================================
@@ -321,30 +339,40 @@ Fixed-length data structures are often initialized with a constant or
 Racket's vectors are one such structure.
 For each built-in vector constructor, we thus define an interpretation:
 
-@todo{fbox vector->size in interp}
+@exact|{
+\vspace{2mm}
+\hfill\fbox{$\RktMeta{vector->size} \in \interp$}
+\vspace{-4mm}
+}|
 @racketblock[
 > (vector->size '#(0 1 2))
-3
+==> 3
 > (vector->size '(make-vector 100))
-100
+==> 100
 > (vector->size '(make-vector (/ 12 3)))
-4
+==> 4
 ]
 
 After interpreting, we associate the size with the new vector at compile-time.
 Other elaborators can use and propagate these sizes; for instance, we have
- implemented elaborating layers for thirteen standard vector operations.
+ implemented elaborating layers for 13 standard vector operations.
 Together, they constitute a length-aware vector library that serves as a
  drop-in replacement for existing code.
-If size information is missing, the operators default to Typed Racket's behavior.
+If size information is ever missing, the operators silently default
+ to Typed Racket's behavior.
 
+@exact|{
+\vspace{2mm}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+}|
 @racketblock[
-> (vector-ref (make-vector 3) 4)
-⊥
-> (vector-length (vector-append '#(A B) '#(C D)))
-4
-> (vector-ref (vector-map add1 '#(3 3 3)) 4)
-(unsafe-ref (vector-map add1 '#(3 3 3)) 4)
+> ⟦(vector-ref (make-vector 3) (+ 2 2))⟧
+==> ⊥
+> ⟦(vector-length (vector-append '#(A B) '#(C D)))⟧
+==> 4
+> ⟦(vector-ref (vector-map add1 '#(3 3 3)) 0)⟧
+==> (unsafe-ref (vector-map add1 '#(3 3 3)) 0)
 ]
 
 For the most part, these elaborations simply manage sizes and
@@ -355,29 +383,29 @@ We do, however, optimize vector references to unsafe primitives and
 
 @; =============================================================================
 @section[#:tag "sec:sql"]{Database Schema}
-@; db
-@; TODO Ocaml, Haskell story
-@; TODO connect to ew-haskell-2012 os-icfp-2008
 
 Racket's @racket[db] library provides a string-based API for executing SQL
- queries.@note{Technically, we use @tt{sql} as an abbreviation for @tt{postgresql}.
-   Although the Racket library supports many database systems, we have only implemented
-   a postgres front-end.}
+ queries.@note{In this section, we use @tt{sql} as an abbreviation for @tt{postgresql}.}
 After connecting to a database, SQL queries embedded in strings can be run
- for effects and row values (represented as Racket vectors).
+ to retrieve row values, represented as Racket vectors.
 Queries may optionally contain @emph{query parameters}---natural numbers
  prefixed by a dollar sign (@tt{$}).
 Arguments substituted for query parameters are guarded against SQL injection.
 
-@todo{format the multi-line strings}
-@racketblock[
-> (define C (sql-connect #:user "admin"
-                         #:database "SCOTUS"))
-> (query-row C
-    "SELECT plaintiff FROM rulings WHERE name = '$1' LIMIT 1"
-    2001)
-'#("Kyllo")
-]
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{define}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{C}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{sql{-}connect}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{\#{\hbox{\texttt{:}}}user}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"admin"}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxxxxxxxxxxxxxxxxxxx}}}\RktPn{\#{\hbox{\texttt{:}}}database}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SCOTUS"}\RktPn{)}\RktPn{)}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{C}
+
+\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktVal{"SELECT plaintiff FROM rulings}\\
+\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktVal{WHERE name = {\textquotesingle}\$1{\textquotesingle} LIMIT 1"}
+
+\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktVal{2001}\RktPn{)}
+
+\evalsto\RktVal{\#}\RktVal{(}\RktVal{"Kyllo"}\RktVal{)}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 This is a far cry from language-integrated query@~cite[mbb-sigmod-2006] or
  Scala's LMS@~cite[ra-icfp-2015], but the interface
@@ -396,6 +424,7 @@ The situation worsens if the programmer uses multiple database connections.
 One can either alias one query function to multiple identifiers (each with a specific type)
  or weaken type signatures and manually type-cast query results.
 
+@subsection{Phantom Types To the Rescue}
 By associating a database schema with each connection, our elaboration technique
  can provide a uniform solution to these issues.
 We specialize both the input and output of calls to @racket[query-row],
@@ -404,16 +433,22 @@ We specialize both the input and output of calls to @racket[query-row],
 Our solution, however, is not entirely annotation-free.
 We need a schema representing the target database; for this, we ask
  the programmer to supply an S-expression of symbols and types
- that passes a @exact{$\RktMeta{schema?} \in \interp$} predicate.
+ that passes a @racket[schema?] predicate.
+This approach is similar to phantom types@~cite[lm-dsl-1999].
 
-@; (@racket[schema?]@exact{$\,\circ\,$}@racket[id]) @exact{$\in \interp$}
-
+@exact|{
+\vspace{1mm}
+\hfill\fbox{$\RktMeta{schema?} \in \interp$}
+\vspace{-4mm}
+}|
 @racketblock[
 > (define scotus-schema
     '([decisions [(id . Natural)
                   (plaintiff . String)
                   (defendant . String)
                   (year . Natural)]]))
+> (schema? scotus-schema)
+==> '([decisions ....])
 ]
 
 The above schema represents a database with at least one table, called @racket[decisions],
@@ -426,33 +461,46 @@ In addition to the @exact{$\RktMeta{schema?}$} predicate, we define one more
 The first elaboration is for connecting to a database.
 We require a statically-known schema object and elaborate to a normal connection.
 
-@exact{$\RktMeta{sql-connect} \in \elab$}
+@exact|{
+\vspace{1mm}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+}|
 @racketblock[
-> (sc '(sql-connect #:user "admin"
-                    #:database "SCOTUS"))
-⊥
-> (sc '(sql-connect scotus-schema
-                    #:user "admin"
-                    #:database "SCOTUS"))
-'(sql-connect #:user "admin"
-              #:database "SCOTUS")
+> ⟦'(sql-connect #:user "admin"
+                 #:database "SCOTUS")⟧
+==> ⊥
+> ⟦'(sql-connect scotus-schema
+                 #:user "admin"
+                 #:database "SCOTUS")⟧
+==> '(sql-connect #:user "admin"
+                  #:database "SCOTUS")
 ]
 
 The next interpretation and elaboration are for reading constraints from
  query strings.
-We parse @tt{SELECT} statements and extract
+We parse @tt{SELECT} statements using @racket[sql->constr] and extract
 @itemlist[
   @item{the names of selected columns,}
   @item{the table name, and}
   @item{an association from query parameters to column names.}
 ]
-@todo{fbox}
-@racketblock[
-> "SELECT defendant FROM decisions WHERE plaintiff = '$1'"
-'[(defendant) decisions ($1 . plaintiff)]
-> "SELECT * FROM loans"
-'[* decisions ()]
-]
+
+@exact|{
+\vspace{1mm}
+\hfill\fbox{$\RktMeta{sql->constr} \in \interp$}
+\vspace{-4mm}
+
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT defendant FROM decisions}\\
+\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktVal{WHERE plaintiff = {\textquotesingle}\$1{\textquotesingle}"}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{(}\RktVal{defendant}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{decisions}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{\$1}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{.}}} }\RktVal{plaintiff}\RktVal{)}\RktVal{]}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT * FROM loans"}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{*}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{decisions}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{)}\RktVal{]}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 The schema, connection, and query constraints now come together in elaborations
  such as @exact{$\RktMeta{query-exec} \in \elab$}.
@@ -460,24 +508,46 @@ There is still a non-trivial amount of work to be done resolving wildcards and
  validating row names before the type-annotated result is produced,
  but all the necessary information is available, statically.
 
-@racketblock[
-> (t '(query-row C
-        "SELECT plaintiff FROM decisions WHERE year = '$1' LIMIT 1"
-        2006))
-'((query-row C
-        "SELECT ..."
-        (2006 : Natural))
-  ::   (Vector String))
-> (t '(query-row C
-        "SELECT * FROM decisions WHERE plaintiff = '$1' LIMIT 1"
-        "United States"))
-'((query-row C
-        "SELECT ..."
-        ("United States" : String))
-  ::   (Vector Natural String String Natural))
-> (t '(query-row C "SELECT foo FROM decisions"))
-⊥
-]
+@exact|{
+\vspace{1mm}
+\hfill\fbox{$\elabf \in \elab$}
+\vspace{-4mm}
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{"SELECT plaintiff FROM decisions}\\
+\mbox{\hphantom{\Scribtexttt{xxxxxxx}}}\RktVal{WHERE year = {\textquotesingle}\$1{\textquotesingle} LIMIT 1"}
+
+\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktVal{2006}\RktVal{)}\RktSym{$]\!]$}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"SELECT {\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}"}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{(}\RktVal{2006}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\RktVal{)}\RktVal{)}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktVal{(}\RktVal{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\RktVal{)}\RktVal{)}
+\\
+\\
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{"SELECT * FROM decisions}\\
+\mbox{\hphantom{\Scribtexttt{xxxxxxx}}}\RktVal{WHERE plaintiff = {\textquotesingle}\$1{\textquotesingle} LIMIT 1"}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"United States"}\RktVal{)}\RktSym{$]\!]$}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"SELECT {\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}"}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{(}\RktVal{"United States"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\RktVal{)}\RktVal{)}
+
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktVal{(}\RktVal{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\RktVal{)}\RktVal{)}
+\\
+\\
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT foo FROM decisions"}\RktVal{)}\RktSym{$]\!]$}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$\perp$}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 Results produced by @racket[query-row] are vectors with a known length;
  as such they cooperate with our library of vector operations described in

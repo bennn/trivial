@@ -25,6 +25,7 @@
 (define Transactions "Transactions on ")
 
 
+(define/short dsl "DS" (string-append ACM Conference "on Domain-specific languages"))
 (define/short asplas "APLAS" (string-append "Asian " Symposium "Programming Languages and Systems"))
 (define/short fpca "FPCA" (string-append ACM International Conference "Functional Programming Languages and Computer Architecture"))
 (define/short icfp "ICFP" (string-append ACM International Conference "on Functional Programming"))
@@ -1216,3 +1217,10 @@
    #:author (authors "Tiark Rompf" "Nada Amin")
    #:location (proceedings-location icfp #:pages '(2 9))
    #:date 2015))
+
+(define lm-dsl-1999
+  (make-bib
+   #:title "Domain Specific Embedded Compilers"
+   #:author (authors "Daan Leijen" "Erik Meijer")
+   #:location (proceedings-location dsl #:pages '(109 122))
+   #:date 1999))

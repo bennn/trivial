@@ -116,8 +116,6 @@ The arity of the result could also be derived from its textual representation,
 
 Our implementation uses a tagging protocol, and this lets us share information
  between unrelated elaboration function in a bottom-up recursive style.
-The same protocol helps us implement binding forms: when interpreting a variable,
- we check for an associated tag.
 Formally speaking, this changes either the codomain of functions in @exact{$\elab$}
  or introduces an elaboration environment mapping expressions to values.
 

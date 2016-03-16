@@ -193,9 +193,10 @@ The interesting design challenge is making one pattern that covers all
 @; =============================================================================
 @section[#:tag "sec:impl-interp"]{Illustrative Interpretations}
 
-By now we have seen two useful syntax classes: @racket[id] and
- @racket[vector/length].@note{The name @racket[vector/length] should
+Both @racket[id] and
+ @racket[vector/length] are useful syntax classes..@note{The name @racket[vector/length] should
   be read as ``vector @emph{with} length information''.}
+They recognize syntax objects with certain well-defined properties.
 In fact, we use syntax classes as the front-end for each function in @exact{$\interp$}.
 @Figure-ref{fig:stxclass} lists all of our syntax classes and ties each to a purpose
  motivated in @Secref{sec:usage}.
@@ -392,12 +393,17 @@ The only question we ask during elaboration is whether a syntax object is associ
 Traditional macros may appear only in the head position of an expression.
 For example, the following are illegal uses of the built-in @racket[or]
  macro:
-@racketblock[
-> or
-or: bad syntax
-> (map or '((#t #f #f) (#f #f)))
-or: bad syntax
-]
+
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{or}
+
+\evalsto\RktErr{or: bad syntax}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{map}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{or}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{(}\RktVal{\#t}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{\#f}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{\#f}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{\#f}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{\#f}\RktVal{)}\RktVal{)}\RktPn{)}
+
+\evalsto\RktErr{or: bad syntax}
+\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 Identifier macros are allowed in both higher-order and top-level positions,
  just like first-class functions.
@@ -416,7 +422,8 @@ By tagging calls to @racket[vector-map] with a syntax property, our system
 
 @centered[
   @codeblock{
-    (vector-length v) == (vector-length (vector-map f v))
+    (vector-length (vector-map f v))
+    == (vector-length v)
   }
 ]
 
@@ -436,12 +443,12 @@ Within the binding's scope, the transformer redirects references from a variable
 For our purposes, we redirect to an annotated version of the same variable:
 
 @racketblock[
-> '(let ([x 4])
-     (+ x 1))
-'(let ([x 4])
-  (let-syntax ([x (make-rename-transformer #'x
-                    secret-key 4)])
-    (+ x 1)))
+> ⟦'(let ([x 4])
+      (+ x 1))⟧
+==> '(let ([x 4])
+      (let-syntax ([x (make-rename-transformer #'x
+                        secret-key 4)])
+        (+ x 1)))
 ]
 
 For definitions, we use a @emph{free-identifier table}.
