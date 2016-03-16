@@ -11,7 +11,7 @@
 @; TODO this is all so boring right now, need to revise heavily
 
 @Figure-ref{fig:stats} gives a few statistics regarding our implementation.
-The purpose of this section is to explain why the numbers are low.
+The purpose of this section is to explain why the line counts are low.
 @; Ode to macros, implementation a symphony
 
 @figure["fig:stats"
@@ -19,16 +19,16 @@ The purpose of this section is to explain why the numbers are low.
   @exact|{\input{fig-stats}}|
 ]
 
-In total, our six applications comprise 800 lines of code (LOC).
+In total, the code for our six applications described in @Secref{sec:usage}
+ comprise 901 lines of code (LOC).
 Another 145 lines implement common functionality, putting the grand total
- just under 1000 LOC.
+ just over 1000 LOC.
 
 Except for @exact|{\mod{db}}| and @exact|{\mod{regexp}}|, each of the
- core modules defines a single function in @exact|{$\interp$}|.
-In @exact|{\mod{db}}| the two functions are the schema predicate and @tt{SQL}
- query parser (we omit the trivial interpreter for connections).
-    @; TODO no parentheses?
-On the other hand, @exact|{\mod{regexp}}| implements six group-parsing functions
+ core modules defines a single interpretation function (in @exact|{$\interp$}|).
+In @exact|{\mod{db}}|, the two functions are the schema predicate and @tt{SQL}
+ query parser.
+In @exact|{\mod{regexp}}|, we have six group-parsing functions
  to match the six string-like input types
    @;@note{Strings, Regex literals, Posix Regex literls, and byte-string variations of each.}
  accepted by Racket's @racket[regexp-match].
@@ -39,11 +39,13 @@ The smallest interpreter is the composition of Racket's @racket[number?] predica
 The largest is the query parser (35 LOC), though the analyses for
  format strings and regular expressions are approximately the same size.
 
-The @exact{$\trans$} functions are aliases for standard library procedures.
-   @; TODO much better to show off short code. But let's draft it first.
-In many cases we are able to re-use code between similar functions.
-For instance, the arithmetic operators @racket[+ - * /] are implemented by
- a single fold.
+The elaboration functions are aliases for standard library procedures.
+Typically, these functions match a syntactic pattern, check for value errors,
+ and elaborate to a specialized Typed Racket procedure call.
+All these tasks can be expressed concisely; the average size of a function in
+ @exact{$\elab$} is 10 lines and the median is 7 lines.
+Much of the brevity is due to amortizing helper functions, so we include helpers'
+ line counts in the figure.
 
 
 @; -----------------------------------------------------------------------------
