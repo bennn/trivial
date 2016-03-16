@@ -25,8 +25,8 @@ In total, we had to modify 6 lines to replace
   we have only tested that interface in scripts.}
 This gives us confidence that retroactively opting-in to our library truly is a 1-line
  effort.
-Removing type annotations and casts made redundant by our library is, however,
- still a manual task.
+Using the library also enables the removal of casts and type annotations made
+ redundant by our elaborations.
 
 Compiling with our library adds no statistically significant overhead, but
  tends to produce slightly larger bytecode files due to the inserted

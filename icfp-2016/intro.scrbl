@@ -124,7 +124,7 @@ Our technique builds on the approach of Herman and Meunier, who first
  static analyzer@~cite[hm-icfp-2004].
 Their illustrative examples were format strings, regular expressions,
  and database queries.
-Relative to their pioneering work, we adapt Herman & Meunier's
+Relative to their pioneering work, we adapt Herman and Meunier's
  transformations to a typed language, suggest new applications, and
  describe how to compose the results of analyses.
 

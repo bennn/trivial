@@ -24,7 +24,7 @@
    without changing the type system.
   We have implemented the technique as a Typed Racket library.
   From the programmers' viewpoint, simply importing the library makes the type
-   system more perceptive---no annotations or new syntax required.
+   system more perceptive---no annotations or new syntax are required.
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]

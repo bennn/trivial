@@ -64,7 +64,7 @@ All strings are valid format strings; additionally, a format string may contain
  @emph{format directives} describing @emph{where} and @emph{how} values can be
  spliced into the format string.
 @; TODO scheme or common lisp?
-Racket follows the Lisp tradition@~cite[s-lisp-1990] of using a tilde character (@tt{~})
+Racket follows the Lisp tradition of using a tilde character (@tt{~})
  to prefix format directives.
 For example, @racket[~s] converts any value to a string and @racket[~b] converts a
  number to binary form.

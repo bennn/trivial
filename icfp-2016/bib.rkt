@@ -1136,7 +1136,7 @@
 
 (define mbb-sigmod-2006
   (make-bib
-   #:title "LINQ: reconciling object, relations and XML in the .NET framework"
+   #:title "LINQ: Reconciling Object, Relations and XML in the .NET Framework"
    #:author (authors "Erik Meijer" "Brain Beckman" "Gavin Bierman")
    #:location (proceedings-location sigmod #:pages '(706 706))
    #:date 2006))
@@ -1192,7 +1192,7 @@
 
 (define fcdb-jfp-2012
   (make-bib
-   #:title "Macros that Work Together: Compile-time bindings, partial expansion, and definition contexts"
+   #:title "Macros that Work Together: Compile-Time Bindings, Partial Expansion, and Definition Contexts"
    #:author (authors "Matthew Flatt" "Ryan Culpepper" "David Darais" "Robert Bruce Findler")
    #:location (proceedings-location jfp #:pages '(181 216))
    #:date 2012))
@@ -1224,3 +1224,10 @@
    #:author (authors "Daan Leijen" "Erik Meijer")
    #:location (proceedings-location dsl #:pages '(109 122))
    #:date 1999))
+
+(define cf-icfp-2010
+  (make-bib
+   #:title "Fortifying Macros"
+   #:author (authors "Ryan Culpepper" "Matthias Felleisen")
+   #:location (proceedings-location icfp #:pages '(235 246))
+   #:date 2010))

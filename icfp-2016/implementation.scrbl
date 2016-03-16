@@ -328,7 +328,7 @@ Each sub-section title is a technical term;
 
 @subsection[#:tag "sec:parse"]{Syntax Parse}
 
-The @racket[syntax/parse] library@~cite[c-dissertation-2010] provides
+The @racket[syntax/parse] library@~cite[cf-icfp-2010] provides
  tools for writing macros.
 It provides the @racket[syntax-parse] and @racket[syntax-parser] forms that
  we have used extensively above.
