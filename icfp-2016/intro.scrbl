@@ -9,14 +9,22 @@
 Well-typed programs @emph{do} go wrong.
 All the time, in fact:
 
-@codeblock{
-  > (vector-ref (make-vector 2) 3)
-  ==> vector-ref: index is out of range
-  > (/ 1 0)
-  ==> /: division by zero
-  > (printf "~s")
-  ==> printf: format string requires 1 argument
-}
+@exact|{
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktPn{(}\RktSym{vector{-}ref}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktPn{(}\RktSym{make{-}vector}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktVal{2}\RktPn{)}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktVal{3}\RktPn{)}\RktMeta{}
+
+\RktMeta{}\RktSym{=={\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktErr{vector-ref: index is out of range}
+
+
+\RktMeta{}\RktSym{{\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktPn{(}\RktSym{/}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktVal{1}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktVal{0}\RktPn{)}\RktMeta{}
+
+\RktMeta{}\RktSym{=={\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktErr{/: division by zero}
+
+\RktMeta{}\RktSym{{\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktPn{(}\RktSym{printf}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{}\RktVal{"$\sim$s"}\RktPn{)}\RktMeta{}
+
+\RktMeta{}\RktSym{=={\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}\RktErr{printf: format string requires 1 argument}
+
+\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+}|
 
 Of course, Milner's catchphrase was about preventing type errors.
 The above are all @emph{value errors} that depend on properties not expressed
@@ -48,7 +56,7 @@ This pearl describes a low-complexity, annotation-free (@Secref{sec:experience})
  technique for detecting
  value errors and expressing polymorphism over values.
 The key is to run a @emph{textualist}@note{A textualist interprets laws by
-   reading exactly the words on the page, not by guessing the words' intended meaning.}
+   reading exactly the words on the page rather that by guessing the words' intended meaning.}
  elaboration over programs before type-checking and propagate value information
  evident from the program syntax to the type checker.
 In terms of the first example in this section, our elaborator infers that the
@@ -57,13 +65,13 @@ In terms of the first example in this section, our elaborator infers that the
  constructs a vector with @racket[n] elements.
 
 Our implementation is a Typed Racket library that shadows functions
- such as @racket[build-vector] with textualist elaborators following the
+ such as @racket[make-vector] with textualist elaborators following the
  guidelines stated in @Secref{sec:solution}.
 We make essential use of Racket's macro system@~cite[fcdb-jfp-2012]
  to reason locally, associate inferred data with bound identifiers, and
  cooperate with the rules of lexical scope.
 For the adventurous reader, @Secref{sec:implementation} describes the
- crucial services provided by Racket's macros.
+ main services provided by Racket's macros.
 Nevertheless, Typed Clojure@~cite[clojure-macros],
  Rust@~cite[rust-compiler-plugins], and Scala@~cite[ramho-hosc-2013]
  could implement our approach just as well.
@@ -81,24 +89,24 @@ For a sense of the practical use-cases we envision, consider the function
 
 The parentheses in the regular expression delimit groups to match and
  return.
-In this example, there are two groups.
+In this example, there are two such groups.
 We have written an elaborator for @racket[regexp-match] that will statically
- parse its first argument, count these groups, and refine the
- result type for specific calls to @racket[regexp-match].
+ parse its first argument, count groups, and refine the
+ result type of specific calls to @racket[regexp-match].
 The elaborator also handles the common case where the regular expression
  argument is a compile-time constant and respects @exact{$\alpha$}-equivalence.
 
-In sum, the code below will compile using our library's @racket[regexp-match]
- whereas Typed Racket cannot guarantee the call to @racket[second] will produce
- a string.
+Whereas Typed Racket will raise a type error on the following code because
+ it cannot be sure @racket[second] will produce a string,
+ importing our library convinces Typed Racket that the code will succeed.
 
 @codeblock{
-(define rx-case #rx"(.*) v\\. (.*),")
-(define r-m regexp-match)
+(define case-regexp #rx"(.*) v\\. (.*),")
+(define rx-match regexp-match)
 
 (define (get-plaintiff (s : String)) : String
   (cond
-   [(r-m rx-case s)
+   [(rx-match case-regexp s)
     => second]
    [else "J. Doe"]))
 }
