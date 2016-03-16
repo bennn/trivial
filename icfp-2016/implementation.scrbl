@@ -194,7 +194,7 @@ The interesting design challenge is making one pattern that covers all
 @section[#:tag "sec:impl-interp"]{Illustrative Interpretations}
 
 Both @racket[id] and
- @racket[vector/length] are useful syntax classes..@note{The name @racket[vector/length] should
+ @racket[vector/length] are useful syntax classes.@note{The name @racket[vector/length] should
   be read as ``vector @emph{with} length information''.}
 They recognize syntax objects with certain well-defined properties.
 In fact, we use syntax classes as the front-end for each function in @exact{$\interp$}.
