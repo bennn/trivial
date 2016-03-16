@@ -35,20 +35,19 @@ In this way, we handle binding forms and propagate information through
  @item{
 Interpretation and elaboration functions are defined over symbolic expressions
  and values; specifically, over @emph{syntax objects}.
-To make clear the difference between Typed Racket terms and representations
- of terms, we quote the latter and typeset it in green.
-Using this notation, @racket[(λ (x) x)] is a term implementing the identity
+To distinguish terms and syntax objects representing
+ terms, we quote the latter and typeset it in green.
+For example, @racket[(λ (x) x)] is a term implementing the identity
  function and @racket['(λ (x) x)] is a representation that will evaluate
  to the identity function.
-Values are typeset in green because their syntax and term representations are identical.
+Values are typeset in @exact|{\RktVal{green}}| because their syntax and
+ term representations are identical.
 } @item{
-In practice, syntax objects carry lexical information.
-Such information is extremely important, especially for implementing @racket[define]
- and @racket[let] forms that respect @exact{$\alpha$}-equivalence, but
- to simplify our presentation we omit it.
+Syntax objects carry lexical information, but our examples treat them as
+ flat symbols.
 } @item{
-We use an infix @tt{:} to write explicit type annotations and casts,
- for instance @racket[(x : Integer)].
+We use an infix @tt{::} to write explicit type annotations and casts,
+ for instance @racket[(x :: Integer)].
 These normally have two different syntaxes, respectively
  @racket[(ann x Integer)] and @racket[(cast x Integer)].
 }
@@ -122,7 +121,7 @@ For all other syntax patterns, @racket[t-printf] is the identity elaboration.
 
 \RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"2"}\RktVal{)}\RktPn{)}
 
-\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{"2"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{)}\RktVal{)}
+\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"$\sim$b"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{"2"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{::}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Integer}\RktVal{)}\RktVal{)}
 
 \RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktPn{(}\RktSym{t{-}printf}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{printf}\RktPn{)}
 
@@ -219,8 +218,8 @@ It also raises syntax errors when an uncompiled regular expression contains
 
 @racketblock[
 > (t-regexp '(regexp-match #rx"(a)b" str))
-'(cast (regexp-match #rx"(a)b" str)
-       (U #f (List String String)))
+'((regexp-match #rx"(a)b" str)
+  :: (U #f (List String String)))
 > (t-regexp '(regexp-match "(" str))
 ⊥
 ]
@@ -377,7 +376,7 @@ Arguments substituted for query parameters are guarded against SQL injection.
 > (query-row C
     "SELECT plaintiff FROM rulings WHERE name = '$1' LIMIT 1"
     2001)
-#("Kyllo")
+'#("Kyllo")
 ]
 
 This is a far cry from language-integrated query@~cite[mbb-sigmod-2006] or
@@ -465,17 +464,17 @@ There is still a non-trivial amount of work to be done resolving wildcards and
 > (t '(query-row C
         "SELECT plaintiff FROM decisions WHERE year = '$1' LIMIT 1"
         2006))
-'(cast (query-row C
+'((query-row C
         "SELECT ..."
         (2006 : Natural))
-       (Vector String))
+  ::   (Vector String))
 > (t '(query-row C
         "SELECT * FROM decisions WHERE plaintiff = '$1' LIMIT 1"
         "United States"))
-'(cast (query-row C
+'((query-row C
         "SELECT ..."
         ("United States" : String))
-       (Vector Natural String String Natural))
+  ::   (Vector Natural String String Natural))
 > (t '(query-row C "SELECT foo FROM decisions"))
 ⊥
 ]
@@ -483,7 +482,8 @@ There is still a non-trivial amount of work to be done resolving wildcards and
 Results produced by @racket[query-row] are vectors with a known length;
  as such they cooperate with our library of vector operations described in
  @Secref{sec:vector}.
-All these compose seamlessly, without any burden on the user.
+Accessing a constant index into a row vector is statically guaranteed
+ to be in bounds.
 
 @; casts can fail, especially if you wildcard without saying all the rows
 

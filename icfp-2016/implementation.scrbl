@@ -1,7 +1,7 @@
 #lang scribble/sigplan
 @require["common.rkt"]
 
-@title[#:tag "sec:implementation"]{Implementation}
+@title[#:tag "sec:implementation"]{More than a Pretty Face}
 @; Amazing Macros
 @; Whirlwind tour
 @; Accounting, taking stock
@@ -49,12 +49,13 @@ Much of the brevity is due to amortizing helper functions, so we include helpers
 
 
 @; -----------------------------------------------------------------------------
-@section[#:tag "sec:impl-trans"]{Implementing Transformations} @; TODO not a great name
-@; @section{Ode to Macros: The Long Version}
+@section[#:tag "sec:impl-elab"]{Elegant Elaborations}
 
-At this point, we have carried on long enough talking about the implementation
- without actually showing any code.
-No longer---here is our definition of @racket[vector-length]:
+Our elaboration for @racket[vector-length] is straightforward.
+If called with a size-annotated vector @racket[v], @racket[(vector-length v)]
+ elaborates to the size.
+Otherwise, it defaults to Typed Racket's @racket[vector-length].
+The implementation is equally concise, modulo some notation.
 
 @codeblock{
   (make-alias #'vector-length
@@ -64,18 +65,14 @@ No longer---here is our definition of @racket[vector-length]:
      [_ #false]))
 }
 
-First of all, this transformation works as specified in @Secref{sec:vector}.
-When the length of its argument is known, it expands to that length.
-Otherwise, it expands to an ordinary call to @racket[vector-length].
 
-Second, we need to introduce a few mysterious characters:
 @itemlist[
   @item{
-    @racket[(make-alias id f)] creates a transformation from an identifier @racket[id]
+    @racket[(make-alias id f)] creates a elaboration from an identifier @racket[id]
     and a partial function @racket[f].
   }
   @item{
-    The symbol @tt{#'} creates a syntax object from a value or template.
+    The symbol @exact|{\RktMeta{\#'}}| creates a syntax object from a value or template.
   }
   @item{
     A @racket[syntax-parser] is a match statement over syntactic patterns.
@@ -84,41 +81,41 @@ Second, we need to introduce a few mysterious characters:
      wildcard @tt{_}.
   }
   @item{
-    The colon character (@tt{:}) used int @racket[v:vector/length]
+    The colon character (@tt{:}) used in @racket[v:vector/length]
      binds the variable @racket[v] to the @emph{syntax class} @racket[vector/length].
   }
   @item{
     The dot character (@tt{.}) accesses an @emph{attribute} of the value bound
      to @racket[v].
-    In this case, the attribute @racket[evidence] is set when 
-     @racket[vector/length] matches successfully.
+    In this case, the attribute @racket[evidence] is set when the class
+     @racket[vector/length] successfully matches the value of @racket[v].
   }
 ]
 
-Third, we remark that the pattern @racket[v:vector/length] unfolds all
- transformations to @racket[v] recursively.
-So we handle each of the following cases, as well as any other combination of
+The pattern @racket[v:vector/length] unfolds all
+ elaborations to @racket[v] recursively.
+So, as hinted in @Secref{sec:vector}, 
+ we handle each of the following cases as well as any other combination of
  length-preserving vector operations.
 
 @racketblock[
-> '(vector-length #(H I))
+> (vector-length #(0 1 2))
 2
-> '(vector-length (vector-append #(Y O)
-                                 #(L O)))
+> (vector-length (vector-append #(A B)
+                                #(C D)))
 4
 ]
 
 @; The general features are explained in greater deteail below
 
 @; make-alias
-@; TODO variable name for f
-The overall structure of @racket[vector-length] is common to many of our transformations.
-That is, we define a rule to handle an interesting syntactic pattern and
+The structure of @racket[vector-length] is common to many of our elaborations:
+we define a rule to handle an interesting syntactic pattern and
  then generate an alias from the rule using the helper function @racket[make-alias].
 
 @codeblock{
-  (define ((make-alias orig-id f) stx)
-    (or (f stx)
+  (define ((make-alias orig-id elaborate) stx)
+    (or (elaborate stx)
         (syntax-parse stx
          [_:id
           orig-id]
@@ -126,11 +123,10 @@ That is, we define a rule to handle an interesting syntactic pattern and
           #`(#,orig-id e* ...)])))
 }
 
-The transformation defined by @racket[(make-alias id f)] is a function on
+The elaboration defined by @racket[(make-alias id elaborate)] is a function on
  syntax objects.
-First, the function applies @racket[f] to the syntax object @racket[stx].
-If the result is not
- @racket[#false] we return.
+This function first applies @racket[elaborate] to the syntax object @racket[stx].
+If the result is not @racket[#false] we return.
 Otherwise the function matches its argument against two possible patterns:
 @itemize[
   @item{
@@ -141,29 +137,29 @@ Otherwise the function matches its argument against two possible patterns:
     @racket[(_ e* ...)] matches function application.
     In the result of this branch,
      @; TODO backtick not printing right
-     we declare a syntax template with @tt{#`} and splice the identifier
-     @racket[orig-id] into the template with @tt{#,}.
+     we declare a syntax template with @exact|{\RktMeta{\#`}}| and splice the identifier
+     @racket[orig-id] into the template with @exact|{\RktMeta{,\#}}|.
     These operators are formally known as @racket[quasisyntax] and @racket[unsyntax];
      you may know their cousins @racket[quasiquote] and @racket[unquote].
   }
 ]
 
-@emph{Note:} the identifier @racket[...] is not pseudocode!
+The identifier @racket[...] is not pseudocode.
 In a pattern, it captures zero-or-more repetitions of the preceding pattern---in
  this case, the variable @racket[e*] binds anything so @racket[(_ e* ...)] matches
- lists with at least one element.@note{The name @racket[e*] is our own convention.}
+ lists with at least one element.@note{The variable name @racket[e*] is our own convention.}
 All but the first element of such a list is then bound to the identifier
  @racket[e*] in the result.
 We use @racket[...] in the result to flatten the contents of @racket[e*] into
  the final expression.
 
-One last example transformation using @racket[make-alias]
- is our definition of @racket[vector-ref], shown below.
+A second example using @racket[make-alias]
+ is @racket[vector-ref] @exact{$\in \elab$}, shown below.
 When given a sized vector @racket[v] and an expression @racket[e] that
  expands to a number @racket[i], the function asserts that @racket[i] is
  in bounds.
 If either @racket[vector/length] or @racket[expr->num] fail to coerce numeric
- values, the function returns @racket[#false].
+ values, the function defaults to Typed Racket's @racket[vector-ref].
 
 @codeblock{
   (make-alias #'vector-ref
@@ -178,12 +174,12 @@ If either @racket[vector/length] or @racket[expr->num] fail to coerce numeric
      [_ #false]))
 }
 
-Unlike the previous two functions, our @racket[vector-ref] transformation
+This elaboration
  does more than just matching a pattern and returning a new syntax object.
 Crucially, it compares the @emph{value} used to index its argument vector with
  that vector's length before choosing how to expand.
 To access these integer values outside of a template, we lift the pattern variables
- @racket[v] and @racket[e] to syntax objects with a @tt{#'} prefix.
+ @racket[v] and @racket[e] to syntax objects with a @exact|{\RktMeta{\#'}}| prefix.
 A helper function @racket[expr->num] then fully expands the syntax object @racket[#'e]
  and the built-in @racket[syntax->datum] gets the integer value stored at the
  attribute @racket[#'v.evidence].
@@ -195,96 +191,102 @@ The interesting design challenge is making one pattern that covers all
 
 
 @; =============================================================================
-@section[#:tag "sec:impl-interp"]{Implementing Interpretations} @; TODO a decidedly bad name
+@section[#:tag "sec:impl-interp"]{Illustrative Interpretations}
 
-By now we have seen two useful syntax classes: @racket[id] and @racket[vector/length].
+By now we have seen two useful syntax classes: @racket[id] and
+ @racket[vector/length].@note{The name @racket[vector/length] should
+  be read as ``vector @emph{with} length information''.}
 In fact, we use syntax classes as the front-end for each function in @exact{$\interp$}.
 @Figure-ref{fig:stxclass} lists all of our syntax classes and ties each to a purpose
- motivated in @Secref{sec:usage}.@note{The name @racket[vector/length] should
-  be read as ``vector @emph{with} length information''.}
+ motivated in @Secref{sec:usage}.
 
 @figure["fig:stxclass"
   "Registry of syntax classes"
   @exact|{\input{fig-stxclass}}|
 ]
 
-These classes are implemented uniformly from predicates on syntax objects.
-One such predicate is @racket[arity?], shown below, which counts
- the parameters accepted by an uncurried anonymous function and returns
- @racket[#false] for all other inputs.
+The definitions of these classes are generated from predicates on syntax
+ objects.
+One such predicate is @racket[vector?], shown below, which counts the
+ length of vector values and returns @racket[#false] for all other inputs.
+Notice that the pattern for @racket[make-vector] recursively expands its
+ first argument using the @racket[num/value] syntax class.
 
 @codeblock{
-  (define arity?
-    (syntax-parser #:literals (λ)
-     [(λ (x*:id ...) e* ...)
-      (length (syntax->datum #'(x* ...)))]
+  (define vector?
+    (syntax-parser #:literals (make-vector)
+     [#(e* ...)
+      (length (syntax->datum #'(e* ...)))]
+     [(make-vector n:num/value)
+      (syntax->datum #'n.evidence)]
      [_ #f]))
 }
 
-The syntax class @racket[procedure/arity] is then defined as ...
 
-@racketblock[
-> (define-stxclass/pred procedure/arity
-    arity?)
-]
-
-... in terms of another macro, which handles the routine work of recursively
- expanding its input, applying the @racket[arity?] predicate,
- and caching results in the @racket[evidence] and @racket[expanded] attributes.
+From @racket[vector?], we define the syntax class @racket[vector/length]
+ that handles the mechanical work of macro-expanding its input,
+ applying the @racket[vector?] predicate, and caching results in the
+ @racket[evidence] and @racket[expanded] attributes.
 
 @codeblock{
-  (define-syntax-rule (define-stxclass/pred id p?)
-    (define-syntax-class id
-     #:attributes (evidence expanded)
-     (pattern e
-      #:with e+ (expand-expr #'e)
-      #:with p+ (p? #'e+)
-      #:when (syntax->datum #'p+)
-      #:attr evidence #'p+
-      #:attr expanded #'e+)))
+  (define-syntax-class vector/length
+   #:attributes (evidence expanded)
+   (pattern e
+    #:with e+  (expand-expr #'e)
+    #:with len (vector? #'e+)
+    #:when (syntax->datum #'len)
+    #:attr evidence #'len
+    #:attr expanded #'e+))
 }
 
-A @racket[define-syntax-rule] is an inlined definition; using it here does not
- save any space, but in practice we re-use the same alias for each of
- our custom syntax classes.
-The @racket[#:attributes] declaration is very important.
+The @racket[#:attributes] declaration is key.
 This is where the earlier-mentioned @racket[v.expanded] and @racket[v.evidence]
- were defined, and indeed these two attributes form the backbone of our value-parsing
- protocol.
-In terms of a pattern @racket[x:procedure/arity], their meaning is:
+ properties are defined, and indeed these two attributes form the backbone
+ of our protocol for cooperative elaborations.
+In terms of a pattern @racket[v:vector/length], their meaning is:
 @itemlist[
   @item{
-    @racket[x.expanded] is the result of fully expanding all macros and transformations
-     contained in the syntax object bound to @racket[x].
+    @racket[v.expanded] is the result of fully expanding all macros and elaborations 
+     contained in the syntax object bound to @racket[v].
     The helper function @racket[expand-expr] triggers this depth-first expansion.
   }
   @item{
-    @racket[x.evidence] is the result of applying the @racket[arity?] predicate
-     to the expanded version of @racket[x].
-    Intuitively, @racket[x.evidence] is the reason why we should be able to
-     perform transformations using @racket[x].
+    @racket[v.evidence] is the result of applying the @racket[vector?] predicate
+     to the expanded version of @racket[v].
+    In general, @racket[v.evidence] is the reason why we should be able to
+     perform elaborations using the value bound to @racket[v].
   }
 ]
 
-If the predicate @racket[arity?] returns @racket[#false], then the boolean
+If the predicate @racket[vector?] returns @racket[#false] then the boolean
  @racket[#:when] guard fails because the value contained in the syntax object
- @racket[p+] will be @racket[#false].
+ @racket[len] will be @racket[#false].
 When this happens, neither attribute is bound and the pattern
- @racket[x.procedure/arity] will fail.
+ @racket[v.vector/length] will fail.
+
 
 @; =============================================================================
-@section{Implementing Definitions}
+@section{Automatically Handling Variables}
 
-With that, we have essentially finished our tour of the key ideas underlying
- our implementation.
-The one detail we elided is precisely how interpreted data is propogated upward
- through recursive transformations, especially since transformations may unfold
- into arbitrary, difficult-to-parse code.
+When the results of an elaboration are bound to a variable @racket[v],
+ we frequently need to associate a compile-time value to @racket[v] for
+ later elaborations to use.
+This is often the case for calls to @racket[sql-connect]:
 
-An illustrative example is our transformation for @racket[sql-connect],
- the library function for connecting a user to a database.
-Recall that our library imposes an extra constraint on calls to @racket[sql-connect]:
- they must supply a database schema, which is erased in translation.
+@racketblock[
+(define C (sql-connect ....))
+(query-row C ....)
+]
+
+Reading the literal variable @racket[C] gives no useful information
+ when elaborating the call to @racket[query-row].
+Instead, we need to retrieve the database schema for the connection bound to @racket[C].
+
+The solution starts with our implementation of @racket[sql-connect],
+ which uses the built-in function
+ @racket[syntax-property] to associate a key/value pair with a syntax object.
+Future elaborations on the syntax object @racket[#'(sql-connect e* ...)] can
+ retrieve the database schema @racket[#'s.evidence] by using the key @racket[connection-key].
 
 @racketblock[
   (syntax-parser
@@ -297,45 +299,16 @@ Recall that our library imposes an extra constraint on calls to @racket[sql-conn
         "Missing schema")])
 ]
 
-Most of this definition is routine.
-We use the syntax class @racket[schema/spec] to lift schema specifications to
- the compile-time environment and we ultimately forward all non-schema arguments
- to the default @racket[sql-connect].@note{If an one of the arguments
-   @racket[e* ...] is malformed, this will be reported by the original
-   @racket[sql-connect]. Three cheers for division of labor!}
-The new form is @racket[syntax-property], which tags our new syntax object
- with a key/value pair.
-Here the key is @racket[connection-key], which we generate when compiling a file
- and use to identify connection objects.
-The value is the evidence parsed from the schema description.
-
-Transformation writers must take care to install @racket[syntax-property]
- information, but we automate the task of retrieving cached properties
- in our syntax classes---before
- applying a predicate, we first search for a cached value.
-Syntax properties are likewise the trick for propagating metadata through
- @racket[let] and @racket[define] bindings.
-The technical tools for this are @racket[rename-transformer]s and @racket[free-id-table]s,
- which we discuss in @Secref{sec:rename}.
-
-@;@codeblock{
-@;  (make-alias #'vector-append
-@;    (syntax-parser
-@;     [(_ v0:vector/length v1:vector/length)
-@;      (define len0 (syntax-e #'v1.evidence))
-@;      (define len1 (syntax-e #'v2.evidence))
-@;      (define new-len (+ len0 len1))
-@;      (syntax-property
-@;        #`(build-vector
-@;              #,new-len
-@;              (lambda (i)
-@;                (if (< i '#,len0)
-@;                  (unsafe-vector-ref v1.expanded i)
-@;                  (unsafe-vector-ref v2.expanded i)))
-@;        vector-length-key
-@;        new-len))]
-@;     [_ #f]))
-@;}
+Storing this syntax property is the job of the programmer, but we automate
+ the task of bubbling the property up through variable definitions by overriding
+ Typed Racket's @racket[define] and @racket[let] forms.
+New definitions search for specially-keyed properties like @racket[connection-key];
+ when found, they associate their variable with the property in a local hashtable
+ whose keys are @exact{$\alpha$}-equivalence classes of identifiers.
+New @racket[let] bindings work similarly, but redirect variable references
+ within their scope.
+The technical tools for implementing these associations are @racket[free-id-table]s
+ and @racket[rename-transformer]s (@Secref{sec:rename}).
 
 
 @; -----------------------------------------------------------------------------
@@ -343,20 +316,19 @@ The technical tools for this are @racket[rename-transformer]s and @racket[free-i
 
 @; Symphony of features
 
-Whereas the previous section was a code-first tour of key techniques supporting
- our implementation, this section is a checklist of important meta-programming
+This section is a checklist of important meta-programming
  tools provided by the Racket macro system.
-For ease of reference, our discussion proceeds from the most useful tool to
+Each sub-section title is a technical term;
+ for ease of reference, our discussion proceeds from the most useful tool to
  the least.
-Each sub-section title is a technical term.
 @;Titles marked with an asterisk are essential to our implementation,
 @; others could be omitted without losing the essence.
 
 
 @subsection[#:tag "sec:parse"]{Syntax Parse}
 
-The @racket[syntax/parse] library@~cite[c-dissertation-2010] is a powerful
- interface for writing macros.
+The @racket[syntax/parse] library@~cite[c-dissertation-2010] provides
+ tools for writing macros.
 It provides the @racket[syntax-parse] and @racket[syntax-parser] forms that
  we have used extensively above.
 From our perspective, the key features are:
@@ -364,13 +336,13 @@ From our perspective, the key features are:
   @item{
     A rich pattern-matching language; including, for example,
      repetition via @racket[...], @racket[#:when] guards, and matching
-     for identifiers like @racket[λ] (top of @Secref{sec:impl-interp})
+     for identifiers like @racket[make-vector] (top of @Secref{sec:impl-interp})
      that respects @exact{$\alpha$}-equivalence.
   }
   @item{
     Freedom to mix arbitrary code between the pattern spec and result,
      as shown in the definition of @racket[vector-ref]
-     (bottom of @Secref{sec:impl-trans}).
+     (bottom of @Secref{sec:impl-elab}).
   }
 ]
 
@@ -382,12 +354,12 @@ Racket's macro expander normally proceeds in a breadth-first manner, traversing
 After expansion, sub-trees are traversed and expanded.
 This ``lazy'' sort of evaluation is normally useful because it lets macro
  writers specify source code patterns instead of forcing them to reason about
- the shape of expanded code.
+ the syntax trees of expanded code.
 
-Our transformations, however, are most effective when value information is
+Our elaborations, however, are most effective when value information is
  propogated bottom up from macro-free syntactic values through other combinators.
 This requires depth-first macro expansion; for instance, in the first argument
- of the @racket[vector-ref] transformation defined in @Secref{sec:impl-trans}.
+ of the @racket[vector-ref] elaboration defined in @Secref{sec:impl-elab}.
 Fortunately, we always know which positions to expand depth-first and
  Racket provides a function @racket[local-expand] that will fully expand
  a target syntax object.
@@ -399,14 +371,20 @@ In particular, all our syntax classes listed in @Figure-ref{fig:stxclass}
 
 A syntax class encapsulates common parts of a syntax pattern.
 With the syntax class shown at the end of @Secref{sec:impl-interp}
- we save 2-6 lines of code in each of our transformation functions.
+ we save 2-6 lines of code in each of our elaboration functions.
 More importantly, syntax classes provide a clean implementation of the ideas
  in @Secref{sec:solution}.
 Given a function in @exact{$\interp$} that extracts data from core value/expression
  forms, we generate a syntax class that applies the function and handles
  intermediate binding forms.
-Functions in @exact{$\trans$} can branch on whether the syntax class matched
+Functions in @exact{$\elab$} can branch on whether the syntax class matched
  instead of parsing data from program syntax.
+
+In other words, syntax classes provide an interface that lets us reason
+ locally when writing elaborators.
+The only question we ask during elaboration is whether a syntax object is associated
+ with an interpreted value---not how the object looks or what sequence of
+ renamings it filtered through.
 
 
 @subsection[#:tag "sec:idmacro"]{Identifier Macros}
@@ -424,14 +402,14 @@ or: bad syntax
 Identifier macros are allowed in both higher-order and top-level positions,
  just like first-class functions.
 This lets us transparently alias built-in functions like @racket[regexp-match]
- and @racket[vector-length] (see @Secref{sec:impl-trans}).
+ and @racket[vector-length] (see @Secref{sec:impl-elab}).
 The higher-order uses cannot be checked for bugs, but they execute as normal
  without raising new syntax errors.
 
 
 @subsection[#:tag "sec:def-implementation"]{Syntax Properties}
 
-Syntax properties are the glue that let us chain transformations together.
+Syntax properties are the glue that let us compose elaborations.
 For instance, @racket[vector-map] preserves the length of its argument vector.
 By tagging calls to @racket[vector-map] with a syntax property, our system
  becomes aware of identities like:
@@ -452,21 +430,6 @@ This proved useful in our implementation of @racket[query-row], where we stored
 
 Cooperating with @racket[let] and @racket[define] bindings is an important
  usability concern.
-When testing this library on existing code, we often saw code like:
-
-@(begin
-#reader scribble/comment-reader
-(racketblock
-(define rx-email #rx"^(.*)@(.*)\\.(.*)$")
-
-;; Other code here
-
-(define (get-recipient str)
-  (regexp-match rx-email str))
-))
-
-Similarly for database code and arithmetic constants.
-
 To deal with @racket[let] bindings, we use a @racket[rename-transformer].
 Within the binding's scope, the transformer redirects references from a variable
  to an arbitrary syntax object.
@@ -482,17 +445,18 @@ For our purposes, we redirect to an annotated version of the same variable:
 ]
 
 For definitions, we use a @emph{free-identifier table}.
-This is less fancy--just a hashtable whose keys respect @exact{$\alpha$}-equivalence--but
- still useful in practice.
+This is less fancy--just a hashtable whose keys respect
+ @exact{$\alpha$}-equivalence--but still useful in practice.
 
 
 @subsection[#:tag "sec:phase"]{Phasing}
 
 Any code between a @racket[syntax-parse] pattern and the output syntax object
  is run at compile-time to generate the code that is ultimately run.
-In general terms, the code used to directly generate run-time code
+In general terms, code used to directly generate run-time code
  executes at @emph{phase level} 1 relative to the enclosing module.
-Code used to generate a syntax-parse pattern may be run at phase level 2, and
+Code used to generate a @racket[syntax-parse] pattern may be run at
+ phase level 2, and
  so on up to as many phases as needed@~cite[f-icfp-2002].
 
 Phases are explicitly separated.
@@ -501,11 +465,9 @@ Also by design, it is very easy to import bindings from any module at a specific
  phase.
 The upshot of this is that one can write and test ordinary, phase-0 Racket code
  but then use it at a higher phase level.
-@; + non-meta programming
-@; + not getting stuck in ascending ladder
-@; + modular development
-@; + don't need to worry about Singletons Haskell duplication
-@;   There is no need to duplicate code for use at different phases.
+We also have functions like @racket[+] available at whatever stage of
+ macro expansion we should need them---no need to copy and paste the implementation
+ at a different phase level@~cite[ew-haskell-2012].
 
 
 @subsection{Lexical Scope, Source Locations}
@@ -513,7 +475,8 @@ The upshot of this is that one can write and test ordinary, phase-0 Racket code
 Perhaps it goes without saying, but having macros that respect lexical scope
  is important for a good user and developer experience.
 Along the same lines, the ability to propogate source code locations in
- transformations lets us report syntax errors in terms of the programmer's
+ elaborations lets us report syntax errors in terms of the programmer's
  source code rather than locations inside our library.
-
+Even though we may implement complex transformations, errors can always be
+ traced to a source code line number.
 
