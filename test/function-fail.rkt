@@ -3,7 +3,7 @@
 
 (module+ test (test-compile-error
   #:require trivial/function trivial/format
-  #:exn #rx"at:" ;;TODO
+  #:exn #rx"Type Checker|lambda:|λ:" ;; TODO, bummer to include lambda:
   ((curry: (lambda (x y) x)) 0 1)
   (((curry: (lambda (x y z) z)) 'x) 'y 'z)
   (((curry: (lambda ([x : Integer] [y : Integer]) (+ x x y))) 'a) 'b)

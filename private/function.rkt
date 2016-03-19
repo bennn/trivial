@@ -1,16 +1,11 @@
 #lang typed/racket/base
 
 ;; TODO get type from a lambda AFTER expansion
-;
-;(require
-; (for-syntax
-;   (only-in typed-racket/private/syntax-properties plambda-property)))
-;
+
 ;; -----------------------------------------------------------------------------
 
 ;; Track procedure arity
 ;; Applications:
-;; - 
 ;; - vectorized ops
 ;; - (TODO) improve apply/map? ask Leif
 ;; - TODO get types, not arity
@@ -35,16 +30,14 @@
     trivial/private/common
 ))
 
-;(require
-;    (prefix-in tr: typed/racket/base)
-;    (prefix-in r: (only-in racket/base quote))
-; (for-syntax
-;  syntax/id-table))
-
 ;; =============================================================================
 
 (begin-for-syntax
   (define TYPE-KEY 'type-label)
+
+  (define (formal->type x)
+    (or (syntax-property x TYPE-KEY)
+        (format-id x "Any"))) ;; Could just use TR's Any from here
 
   (define (parse-procedure-arity stx)
     (syntax-parse stx #:literals (: #%plain-lambda lambda)
@@ -90,29 +83,8 @@
     ;; --
     #:with Listof-stx (format-id stx "Listof")
     #:with (e+* ...)
-      (for/list ([t (in-list (syntax-e #'p.evidence))]
+      (for/list ([x (in-list (syntax-e #'p.evidence))]
                  [e (in-list (syntax-e #'(e* ...)))])
-        (quasisyntax/loc stx (ann #,e (Listof-stx #,t))))
-    (syntax/loc stx (map p.expanded e+* ...))]
-   [(_ p e* ...)
-    ;; TODO -- this case should be subsumed by the last
-    #:with p+ (expand-expr #'p)
-    #:with evi (fun? #'p+)
-    #:when (syntax-e #'evi)
-    #:when
-      (let ([num-expected (length (syntax-e #'evi))]
-            [num-actual (length (syntax-e #'(e* ...)))])
-        (unless (= num-expected num-actual)
-          (apply raise-arity-error
-            'map:
-            num-expected
-            (map syntax->datum (syntax-e #'(e* ...))))))
-    ;; --
-    #:with Listof-stx (format-id stx "Listof")
-    #:with (e+* ...)
-      (for/list ([t (in-list (syntax-e #'evi))]
-                 [e (in-list (syntax-e #'(e* ...)))])
-        ;; TODO stop using format-id
-        (quasisyntax/loc stx (ann #,e (Listof-stx #,(format-id stx "~a" t)))))
-    (syntax/loc stx (map p+ e+* ...))]))))
+        (quasisyntax/loc stx (ann #,e (Listof-stx #,(formal->type x)))))
+    (syntax/loc stx (map p.expanded e+* ...))]))))
 
