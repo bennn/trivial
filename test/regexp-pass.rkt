@@ -259,4 +259,10 @@
     #rx"^\\\\draw\\[.*\\]? *\\(([0-9]+)\\)[^(]*\\(([0-9]+)\\);$"])
     (regexp-match: EDGE_REGEXP "bye")
     (void))
+
+  ;; -- check return type "inference"
+  (check-equal?
+    (regexp-match: #rx"hello" #"world")
+    ;; Would be a type error if we annotated wrong
+    #f)
 )

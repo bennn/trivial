@@ -2,6 +2,16 @@
 
 ;; Stronger types for regular expression matching.
 
+;; Specification:
+;; - Racket docs:
+;;   http://docs.racket-lang.org/reference/regexp.html
+;;
+;; - Pregexp docs:
+;;   http://ds26gte.github.io/pregexp/index.html
+;;
+;; - Racket source:
+;;   https://github.com/racket/racket/blob/master/racket/src/racket/src/regexp.c
+
 (provide
   regexp:
   pregexp:
@@ -85,8 +95,7 @@
                    (or
                     (eq? #\? (string-ref str (+ i 1)))
                     (eq? #\* (string-ref str (+ i 1)))))
-              ;; Group is starred, can't predict num. matches statically
-              ;; or ?'d 
+              ;; TODO starred group = may be #f
               #f]
              [(null? in-paren)
               (group-error str (format "')' at index ~a" i))]
@@ -129,6 +138,22 @@
   (define-values (rx-key rx? rx-define rx-let)
     (make-value-property 'rx:groups parse-groups))
   (define-syntax-class/predicate pattern/groups rx?)
+
+)
+;; -----------------------------------------------------------------------------
+;; --- Other helpers
+
+(begin-for-syntax
+  (define (infer-return-type pattern-sym arg-stx)
+    (if (and
+          (or (eq? pattern-sym 'String)
+              (eq? pattern-sym 'Regexp))
+          (or (syntax-parse arg-stx
+                ((x:str) #t)
+                ((x) #:when (bytes? (syntax-e #'x)) #f)
+                (_ #t))))
+      'String
+      'Bytes))
 )
 
 ;; -----------------------------------------------------------------------------
@@ -159,12 +184,13 @@
     #:with (num-groups . type-sym) (syntax/loc stx pat.evidence)
     ;; TODO keep source location in type-sym, stop using format-id
     ;;  (Is it really that bad?)
-    #:with type (format-id stx "~a" (syntax-e #'type-sym))
+    #:with return-type (format-id stx "~a" (infer-return-type (syntax-e #'type-sym)
+                                                              #'(arg* ...)))
     #:with (index* ...) (for/list ([i (in-range (syntax-e #'num-groups))]) i)
     (syntax/loc stx
       (let ([maybe-match (regexp-match pat.expanded arg* ...)])
         (if maybe-match
-          (let ([m : (Listof (Option type)) maybe-match])
+          (let ([m : (Listof (Option return-type)) maybe-match])
             (list (car maybe-match)
                   (begin (set! m (cdr m))
                          (or (car m) (error 'regexp-match: (format "Internal error at result index ~a, try using Racket's regexp-match" 'index*))))
