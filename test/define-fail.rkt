@@ -15,7 +15,7 @@
 )
 (test-compile-error
   #:require trivial/define trivial/function trivial/format
-  #:exn exn:fail? ;;#rx"Type Checker"
+  #:exn #rx"Type Checker|lambda:" ;; TODO
 
   (let: ([f (lambda ([x : String] [y : Integer])
   ;; Error here -- swapped y and x

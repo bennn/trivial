@@ -19,7 +19,15 @@
     2)
 
   (check-true
-    (begin (curry: (lambda ([x : Integer]) x)) #t))
+    (begin
+      (curry: (lambda ([x : Integer]) x))
+      (curry: (lambda ([x : String]) x))
+      (curry: (lambda ([x : Any]) x))
+      ((curry: (lambda (x) x)) 1)
+      ((curry: (lambda ([x : (Listof Any)]) x)) '())
+      (curry: (lambda ([x : (Listof Boolean)]) x))
+      (curry: (lambda ([x : (Vectorof (Listof Boolean))]) x))
+      #t))
 
   (check-equal?
     ((curry: (lambda ([x : Integer]) x)) 3)
