@@ -19,7 +19,8 @@ before_script:
 
 script:
  - raco setup --check-pkg-deps trivial
- - raco test $TRAVIS_BUILD_DIR
+ - raco test $TRAVIS_BUILD_DIR/trivial
+ - raco test $TRAVIS_BUILD_DIR/test
 
 after_success:
  - raco pkg install --deps search-auto cover
