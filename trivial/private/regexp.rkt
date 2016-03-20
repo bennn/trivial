@@ -32,6 +32,7 @@
   (for-syntax
     (only-in racket/syntax format-id)
     typed/racket/base
+    (only-in racket/list range)
     (only-in racket/format ~a)
     syntax/parse
     trivial/private/common))
@@ -59,69 +60,86 @@
       [(byte-pregexp? v)  (parse-groups/byte-pregexp v #:src v-stx)]
       [else               #f]))
 
+  ;; Handle pipes
+  ;; If there is a pipe, everything is nullable, but we know the number of groups
+  (define (parse-groups/untyped str #:src stx)
+    (define alt* (string->alt* str))
+    (cond
+     [(null? alt*)
+      (list 0 '())]
+     [(null? (cdr alt*))
+      (parse-groups-for-alt (car alt*) #:src stx)]
+     [else
+      (define num-groups
+        (for/fold ([num-groups 0])
+                  ([alt (in-list alt*)])
+          (define ng+null* (parse-groups-for-alt alt #:src stx))
+          (+ num-groups (car ng+null*))))
+      (list num-groups (range num-groups))]))
+
   ;; Count the number of matched parentheses in a regexp pattern.
   ;; Raise an exception if there are unmatched parens.
-  (define (parse-groups/untyped str #:src stx)
+  (define (parse-groups-for-alt str #:src stx)
     (define last-index (- (string-length str) 1))
-    (define ignore? (box #f))
-    (let loop ([i 0] [in-paren '()] [num-groups 0])
+    (define in-square? (box #f))
+    (let loop ([i 0] [in-paren '()] [num-groups 0] [null-idx* '()])
       (if (> i last-index)
         (cond
          [(not (null? in-paren))
           (group-error str (format "'(' at index ~a" (car in-paren)))]
-         [(unbox ignore?)
+         [(unbox in-square?)
           (group-error str (format "'[' at index ~a" (car in-paren)))]
          [else
-          num-groups])
-        (if (unbox ignore?)
+          (list num-groups null-idx*)])
+        (if (unbox in-square?)
           (if (eq? #\] (string-ref str i))
-            (begin (set-box! ignore? #f)
-                   (loop (+ i 1) (cdr in-paren) num-groups))
-            (loop (+ i 1) in-paren num-groups))
+            (begin (set-box! in-square? #f)
+                   (loop (+ i 1) (cdr in-paren) num-groups null-idx*))
+            (loop (+ i 1) in-paren num-groups null-idx*))
           (case (string-ref str i)
            [(#\[)
             ;; Ignore things between [ ... ]
-            (set-box! ignore? #t)
-            (loop (+ i 1) (cons i in-paren) num-groups)]
+            (set-box! in-square? #t)
+            (loop (+ i 1) (cons i in-paren) num-groups null-idx*)]
            [(#\()
             ;; Watch for (? patterns
             (if (and (< i last-index)
                      (eq? #\? (string-ref str (+ i 1))))
-              (loop (+ i 2) (cons #f in-paren) num-groups)
-              (loop (+ i 1) (cons i in-paren) num-groups))]
+              (loop (+ i 2) (cons #f in-paren) num-groups null-idx*)
+              (loop (+ i 1) (cons i in-paren) num-groups null-idx*))]
            [(#\))
             (cond
-             [(and (< i last-index)
-                   (or
-                    (eq? #\? (string-ref str (+ i 1)))
-                    (eq? #\* (string-ref str (+ i 1)))))
-              ;; TODO starred group = may be #f
-              #f]
              [(null? in-paren)
               (group-error str (format "')' at index ~a" i))]
              [(eq? #f (car in-paren))
               ;; Matched closing paren, but does not count as a group
-              (loop (+ i 1) (cdr in-paren) num-groups)]
+              (loop (+ i 1) (cdr in-paren) num-groups null-idx*)]
+             [(and (< i last-index)
+                   (or
+                    (eq? #\? (string-ref str (+ i 1)))
+                    (eq? #\* (string-ref str (+ i 1)))))
+              ;; group = may be #f
+              (loop (+ i 1) (cdr in-paren) (+ 1 num-groups) (cons num-groups null-idx*))]
              [else
-              (loop (+ i 1) (cdr in-paren) (+ 1 num-groups))])]
+              (loop (+ i 1) (cdr in-paren) (+ 1 num-groups) null-idx*)])]
            [(#\\)
             (if (and (< i last-index)
                      (eq? #\\ (string-ref str (+ i 1))))
-              (loop (+ i 3) in-paren num-groups)
-              (loop (+ i 2) in-paren num-groups))]
+              (loop (+ i 3) in-paren num-groups null-idx*)
+              (loop (+ i 2) in-paren num-groups null-idx*))]
            [(#\|)
             ;; Nope! Can't handle pipes
-            #f]
+            (error 'internal-error "Found '|' character in regexp string.")]
            [else
-            (loop (+ i 1) in-paren num-groups)])))))
+            (loop (+ i 1) in-paren num-groups null-idx*)])))))
 
   (define (parse-groups/string str #:src stx)
     (let ([ng (parse-groups/untyped str #:src stx)])
-      (and ng (cons ng 'String))))
+      (and ng (cons 'String ng))))
 
   (define (parse-groups/bytes b #:src stx)
     (let ([ng (parse-groups/untyped (~a b) #:src stx)])
-      (and ng (cons ng 'Bytes))))
+      (and ng (cons 'Bytes ng))))
 
   (define (parse-groups/regexp rx #:src stx)
     (parse-groups/string (~a rx) #:src stx))
@@ -144,6 +162,40 @@
 ;; --- Other helpers
 
 (begin-for-syntax
+
+  ;; Divide string into |-separated substrings (regex alternates)
+  ;; Be wary of escaped | characters.
+  (define (string->alt* str)
+    (define L (string-length str))
+    (let loop ([prev-i 0] [i 0])
+      (cond
+       [(= i L)
+        ;; End of string, return last alternate
+        (list (substring str prev-i i))]
+       [(and (eq? (string-ref str i) #\|)
+               (< 1 i)
+               (not (and (eq? (string-ref str (- i 1)) #\\)
+                         (eq? (string-ref str (- i 2)) #\\))))
+        ;; Found a pipe, save current alternate
+        (cons (substring str prev-i i)
+              (loop (+ i 1) (+ i 1)))]
+       [else
+        ;; Nothing interesting, continue building alternate
+        (loop prev-i (+ i 1))])))
+
+  (define (intlist-union i* j*)
+    (cond
+     [(null? i*)
+      j*]
+     [(null? j*)
+      i*]
+     [(< (car i*) (car j*))
+      (cons (car i*) (intlist-union (cdr i*) j*))]
+     [(> (car i*) (car j*))
+      (cons (car j*) (intlist-union i* (cdr j*)))]
+     [else
+      (cons (car i*) (intlist-union (cdr i*) (cdr j*)))]))
+
   (define (infer-return-type pattern-sym arg-stx)
     (if (and
           (or (eq? pattern-sym 'String)
@@ -181,20 +233,19 @@
 (define-syntax regexp-match: (make-alias #'regexp-match
   (lambda (stx) (syntax-parse stx
    [(_ pat:pattern/groups arg* ...)
-    #:with (num-groups . type-sym) (syntax/loc stx pat.evidence)
+    #:with (type-sym num-groups null-idx*) (syntax/loc stx pat.evidence)
     ;; TODO keep source location in type-sym, stop using format-id
     ;;  (Is it really that bad?)
     #:with return-type (format-id stx "~a" (infer-return-type (syntax-e #'type-sym)
                                                               #'(arg* ...)))
-    #:with (index* ...) (for/list ([i (in-range (syntax-e #'num-groups))]) i)
+    #:with (group-type* ...) (let ([null* (syntax->datum #'null-idx*)])
+                               (for/list ([i (in-range (syntax-e #'num-groups))])
+                                 (if (memv i null*)
+                                   (syntax/loc stx (U #f return-type))
+                                   (syntax/loc stx return-type))))
     (syntax/loc stx
       (let ([maybe-match (regexp-match pat.expanded arg* ...)])
         (if maybe-match
-          (let ([m : (Listof (Option return-type)) maybe-match])
-            (list (car maybe-match)
-                  (begin (set! m (cdr m))
-                         (or (car m) (error 'regexp-match: (format "Internal error at result index ~a, try using Racket's regexp-match" 'index*))))
-                  ...))
+          (cast maybe-match (List return-type group-type* ...))
           #f)))]
    [_ #f]))))
-

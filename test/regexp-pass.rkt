@@ -265,4 +265,65 @@
     (regexp-match: #rx"hello" #"world")
     ;; Would be a type error if we annotated wrong
     #f)
+
+  ;; -- starred group => 1 group
+  (check-equal?
+    (ann
+      (regexp-match: "(poo )*" "poo poo platter")
+      (U #f (List String (U #f String))))
+   '("poo poo " "poo "))
+
+  (check-equal?
+    (ann
+      (regexp-match: "([a-z ]+;)*" "lather; rinse; repeat;")
+      (U #f (List String (U #f String))))
+    '("lather; rinse; repeat;" " repeat;"))
+
+  ;; -- ? = 1 group
+  (let-regexp: ([date-re (pregexp: "([a-z]+) +([0-9]+,)? *([0-9]+)")])
+    (check-equal?
+      (ann
+        (regexp-match: date-re "jan 1, 1970")
+        (U #f (List String String (U #f String) String)))
+      '("jan 1, 1970" "jan" "1," "1970"))
+
+    (check-equal?
+      (ann
+        (regexp-match: date-re "jan 1970")
+        (U #f (List String String (U #f String) String)))
+      '("jan 1970" "jan" #f "1970"))
+  )
+
+  ;; -- (? = 0 groups
+  (check-equal?
+    (ann
+      (regexp-match: "^(?:[a-z]*/)*([a-z]+)$" "/usr/local/bin/mzscheme")
+      (U #f (List String String)))
+    '("/usr/local/bin/mzscheme" "mzscheme"))
+
+  (check-equal?
+    (ann
+      (regexp-match: #px"(?i:AloT)" "alot")
+      (U #f (List String)))
+    '("alot"))
+
+  ;; -- pipes = take min groups
+  (check-equal?
+    (ann
+      (regexp-match: "^(a*)|(b*)$" "aaa")
+      (U #f (List String (U #f String) (U #f String))))
+    '("aaa" "aaa" #f))
+
+  (check-equal?
+    (ann
+      (regexp-match: "^(aa*)(c*)|(b*)$" "b")
+      (U #f (List String (U #f String) (U #f String) (U #f String))))
+    '("b" #f #f "b"))
+
+  ;; -- nested gropus
+  (check-equal?
+    (ann
+      (regexp-match: "((a)b)" "abc")
+      (U #f (List String String String)))
+    '("ab" "ab" "a"))
 )
