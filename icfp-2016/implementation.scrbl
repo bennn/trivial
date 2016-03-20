@@ -484,7 +484,7 @@ Perhaps it goes without saying, but having macros that respect lexical scope
  is important for a good user and developer experience.
 Along the same lines, the ability to propogate source code locations in
  elaborations lets us report syntax errors in terms of the programmer's
- source code rather than locations inside our library.
+ code rather than locations inside our library.
 Even though we may implement complex transformations, errors can always be
- traced to a source code line number.
+ traced to a line number in the source.
 

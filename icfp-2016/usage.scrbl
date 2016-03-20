@@ -328,7 +328,7 @@ Taken alone, this re-implementation of constant folding in an earlier compiler
  stage is not very exciting.
 But since folded expressions propagate their result upwards to arbitrary
  analyses, we can combine these elaborations with a size-aware vector library to
- guard against index errors access at computed locations.
+ guard against index errors at computed locations.
 
 
 @; =============================================================================
