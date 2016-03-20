@@ -4,7 +4,7 @@ trivial
 [![Coverage Status](https://coveralls.io/repos/bennn/trivial/badge.svg?branch=master&service=github)](https://coveralls.io/github/bennn/trivial?branch=master)
 [![Scribble](https://img.shields.io/badge/Docs-Scribble-blue.svg)](http://pkg-build.racket-lang.org/doc/trivial/index.html)
 
-This library provides "smarter" versions of Typed Racket standard library functions.
+This [Typed Racket](http://docs.racket-lang.org/ts-reference/) library provides "smarter" versions of standard library functions.
 For example:
 
 ```
@@ -23,17 +23,28 @@ For example:
 
 The `printf:` (with a colon) checks whether its first argument is a string literal.
 If so, it parses the string's format sequences for arity and type constraints.
-Unless the constraints fail, `printf:` then calls the standard `printf`.
 
-When the first argument to `printf:` is not a string literal, nothing special happens; we just call the standard `printf`.
+Definitions work too:
+
+```
+(require trivial/no-colon)
+
+(let ([s "hello ~a"])
+  (printf s))
+
+```
+
+
+When the first argument to `printf:` is not clear from the program syntax, nothing special happens; we just call the standard `printf`.
 
 ```
 #lang typed/racket/base
 
 (require trivial)
 
-(let ([s "hello, ~a\n"])
+((lambda ([s : String])
   (printf: s)) ;; Non-trivial!
+ "hello, ~a\n")
 
 ;; Compiles successfully, but throws arity error at runtime
 ```
@@ -42,9 +53,14 @@ Besides `printf:`, this library also provides [macros](http://www.greghendershot
 for:
 
 - `regexp-match:`, to count the number of groups in a pattern and give the match result a more specific type
-- `+:`, `-:`, `*:`, `/:`, to reduce constants where possible, yielding results with more specific types.
+- constant-folding arithmetic, so `(/ 1 0)` raises a compile-time error
+- arity-aware functions, like generalized `curry` and `map`
+- size-aware vector functions, like length-propagating `vector-append`
+- (experimental) typed database queries
 
 See the [documentation](http://pkg-build.racket-lang.org/doc/trivial/index.html) for the full story.
+
+`trivial` is not currently compatible with untyped Racket.
 
 
 Install
@@ -64,12 +80,7 @@ From the Racket [package server](http://pkgs.racket-lang.org/):
 ```
 
 Use `(require trivial)` to import all bindings from this library.
-Each file in the root directory of this repo can be imported specifically, as in:
-- `(require trivial/format)`
-- `(require trivial/regexp)`
-- `(require trivial/math)`
-
-These files only export macros.
+If you get tired of writing colons everywhere, require `trivial/no-colon` instead.
 
 
 Naming
