@@ -1,6 +1,7 @@
 #lang typed/racket/base
 
-;; TODO get type from a lambda AFTER expansion
+;; TODO
+;;  map passing, but cury failig; can't make a lambda like I'd like to
 
 ;; -----------------------------------------------------------------------------
 
@@ -37,12 +38,14 @@
 
   (define (formal->type x)
     (or (syntax-property x TYPE-KEY)
+        ;(syntax/loc x Any)))
         (format-id x "Any"))) ;; Could just use TR's Any from here
 
   (define (parse-procedure-arity stx)
     (syntax-parse stx #:literals (: #%plain-lambda lambda)
      [(#%plain-lambda (x*:id ...) e* ...)
-      (syntax/loc stx (x* ...))]
+      (map formal->type (syntax-e #'(x* ...)))]
+      ;(syntax/loc stx (x* ...))]
      ;; TODO polydots, keywords, optional args
      ;; TODO standard library functions
      [_ #f]))
@@ -58,8 +61,10 @@
 (define-syntax (curry: stx)
   (syntax-parse stx
    [(_ p:procedure/arity)
-    #:with p+ (for/fold ([e (quasisyntax/loc stx (p.expanded #,@#'p.evidence))])
-                        ([x (in-list (reverse (syntax-e #'p.evidence)))])
+    #:with x* (for/list ([_t (in-list (syntax-e #'p.evidence))]) (gensym))
+    #:with p+ (for/fold ([e (quasisyntax/loc stx (p.expanded #,#'x*))])
+                        ([x (in-list (reverse (syntax-e #'x*)))]
+                         [t (in-list (syntax-e #'p.evidence))])
                 (quasisyntax/loc stx
                   (lambda (#,x) #,e)))
     (syntax/loc stx p+)]
@@ -83,8 +88,8 @@
     ;; --
     #:with Listof-stx (format-id stx "Listof")
     #:with (e+* ...)
-      (for/list ([x (in-list (syntax-e #'p.evidence))]
+      (for/list ([t (in-list (syntax-e #'p.evidence))]
                  [e (in-list (syntax-e #'(e* ...)))])
-        (quasisyntax/loc stx (ann #,e (Listof-stx #,(formal->type x)))))
+        (quasisyntax/loc stx (ann #,e (Listof-stx #,(format-id stx "~a" (syntax-e t))))))
     (syntax/loc stx (map p.expanded e+* ...))]))))
 
