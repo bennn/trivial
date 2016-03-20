@@ -15,6 +15,6 @@
                      "rackunit-lib"))
 (define compile-omit-paths '("icfp-2016"))
 (define pkg-desc "Strongly-typed macros")
-(define version "0.1")
+(define version "1")
 (define pkg-authors '(ben))
 (define scribblings '(("scribblings/trivial.scrbl" () ("typed-racket"))))
