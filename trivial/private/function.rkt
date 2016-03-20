@@ -38,14 +38,12 @@
 
   (define (formal->type x)
     (or (syntax-property x TYPE-KEY)
-        ;(syntax/loc x Any)))
         (format-id x "Any"))) ;; Could just use TR's Any from here
 
   (define (parse-procedure-arity stx)
     (syntax-parse stx #:literals (: #%plain-lambda lambda)
      [(#%plain-lambda (x*:id ...) e* ...)
       (map formal->type (syntax-e #'(x* ...)))]
-      ;(syntax/loc stx (x* ...))]
      ;; TODO polydots, keywords, optional args
      ;; TODO standard library functions
      [_ #f]))
@@ -62,11 +60,11 @@
   (syntax-parse stx
    [(_ p:procedure/arity)
     #:with x* (for/list ([_t (in-list (syntax-e #'p.evidence))]) (gensym))
-    #:with p+ (for/fold ([e (quasisyntax/loc stx (p.expanded #,#'x*))])
+    #:with p+ (for/fold ([e (quasisyntax/loc stx (p.expanded #,@#'x*))])
                         ([x (in-list (reverse (syntax-e #'x*)))]
                          [t (in-list (syntax-e #'p.evidence))])
                 (quasisyntax/loc stx
-                  (lambda (#,x) #,e)))
+                  (lambda ([#,x : #,t]) #,e)))
     (syntax/loc stx p+)]
    [_
     (raise-user-error 'curry "Fail at: ~a" (syntax->datum stx))]))
