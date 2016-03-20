@@ -11,6 +11,9 @@
     trivial/private/common
     syntax/parse
     typed/racket/base)
+  (only-in trivial/private/format
+    format-define
+    format-let)
   (only-in trivial/private/math
     num-define
     num-let)
@@ -26,14 +29,16 @@
 
 (define-syntax define: (make-keyword-alias 'define
   (lambda (stx)
-    (or (num-define stx)
+    (or (format-define stx)
+        (num-define stx)
         (rx-define stx)
         (fun-define stx)
         (vec-define stx)))))
 
 (define-syntax let: (make-keyword-alias 'let
   (lambda (stx)
-    (or (fun-let stx)
+    (or (format-let stx)
+        (fun-let stx)
         (num-let stx)
         (rx-let stx)
         (vec-let stx)))))

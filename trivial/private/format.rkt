@@ -5,6 +5,10 @@
 (provide
   format:
   printf:
+
+  (for-syntax
+    format-define
+    format-let)
 )
 
 (require
@@ -59,7 +63,7 @@
           (loop (+ i 1) acc)]))]
      [else #f]))
 
-  (define-values (_key fmt? _define _let)
+  (define-values (_key fmt? format-define format-let)
     (make-value-property 'string:format format-parser))
 
   (define-syntax-class/predicate string/format fmt?)
