@@ -1,7 +1,7 @@
 #lang info
 (define collection 'multi)
+(define setup-collects '("trivial"))
 (define compile-omit-paths '(
-  "compiled"
   "icfp-2016"
   "test"
 ))
