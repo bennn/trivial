@@ -492,14 +492,14 @@ We parse @tt{SELECT} statements using @racket[sql->constr] and extract
 \vspace{-4mm}
 
 \begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT defendant FROM decisions}\\
-\mbox{\hphantom{\Scribtexttt{xxxx}}}\RktVal{WHERE plaintiff = {\textquotesingle}\$1{\textquotesingle}"}
-
-\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{(}\RktVal{defendant}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{decisions}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{\$1}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{.}}} }\RktVal{plaintiff}\RktVal{)}\RktVal{]}
-
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT * FROM loans"}
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{(sql->constr}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT * FROM loans"}\RktMeta{)}
 
 \RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{*}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{decisions}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{)}\RktVal{]}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
+
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{(sql->constr}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT defendant FROM decisions}\\
+\mbox{\hphantom{\Scribtexttt{xxxxxxxxxxxxxxxxxxx}}}\RktVal{WHERE plaintiff = {\textquotesingle}\$1{\textquotesingle}"}\RktMeta{)}
+
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{[}\RktVal{(}\RktVal{defendant}\RktVal{)}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{decisions}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{(}\RktVal{\$1}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{.}}} }\RktVal{plaintiff}\RktVal{)}\RktVal{]}
 }|
 
 The schema, connection, and query constraints now come together in elaborations
@@ -512,39 +512,39 @@ There is still a non-trivial amount of work to be done resolving wildcards and
 \vspace{1mm}
 \hfill\fbox{$\elabf \in \elab$}
 \vspace{-4mm}
-\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+\begin{SCodeFlow}\begin{RktBlk}\begin{SingleColumn}\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktMeta{(}\RktMeta{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{C}
 
 \mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{"SELECT plaintiff FROM decisions}\\
 \mbox{\hphantom{\Scribtexttt{xxxxxxx}}}\RktVal{WHERE year = {\textquotesingle}\$1{\textquotesingle} LIMIT 1"}
 
-\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktVal{2006}\RktVal{)}\RktSym{$]\!]$}
+\mbox{\hphantom{\Scribtexttt{xxxxx}}}\RktMeta{2006}\RktMeta{)}\RktSym{$]\!]$}
 
-\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{(}\RktMeta{(}\RktMeta{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{C}
 
 \mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"SELECT {\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}"}
 
-\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{(}\RktVal{2006}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\RktVal{)}\RktVal{)}
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktMeta{(}\RktMeta{2006}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{Natural}\RktMeta{)}\RktMeta{)}
 
-\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktVal{(}\RktVal{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\RktVal{)}\RktVal{)}
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktMeta{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktMeta{(}\RktMeta{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{String}\RktMeta{)}\RktMeta{)}
 \\
 \\
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktMeta{(}\RktMeta{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{C}
 
 \mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{"SELECT * FROM decisions}\\
 \mbox{\hphantom{\Scribtexttt{xxxxxxx}}}\RktVal{WHERE plaintiff = {\textquotesingle}\$1{\textquotesingle} LIMIT 1"}
 
-\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"United States"}\RktVal{)}\RktSym{$]\!]$}
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{"United States"}\RktMeta{)}\RktSym{$]\!]$}
 
-\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}
+\RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{(}\RktMeta{(}\RktMeta{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{C}
 
 \mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{"SELECT {\hbox{\texttt{.}}}{\hbox{\texttt{.}}}{\hbox{\texttt{.}}}"}
 
-\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktVal{(}\RktVal{"United States"}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\RktVal{)}\RktVal{)}
+\mbox{\hphantom{\Scribtexttt{xxxxxxxx}}}\RktMeta{(}\RktVal{"United States"}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{String}\RktMeta{)}\RktMeta{)}
 
-\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktVal{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktVal{(}\RktVal{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{Natural}\RktVal{)}\RktVal{)}
+\mbox{\hphantom{\Scribtexttt{xxxxxx}}}\RktMeta{{\hbox{\texttt{:}}}{\hbox{\texttt{:}}}}\mbox{\hphantom{\Scribtexttt{xxx}}}\RktMeta{(}\RktMeta{Vector}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{Natural}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{String}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{Natural}\RktMeta{)}\RktMeta{)}
 \\
 \\
-\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktVal{{\textquotesingle}}\RktVal{(}\RktVal{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{C}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT foo FROM decisions"}\RktVal{)}\RktSym{$]\!]$}
+\RktSym{{\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$[\![$}\RktMeta{(}\RktMeta{query{-}row}\mbox{\hphantom{\Scribtexttt{x}}}\RktMeta{C}\mbox{\hphantom{\Scribtexttt{x}}}\RktVal{"SELECT foo FROM decisions"}\RktMeta{)}\RktSym{$]\!]$}
 
 \RktSym{=={\Stttextmore}}\mbox{\hphantom{\Scribtexttt{x}}}\RktSym{$\perp$}\end{SingleColumn}\end{RktBlk}\end{SCodeFlow}
 }|
