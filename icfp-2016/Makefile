@@ -1,14 +1,14 @@
-PAPER=paper
+PAPER=pearl
 
-all: paper.pdf
+all: pearl.pdf
 
-compiled/paper_scrbl.zo: *.rkt *.scrbl
+compiled/pearl_scrbl.zo: *.rkt *.scrbl
 	raco make -v $(PAPER).scrbl
 
-paper.pdf: pkg compiled/paper_scrbl.zo texstyle.tex
+pearl.pdf: pkg compiled/pearl_scrbl.zo texstyle.tex
 	scribble ++extra fig-experience.tex ++extra fig-stxclass.tex ++extra fig-stats.tex ++style texstyle.tex --pdf $(PAPER).scrbl
 
-paper.tex: pkg compiled/paper_scrbl.zo texstyle.tex
+pearl.tex: pkg compiled/pearl_scrbl.zo texstyle.tex
 	scribble ++style texstyle.tex --latex $(PAPER).scrbl
 
 pkg:
