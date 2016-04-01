@@ -1,16 +1,7 @@
 #lang scribble/sigplan
 @(require "common.rkt" racket/string racket/sandbox)
 
-@; TODO 'need to' etc
 @; TODO clever examples
-@; TODO definition pane for examples
-@; +------------
-@; | f \in \interp
-@; |
-@; | > (f x)
-@; | y
-@; +------------
-@; TODO remove all refs to implementation?
 
 @title[#:tag "sec:usage"]{What we can learn from Values}
 
@@ -39,6 +30,7 @@ To distinguish terms and syntax objects,
  we quote the latter and typeset it in green.
 Hence @racket[(λ (x) x)] is the identity function
  and @racket['(λ (x) x)] is a syntax object.
+@; TODO @todo{No longer accurate, not quoting was prettier}
 } @item{
 Values are typeset in @exact|{\RktVal{green}}| because their syntax and
  term representations are identical.
@@ -101,7 +93,7 @@ In Typed Racket this function is rather simple because the most common
 }|
 @racketblock[
 > (fmt->types "binary(~s) = ~b")
-==> '[Any Integer]
+==> [Any Integer]
 > (fmt->types '(λ (x) x))
 ==> #false
 ]
@@ -116,12 +108,12 @@ For all other syntax patterns, we perform the identity elaboration.
 \vspace{-4mm}
 }|
 @racketblock[
-> ⟦'(printf "~a")⟧
+> ⟦(printf "~a")⟧
 ==> ⊥
-> ⟦'(printf "~b" 2)⟧
-==> '(printf "~b" (2 :: Integer))
-> ⟦'printf ⟧
-==> 'printf
+> ⟦(printf "~b" 2)⟧
+==> (printf "~b" (2 :: Integer))
+> ⟦printf ⟧
+==> printf
 ]
 
 The first example is rejected immediately as a syntax error.
@@ -211,10 +203,10 @@ It also raises syntax errors when an uncompiled regular expression contains
 \vspace{-4mm}
 }|
 @racketblock[
-> ⟦'(regexp-match #rx"(a)b" str)⟧
-==> '((regexp-match #rx"(a)b" str)
+> ⟦(regexp-match #rx"(a)b" str)⟧
+==> ((regexp-match #rx"(a)b" str)
       :: (U #f (List String String)))
-> ⟦'(regexp-match "(" str)⟧
+> ⟦(regexp-match "(" str)⟧
 ==> ⊥
 ]
 
@@ -229,12 +221,12 @@ By tokenizing symbolic λ-expressions, we can statically infer their domain.
 \vspace{-4mm}
 }|
 @racketblock[
-> (fun->domain '(λ (x y z)
-                  (x (z y) y)))
-==> '[Any Any Any]
-> (fun->domain '(λ ([x : Real] [y : Real])
+> (fun->domain (λ (x y z)
+                 (x (z y) y)))
+==> [Any Any Any]
+> (fun->domain (λ ([x : Real] [y : Real])
                   x))
-==> '[Real Real]
+==> [Real Real]
 ]
 
 When domain information is available at calls to a @racket[curry] function,
@@ -247,8 +239,8 @@ Conceptually, we give @racket[curry] the unusable type @racket[(⊥ -> ⊤)] and
 \vspace{-4mm}
 }|
 @racketblock[
-> ⟦'(curry (λ (x y) x))⟧
-==> '(curry_2 (λ (x y) x))
+> ⟦(curry (λ (x y) x))⟧
+==> (curry_2 (λ (x y) x))
 ]
 
 This same technique can be used to implement generalized @racket[map] in
@@ -321,7 +313,7 @@ Partial folds also work as expected.
 
 @racketblock[
 > (* 2 3 7 z)
-==> '(* 42 z)
+==> (* 42 z)
 ]
 
 Taken alone, this re-implementation of constant folding in an earlier compiler
@@ -467,13 +459,13 @@ We require a statically-known schema object and elaborate to a normal connection
 \vspace{-4mm}
 }|
 @racketblock[
-> ⟦'(sql-connect #:user "admin"
-                 #:database "SCOTUS")⟧
+> ⟦(sql-connect #:user "admin"
+                #:database "SCOTUS")⟧
 ==> ⊥
-> ⟦'(sql-connect scotus-schema
-                 #:user "admin"
-                 #:database "SCOTUS")⟧
-==> '(sql-connect #:user "admin"
+> ⟦(sql-connect scotus-schema
+                #:user "admin"
+                #:database "SCOTUS")⟧
+==> (sql-connect #:user "admin"
                   #:database "SCOTUS")
 ]
 
