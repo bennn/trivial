@@ -12,7 +12,7 @@
 This library exports a collection of @hyperlink["http://www.greghendershott.com/fear-of-macros/"]{macros} for improved standard library functions.
 All exported macros are named with a trailing colon (meant as a hint that some extra type-checking may happen at the call site).@note{
   Not happy with the colon convention? @racket[trivial/no-colon] provides the same identifiers, colon-free.
-  Same goes for each sub-collection, for instance you can require @racket[trivial/math/no-colon].
+  Same goes for each sub-collection, e.g. @racket[trivial/math/no-colon].
 }
 
 
@@ -75,9 +75,8 @@ In other words, the result is one string for the matched substring and an unknow
   (regexp-match: "(bad))group" "")
 ]
 
-  @emph{Note:} the regular expression @racket{|} operator is not currently supported because it can nullify some groups.
-  Using the @racket{|} will result is a less-precise type.
-  Same goes for groups followed by a Kleene star.
+@emph{Note:} the regular expression @racket{|} operator is not currently supported because it can nullify some groups.
+Using the @racket{|} will always default to the behavior of @racket[regexp-match].
 
 
 @examples[#:eval trivial-eval
@@ -91,20 +90,23 @@ In other words, the result is one string for the matched substring and an unknow
 
 Large regular expression patterns are expensive to compile, so we offer a definition form that remembers the number of groups in a pattern for later calls to @racket[regexp-match:].
 
-@defform*[((regexp: id pattern)
-           (pregexp: id pattern)
-           (byte-regexp: id pattern)
-           (byte-pregexp: id pattern))]{}
+@deftogether[(
+  @defform[(regexp: id pattern)]{}
+  @defform[(pregexp: id pattern)]{}
+  @defform[(byte-regexp: id pattern)]{}
+  @defform[(byte-pregexp: id pattern)]{}
+)]{}
 
-@defform*[((define-regexp: ([id expr] ...) expr ...)
-           (define-pregexp: ([id expr] ...) expr ...)
-           (define-byte-regexp: ([id expr] ...) expr ...)
-           (define-byte-pregexp: ([id expr] ...) expr ...)
-           (let-regexp: ([id expr] ...) expr ...)
-           (let-pregexp: ([id expr] ...) expr ...)
-           (let-byte-regexp: ([id expr] ...) expr ...)
-           (let-byte-pregexp: ([id expr] ...) expr ...))]{}
-
+@deftogether[(
+  @defform[(define-regexp: ([id expr] ...) expr ...)]{}
+  @defform[(define-pregexp: ([id expr] ...) expr ...)]{}
+  @defform[(define-byte-regexp: ([id expr] ...) expr ...)]{}
+  @defform[(define-byte-pregexp: ([id expr] ...) expr ...)]{}
+  @defform[(let-regexp: ([id expr] ...) expr ...)]{}
+  @defform[(let-pregexp: ([id expr] ...) expr ...)]{}
+  @defform[(let-byte-regexp: ([id expr] ...) expr ...)]{}
+  @defform[(let-byte-pregexp: ([id expr] ...) expr ...)]{}
+)]{}
 
 
 @section{Mathematical Operators}
@@ -120,11 +122,13 @@ The special cases are often convenient, but can lead to confusing behavior.@note
 
 The following operators special-case all numeric constants, uniformly sweeping the problem under a rug.
 
-@defform*[((+: e* ...)
-           (-: e* ...)
-           (*: e* ...)
-           (/: e* ...)
-           (expt: e1 e2))]{
+@deftogether[(
+  @defform[(+: e* ...)]{}
+  @defform[(-: e* ...)]{}
+  @defform[(*: e* ...)]{}
+  @defform[(/: e* ...)]{}
+  @defform[(expt: e1 e2)]{}
+)]{
   Similar to the corresponding @racket[racket/base] operators, but reduces every pair of numeric constants in @racket[e* ...] during @emph{macro expansion}.
 }
 
@@ -139,8 +143,8 @@ Only constants are reduced.
 Any non-constants will upset the static analysis.
 
 @examples[#:eval trivial-eval
-  (lambda ([n : Integer])
-    (ann (-: n 2) Zero))
+  ((lambda ([n : Integer])
+     (ann (-: n 2) Zero)) 2)
 ]
 
 However, an expression such as @racket[(+ 1 2 n)] will compile to @racket[(+ 3 n)].
@@ -152,8 +156,10 @@ However, an expression such as @racket[(+ 1 2 n)] will compile to @racket[(+ 3 n
 When the arity of a function @racket[f] is known, we replace calls
  to generic functions like @racket[curry] with specialized versions.
 
-@defform*[((curry: f)
-           (map: f e* ...))]{
+@deftogether[(
+  @defform[(curry: f)]{}
+  @defform[(map: f e* ...)]{}
+)]{
   If @racket[f] accepts 2 arguments, @racket[(curry f)] returns a function
    of one argument @racket[x] which returns a function of one argument @racket[y]
    which returns @racket[(f x y)].
@@ -167,22 +173,24 @@ When the arity of a function @racket[f] is known, we replace calls
 
 These vector operations store and update a vector's length information.
 
-@defform*[((vector: e* ...)
-           (make-vector: i e)
-           (build-vector: i e)
-           (vector-length: v)
-           (vector-ref: v i)
-           (vector-set!: v i k)
-           (vector-map f v* ...)
-           (vector-map! f v* ...)
-           (vector-append: v1 v2)
-           (vector->list: v)
-           (vector->immutable-vector: v)
-           (vector-fill: v k)
-           (vector-take: v i)
-           (vector-take-right: v i)
-           (vector-drop: v i)
-           (vector-drop-right: v i))]{}
+@deftogether[(
+  @defform[(vector: e* ...)]{}
+  @defform[(make-vector: i e)]{}
+  @defform[(build-vector: i e)]{}
+  @defform[(vector-length: v)]{}
+  @defform[(vector-ref: v i)]{}
+  @defform[(vector-set!: v i k)]{}
+  @defform[(vector-map f v* ...)]{}
+  @defform[(vector-map! f v* ...)]{}
+  @defform[(vector-append: v1 v2)]{}
+  @defform[(vector->list: v)]{}
+  @defform[(vector->immutable-vector: v)]{}
+  @defform[(vector-fill: v k)]{}
+  @defform[(vector-take: v i)]{}
+  @defform[(vector-take-right: v i)]{}
+  @defform[(vector-drop: v i)]{}
+  @defform[(vector-drop-right: v i)]{}
+)]{}
 
 @examples[#:eval trivial-eval
   (vector-ref: (vector-append: '#(A) '#(B)) 0)
@@ -193,14 +201,20 @@ These vector operations store and update a vector's length information.
 @section{Binding forms}
 @defmodule[trivial/define]
 
-The @racket[let:] and @racket[define:] forms infer and propagate data about their
- bindings.
+@deftogether[(
+  @defform[(let: ([id e] ...) e)]{}
+  @defform[(define: id e)]{}
+)]{
+  The @racket[let:] and @racket[define:] forms infer and propagate data about their
+   bindings.
+}
+
 
 @examples[#:eval trivial-eval
-  (let: ([n 0])
-    (ann (/ 3 3) One))
-  (let ([n 0])
-    (ann (/ 3 3) One))
+  (let: ([n 3])
+    (ann (/: n 3) One))
+  (let ([n 3])
+    (ann (/: n 3) One))
 ]
 
 
@@ -213,10 +227,9 @@ Short essay: @hyperlink["http://www.ccs.neu.edu/home/types/publications/letter-o
 
 Inspired by:
 @itemlist[
-@item{@hyperlink["http://www.ccs.neu.edu/home/samth/"]{Sam Tobin-Hochstadt}}
-@item{@hyperlink["http://www.ccs.neu.edu/home/stchang/"]{Stephen Chang}}
-@item{@hyperlink["http://www.ccs.neu.edu/home/matthias/"]{Matthias Felleisen}}
-@item{@hyperlink["http://www.ccs.neu.edu/home/dherman/research/papers/icfp04-dsl-analysis.pdf"]{David Herman and Philippe Meunier}}
+  @item{@hyperlink["http://www.ccs.neu.edu/home/dherman/research/papers/icfp04-dsl-analysis.pdf"]{David Herman and Philippe Meunier}}
+  @item{@hyperlink["http://www.ccs.neu.edu/home/matthias/"]{Matthias Felleisen}}
+  @item{@hyperlink["http://www.ccs.neu.edu/home/stchang/"]{Stephen Chang}}
+  @item{@hyperlink["http://www.ccs.neu.edu/home/samth/"]{Sam Tobin-Hochstadt}}
 ]
 
-The views/code expressed in this library do not necessarily reflect the good taste and decency of the aforementioned sources of inspiration.
