@@ -3,7 +3,7 @@
 @require[scribble/eval]
 @require[scriblib/footnote]
 
-@title[#:tag "top"]{Trivial: Solving the easiest type-checking problems}
+@title[#:tag "top"]{Trivial: Observably smarter typechecking}
 @author[@hyperlink["https://github.com/bennn"]{Ben Greenman}]
 
 @defmodule[trivial]

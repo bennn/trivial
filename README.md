@@ -2,7 +2,7 @@ trivial
 ===
 [![Build Status](https://travis-ci.org/bennn/trivial.svg)](https://travis-ci.org/bennn/trivial)
 [![Coverage Status](https://coveralls.io/repos/bennn/trivial/badge.svg?branch=master&service=github)](https://coveralls.io/github/bennn/trivial?branch=master)
-[![Scribble](https://img.shields.io/badge/Docs-Scribble-blue.svg)](http://pkg-build.racket-lang.org/doc/trivial/index.html)
+[![Scribble](https://img.shields.io/badge/Docs-Scribble-blue.svg)](http://docs.racket-lang.org/trivial/index.html)
 
 This [Typed Racket](http://docs.racket-lang.org/ts-reference/) library provides "smarter" versions of standard library functions.
 For example:
