@@ -37,23 +37,13 @@
   racket/vector
   (for-syntax
     trivial/private/common
+    trivial/private/sequence
     typed/racket/base
     syntax/parse))
 
 ;; =============================================================================
 
 (begin-for-syntax
-  (define (small-vector-size? n)
-    (< n 20))
-
-  (define (vector-bounds-error sym v-stx i)
-    (raise-syntax-error
-      sym
-      "Index out-of-bounds"
-      (syntax->datum v-stx)
-      i
-      (list v-stx)))
-
   (define (parse-vector-length stx)
     (syntax-parse stx #:literals (#%plain-app vector make-vector build-vector)
      [(~or '#(e* ...)
@@ -95,7 +85,7 @@
     #:when (syntax-e #'i-stx)
     (let ([i (syntax-e #'i-stx)])
       (unless (< i (syntax-e #'v.evidence))
-        (vector-bounds-error 'vector-ref: #'v i))
+        (bounds-error 'vector-ref: #'v i))
       (syntax/loc stx (unsafe-vector-ref v.expanded 'i-stx)))]
    [_ #f]))))
 
@@ -106,7 +96,7 @@
     #:when (syntax-e #'i-stx)
     (let ([i (syntax-e #'i-stx)])
       (unless (< i (syntax-e #'v.evidence))
-        (vector-bounds-error 'vector-set!: #'v i))
+        (bounds-error 'vector-set!: #'v i))
       (syntax/loc stx (unsafe-vector-set! v.expanded 'i-stx val)))]
    [_ #f]))))
 
@@ -116,7 +106,7 @@
     #:with f+ (gensym 'f)
     #:with v+ (gensym 'v)
     #:with v++ (syntax-property
-                 (if (small-vector-size? (syntax-e #'v.evidence))
+                 (if (small-sequence-size? (syntax-e #'v.evidence))
                    (with-syntax ([(i* ...) (for/list ([i (in-range (syntax-e #'v.evidence))]) i)])
                      (syntax/loc stx
                        (let ([f+ f] [v+ v.expanded])
@@ -154,8 +144,8 @@
     (define l1 (syntax-e #'v1.evidence))
     (define l2 (syntax-e #'v2.evidence))
     (syntax-property
-      (if (and (small-vector-size? l1)
-               (small-vector-size? l2))
+      (if (and (small-sequence-size? l1)
+               (small-sequence-size? l2))
         (with-syntax ([(i1* ...) (for/list ([i (in-range l1)]) i)]
                       [(i2* ...) (for/list ([i (in-range l2)]) i)])
           (syntax/loc stx
@@ -181,7 +171,7 @@
    [(_ v:vector/length)
     #:with v+ (gensym 'v)
     (define len (syntax-e #'v.evidence))
-    (if (small-vector-size? len)
+    (if (small-sequence-size? len)
       (with-syntax ([(i* ...) (for/list ([i (in-range len)]) i)])
         (syntax/loc stx
           (let ([v+ v.expanded])
@@ -233,7 +223,7 @@
       #:with n+ (gensym 'n)
       #:with v+ (gensym 'v)
       (unless (<= (syntax-e #'n-stx) (syntax-e #'v.evidence))
-        (vector-bounds-error (syntax-e #'op-name) #'v
+        (bounds-error (syntax-e #'op-name) #'v
           (if 'take? (if 'left? (syntax-e #'hi) (syntax-e #'lo))
                      (if 'left? (syntax-e #'lo) (syntax-e #'hi)))))
       (syntax-property
@@ -244,7 +234,7 @@
         vector-length-key
         (syntax-e #'v.evidence))]
      [(op-name v n:int/expand)
-      (vector-bounds-error (syntax-e #'op-name) #'v (stx->num #'n.expanded))]
+      (bounds-error (syntax-e #'op-name) #'v (stx->num #'n.expanded))]
      [_ #f]))))
 
 (define-syntax vector-take:
