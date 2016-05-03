@@ -358,7 +358,7 @@ This ``lazy'' sort of evaluation is normally useful because it lets macro
  the syntax trees of expanded code.
 
 Our elaborations, however, are most effective when value information is
- propogated bottom up from macro-free syntactic values through other combinators.
+ propagated bottom up from macro-free syntactic values through other combinators.
 This requires depth-first macro expansion; for instance, in the first argument
  of the @racket[vector-ref] elaboration defined in @Secref{sec:impl-elab}.
 Fortunately, we always know which positions to expand depth-first and
@@ -482,7 +482,7 @@ We also have functions like @racket[+] available at whatever stage of
 
 Perhaps it goes without saying, but having macros that respect lexical scope
  is important for a good user and developer experience.
-Along the same lines, the ability to propogate source code locations in
+Along the same lines, the ability to propagate source code locations in
  elaborations lets us report syntax errors in terms of the programmer's
  code rather than locations inside our library.
 Even though we may implement complex transformations, errors can always be
