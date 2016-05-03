@@ -51,12 +51,21 @@
     typed/racket/base
     syntax/parse))
 
+;; Thank you based Asumu
 (unsafe-require/typed racket/unsafe/ops
-  (unsafe-car (All (A) (-> (Listof A) A)))
-  (unsafe-cdr (All (A) (-> (Listof A) (Listof A))))
-  (unsafe-cons-list (All (A) (-> A (Listof A) (Listof A))))
-  (unsafe-list-ref (All (A) (-> (Listof A) Integer A)))
-  (unsafe-list-tail (All (A) (-> (Listof A) Integer (Listof A)))))
+  (unsafe-car (All (A B)
+   (case->
+     (-> (Listof A) A)
+     (-> (Pairof A B) A))))
+  (unsafe-cdr (All (A B)
+   (-> (Pairof A B) B)))
+  (unsafe-cons-list (All (A B)
+   (-> A B (Pairof A B))))
+  (unsafe-list-ref (All (A B)
+   (-> (Listof A) B A)))
+  (unsafe-list-tail (All (A B C)
+   (-> (Pairof A B) C B)))
+)
 
 ;; =============================================================================
 
@@ -154,7 +163,7 @@
     #:with i-stx (stx->num #'e)
     #:when (syntax-e #'i-stx)
     (let ([i (syntax-e #'i-stx)])
-      (unless (< i (syntax-e #'l.evidence))
+      (unless (< -1 i (syntax-e #'l.evidence))
         (bounds-error 'list-ref: #'l i))
       (syntax/loc stx (unsafe-list-ref l.expanded 'i-stx)))]
    [_ #f]))))
