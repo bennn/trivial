@@ -56,7 +56,7 @@ This pearl describes a low-complexity, annotation-free (@Secref{sec:experience})
  technique for detecting
  value errors and expressing polymorphism over values.
 The key is to run a @emph{textualist}@note{A textualist interprets laws by
-   reading exactly the words on the page rather that by guessing the words' intended meaning.}
+   reading exactly the words on the page rather than by guessing the words' intended meaning.}
  elaboration over programs before type-checking and propagate value information
  evident from the program syntax to the type checker.
 In terms of the first example in this section, our elaborator infers that the
@@ -79,8 +79,8 @@ Nevertheless, Typed Clojure@~cite[clojure-macros],
 
 For a sense of the practical use-cases we envision, consider the function
  @racket[regexp-match], which matches a regular expression pattern against
- a string and returns either a list of matched substrings or @racket[#false]
- if the match failed.
+ a string and returns either a list of matched substrings
+ or @racket[#false] if the match failed.
 
 @racketblock[
 > (regexp-match #rx"(.*) v\\. (.*),"
