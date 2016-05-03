@@ -3,7 +3,7 @@
 
 @; TODO clever examples
 
-@title[#:tag "sec:usage"]{What we can learn from Values}
+@title[#:tag "sec:usage"]{What we can Learn from Values}
 
 We have defined useful elaborators for a variety of
  common programming tasks ranging from type-safe string formatting to
@@ -416,7 +416,7 @@ The situation worsens if the programmer uses multiple database connections.
 One can either alias one query function to multiple identifiers (each with a specific type)
  or weaken type signatures and manually type-cast query results.
 
-@subsection{Phantom Types To the Rescue}
+@subsection{Phantom Types to the Rescue}
 By associating a database schema with each connection, our elaboration technique
  can provide a uniform solution to these issues.
 We specialize both the input and output of calls to @racket[query-row],
