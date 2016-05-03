@@ -13,7 +13,7 @@
   (list-tail:              list-tail)
   (append:                 append)
   (reverse:                reverse)
-  (map:                    map)
+  ;(map:                    map)
 ))
 (require trivial/list)
 

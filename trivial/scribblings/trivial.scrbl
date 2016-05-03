@@ -174,14 +174,16 @@ When the arity of a function @racket[f] is known, we replace calls
 These vector operations store and update a vector's length information.
 
 @deftogether[(
-  @defform[(vector: e* ...)]{}
-  @defform[(make-vector: i e)]{}
-  @defform[(build-vector: i e)]{}
+  @defform[(vector e* ...)]{}
+  @defform[(make-vector i e)]{}
+  @defform[(build-vector i e)]{}
+)]{}
+@deftogether[(
   @defform[(vector-length: v)]{}
   @defform[(vector-ref: v i)]{}
   @defform[(vector-set!: v i k)]{}
-  @defform[(vector-map f v* ...)]{}
-  @defform[(vector-map! f v* ...)]{}
+  @defform[(vector-map f v)]{}
+  @defform[(vector-map! f v)]{}
   @defform[(vector-append: v1 v2)]{}
   @defform[(vector->list: v)]{}
   @defform[(vector->immutable-vector: v)]{}
@@ -195,6 +197,42 @@ These vector operations store and update a vector's length information.
 @examples[#:eval trivial-eval
   (vector-ref: (vector-append: '#(A) '#(B)) 0)
   (vector-ref: (vector-append: '#(A) '#(B)) 2)
+]
+
+
+
+
+@section{Sized Lists}
+@defmodule[trivial/list]
+
+Length-aware list operations.
+Note that @racket[map:] is missing here --- we need to integrate with the version
+ from @racket[trivial/function].
+
+@deftogether[(
+  @defform[(null)]{}
+  @defform[(list e* ...)]{}
+  @defform[(make-list i e)]{}
+  @defform[(build-list i e)]{}
+)]{}
+@deftogether[(
+  @defform[(pair?: l)]{}
+  @defform[(null?: l)]{}
+  @defform[(cons: x l)]{}
+  @defform[(car: l)]{}
+  @defform[(cdr: l)]{}
+  @defform[(list?: l)]{}
+  @defform[(length: l)]{}
+  @defform[(reverse: l)]{}
+  @defform[(list-ref: l i)]{}
+  @defform[(list-tail: l i)]{}
+  @;@defform[(map f l* ...)]{}
+  @defform[(append: l1 l2)]{}
+)]{}
+
+@examples[#:eval trivial-eval
+  (car: (append: '(A) '(B)))
+  (car: (cdr: (cdr: (cons: 1 (cons: 2 '())))))
 ]
 
 

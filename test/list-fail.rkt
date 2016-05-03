@@ -25,19 +25,19 @@
   ;  (let-list: ([v2 (list v1)])
   ;    (list-ref: (list-ref: v2 0) 1)))
 
-  (list-ref: (map: (lambda (x) x) (list #t "ha")) 20)
+  ;(list-ref: (map: (lambda (x) x) (list #t "ha")) 20)
 
   (list-ref: (list 0) -5)
 
-  (list-ref:
-    (map: add1 (map: add1 (map: add1 (list 0 0 0))))
-    3)
+  ;(list-ref:
+  ; (map: add1 (map: add1 (map: add1 (list 0 0 0))))
+  ; 3)
 
-  (list-ref: (map: symbol->string (list 'a 'b)) 5)
+  ;(list-ref: (map: symbol->string (list 'a 'b)) 5)
 
-  (list-ref:
-    (map: add1 (map: add1 (map: add1 (list 0 0 0))))
-    3)
+  ;(list-ref:
+  ;  (map: add1 (map: add1 (map: add1 (list 0 0 0))))
+  ;  3)
 
   (let-list: ([v (list 0 0 0)]
                 [v2 (list 1 2)])

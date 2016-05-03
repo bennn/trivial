@@ -104,45 +104,45 @@
   ;)
 
  ;(test-suite "map:"
-   (test-case "list/length map"
-     (check-equal? (map: add1 (list 1)) (list 2)))
+ ;  (test-case "list/length map"
+ ;    (check-equal? (map: add1 (list 1)) (list 2)))
 
-   (test-case "list/length map via let"
-     (check-equal?
-       (let-list: ([v (list (list 1) (list 2 2)
-                                (list 3 3 3) (list 4 4 4 4))])
-         (map: (lambda ([x : (Listof Any)]) (length: x)) v)) ;; dammit map
-       (list 1 2 3 4)))
+ ;  (test-case "list/length map via let"
+ ;    (check-equal?
+ ;      (let-list: ([v (list (list 1) (list 2 2)
+ ;                               (list 3 3 3) (list 4 4 4 4))])
+ ;        (map: (lambda ([x : (Listof Any)]) (length: x)) v)) ;; dammit map
+ ;      (list 1 2 3 4)))
 
-   (test-case "map^3"
-     (check-equal?
-       (map: add1 (map: add1 (map: add1 (list 0 0 0))))
-       (list 3 3 3)))
+ ;  (test-case "map^3"
+ ;    (check-equal?
+ ;      (map: add1 (map: add1 (map: add1 (list 0 0 0))))
+ ;      (list 3 3 3)))
 
-   (test-case "plain map"
-     (check-equal?
-       ((lambda ([v : (Listof (Listof Any))])
-         (map: (lambda ([x : (Listof Any)]) (length: x)) v))
-        (list (list 1) (list 2 2) (list 3 3 3) (list 4 4 4 4)))
-       (list 1 2 3 4)))
+ ;  (test-case "plain map"
+ ;    (check-equal?
+ ;      ((lambda ([v : (Listof (Listof Any))])
+ ;        (map: (lambda ([x : (Listof Any)]) (length: x)) v))
+ ;       (list (list 1) (list 2 2) (list 3 3 3) (list 4 4 4 4)))
+ ;      (list 1 2 3 4)))
 
-   (test-case "large list"
-     (let-list: ([v* (make-list 200 #f)])
-       (check-true (for/and ([v (in-list (map: not v*))]) v))))
+ ;  (test-case "large list"
+ ;    (let-list: ([v* (make-list 200 #f)])
+ ;      (check-true (for/and ([v (in-list (map: not v*))]) v))))
 
-   (test-case "higher-order map pass"
-     (check-equal?
-       ((lambda ([f : (-> (-> Symbol String) (Listof Symbol) (Listof String))])
-         (f symbol->string '(x yy z)))
-        map:)
-       (list "x" "yy" "z")))
+ ;  (test-case "higher-order map pass"
+ ;    (check-equal?
+ ;      ((lambda ([f : (-> (-> Symbol String) (Listof Symbol) (Listof String))])
+ ;        (f symbol->string '(x yy z)))
+ ;       map:)
+ ;      (list "x" "yy" "z")))
 
-   (test-case "higher-order map fail"
-     (check-exn exn:fail:contract?
-       (lambda ()
-         ((lambda ([f : (-> (-> Integer Integer) (Listof Integer) (Listof Integer))])
-           (list-ref: (f add1 (list 0 0)) 3))
-          map:))))
+ ;  (test-case "higher-order map fail"
+ ;    (check-exn exn:fail:contract?
+ ;      (lambda ()
+ ;        ((lambda ([f : (-> (-> Integer Integer) (Listof Integer) (Listof Integer))])
+ ;          (list-ref: (f add1 (list 0 0)) 3))
+ ;         map:))))
  ;)
 
   ;(test-suite "append:"

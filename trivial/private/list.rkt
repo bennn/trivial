@@ -14,7 +14,7 @@
   list-tail:
   append:
   reverse:
-  map:
+  ;map:
   ;andmap:
   ;ormap:
   ;for-each:
