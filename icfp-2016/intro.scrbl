@@ -64,17 +64,18 @@ In terms of the first example in this section, our elaborator infers that the
  @racket[(make-vector n)]
  constructs a vector with @racket[n] elements.
 
-Our implementation is a Typed Racket library that shadows functions
- such as @racket[make-vector] with textualist elaborators following the
- guidelines stated in @Secref{sec:solution}.
-We make essential use of Racket's macro system@~cite[fcdb-jfp-2012]
+We have implemented the technique as a Typed Racket library that shadows
+ functions such as @racket[make-vector] with textualist elaborators following
+ the guidelines stated in @Secref{sec:solution}.
+The implementation makes essential use of Racket's macro system@~cite[fcdb-jfp-2012]
  to reason locally, associate inferred data with bound identifiers, and
  cooperate with the rules of lexical scope.
 For the adventurous reader, @Secref{sec:implementation} describes the
  main services provided by Racket's macros.
 Nevertheless, Typed Clojure@~cite[clojure-macros],
  Rust@~cite[rust-compiler-plugins], and Scala@~cite[ramho-hosc-2013]
- could implement our approach just as well.
+ could implement our approach just as well using those languages' powerful
+ macro and compiler plugin systems.
 
 For a sense of the practical use-cases we envision, consider the function
  @racket[regexp-match], which matches a regular expression pattern against
