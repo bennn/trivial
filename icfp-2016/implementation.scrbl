@@ -100,7 +100,7 @@ So, as hinted in @Secref{sec:vector},
 
 @racketblock[
 > (vector-length #(0 1 2))
-2
+3
 > (vector-length (vector-append #(A B)
                                 #(C D)))
 4
