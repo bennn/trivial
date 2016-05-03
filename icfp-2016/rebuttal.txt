@@ -1,30 +1,23 @@
-0. We thank all three reviewers for their extensive comments.
-   This pearl is certainly intended for an audience with no knowledge of Lisp
-    or Racket and reviewer 3's remarks about the level of technical detail are
-    very welcome.
-   We will clarify the motivating example and give Section 3 a friendlier
-    introduction.
+0. Thanks!
 
 
 1. The purpose of this pearl is to describe a language agnostic technique
     for augmenting a traditional type checker.
 
-   Typed Racket is irrelevant to our technique.
-   If this paper is accepted, we plan to use Rust for demos in the talk.
+
+2.  We use Typed Racket to illustrate the technique ONLY because the
+    choice allows us to fit the ENTIRE core implementation in Sections 5.1
+    and 5.2.
+
+    [[ Section 5 illustrates the power of Racket's macro expander,
+       but this has been shown many times before. ]]
 
 
-2. Our secondary purpose was to advertise macros and show off a
-    concise implementation made possible by Racket.
-   The latter half of Section 5 is a list of features for GHC/Scala/...
-    developers to consider implementing.
+3. It is correct that neither our elaboration mechanism nor our examples
+   in Section 3 are new. That is precisely why this is a PEARL.
 
-   Language implementors and users like Chris Done who stretch their favorite
-    language are the "adventurous readers" for whom we intended Section 5.
-
-
-3. Reviewer B is correct that the elaboration mechanism is not new.
-   None of our applications are new either.
-   But we hope to have shown an interesting and useful combination of old ideas.
+   Like a functional pearl written in any other language, our pearl demonstrates
+    a novel combination of old ideas with concise, elegant code.
 
    * Our technique can be implemented by language users i.e. as a library.
      (The Typed Racket implementation is proof.)
@@ -44,7 +37,7 @@
 
      We chose our examples to suggest theorems that a user might want to prove
       about their own implementation of the technique.
-     This purpose will be made clearer.
+
 
 ================================================================================
 === END OF FORMAL RESPONSE. Detailed comments to reviewers (RA RB RC) follow.
@@ -176,9 +169,8 @@
 
    Besides removing casts, the library is also useful for early detection of
     bugs when writing programs.
-   Our personal experience has been good.
-   We did ask Typed Racket users for feedback, but unfortunately got no response
-    at the time (three months after the library was initially released).
+   Our personal experience has been good and we are currently in the process
+    of soliciting feedback from Typed Racket users 
 
 
 --------------------------------------------------------------------------------
@@ -216,6 +208,6 @@
    If permitted, we will reorganize to show how the examples run in Typed Racket
     and compare to our library.
 
-   (Doing so is a little tricky, as some are runtime errors, some are type
-    errors, and Sec. 3.6 requires an elaborate work-around. But we can manage.)
-
+   (Doing so is a little tricky, as some examples cannot be run in Typed Racket,
+    others run with dynamic errors, and Sec. 3.6 requires an elaborate
+    work-around currently described in prose.)
