@@ -108,7 +108,7 @@ For all other syntax patterns, we perform the identity elaboration.
 \vspace{-4mm}
 }|
 @racketblock[
-> ⟦(printf "~a")⟧
+> ⟦(printf "~s")⟧
 ==> ⊥
 > ⟦(printf "~b" 2)⟧
 ==> (printf "~b" (2 :: Integer))
