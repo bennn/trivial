@@ -1,0 +1,195 @@
+0. We thank all three reviewers for their extensive comments.
+   This pearl is certainly intended for an audience with no knowledge of Lisp
+    or Racket and reviewer 3's remarks about the level of technical detail are
+    very welcome.
+   We will clarify the motivating example and give Section 3 a friendlier
+    introduction.
+
+
+1. The purpose of this pearl is to describe a ==LANGUAGE AGNOSTIC== technique
+    for improving a typed language's ability to give compile-time feedback.
+
+   Typed Racket is ==IRRELEVANT== to our technique.
+   If this paper is accepted, we plan to use Rust for demos in the talk.
+
+
+2. Our secondary purpose was to advertise macros and show off a
+    concise implementation made possible by Racket.
+   The latter half of Section 5 is a list of features for GHC/Scala/...
+    developers to consider implementing.
+
+   Language implementors and users like Chris Done who stretch their favorite
+    language are the "adventurous readers" for whom we intended Section 5.
+
+
+3. Reviewer B is correct that the elaboration mechanism is not new.
+   None of our applications are new either.
+   But we hope to have shown an interesting and useful combination of old ideas.
+
+   * Our technique can be implemented by language users i.e. as a library.
+     (The Typed Racket implementation is proof.)
+
+   * Our technique is compositional.
+     All examples are local transformations that work up to arbitrary
+      expression nesting and cooperate with definition forms.
+
+   * Our technique provides guarantees.
+
+     The basic guarantees and proof obligations necessary to obtain them
+      are explicitly stated in Section 2.
+
+     Specific guarantees like "the new division function raises compile-time
+      errors when called with a 0 denominators" are theorems that may be
+      stated and proved using a suitable dependent type system.
+
+     We chose our examples to suggest theorems that a user might want to prove
+      about their own implementation of the technique.
+     This purpose will be made clearer.
+
+================================================================================
+=== END OF FORMAL RESPONSE. Detailed comments to reviewers (RA RB RC) follow.
+================================================================================
+
+--------------------------------------------------------------------------------
+--- RA RB RC, re: purpose & organization of pearl
+
+   The pearl is currently organized as:
+
+      Section 1 : examples, design goals, outline of pearl
+
+      Section 2 : formalize intuition from Sec. 1,
+                  get readers thinking: "how could I do this in my language?"
+
+      Section 3 : motivating + useful + versatile examples
+
+      Section 4 : justify "annotation free" claim from Sec. 1
+
+      Section 5 : basics of Racket macros,
+                  full details of two examples from Sec. 3,
+                  how to handle definitions,
+                  checklist of useful Racket features
+
+      Section 6 : rekindle the fun of Sec. 1 after the long Sec. 5
+
+
+   With the reviewers permission, we propose a different organization to
+    emphasize the useful applications:
+
+     Section 1 : Same as before
+
+     Section 2 : Same
+
+     Section 3 : same examples,
+                 explicit comparisons to "vanilla Typed Racket",
+                 list desirable guarantees of each elaborations
+
+     Section 5 : basics of Racket macros in terms of `printf`
+
+     Section 6 : internals of every example from Sec. 3
+                 emphasis on Sec. 3.6
+
+     Section 7 : checklist of useful Racket features
+
+     Section 8 : related work + implementation sketch for other languages
+
+     Section 9 : conclusion
+
+
+--------------------------------------------------------------------------------
+--- RA RB, re: translating the ideas to Typed Clojure, Scala, and Rust
+
+  These languages have powerful syntax extension tools but are just missing
+   some of Racket's useful abstractions & guarantees.
+
+  * Clojure's macros are arbitrary rewrite rules interspersed with
+     normal Clojure code run at compile-time.
+    The main difficulty will be parsing complicated syntax patterns and
+     being robust against renamings.
+
+  * Scala Macros may not be able to handle definitions, but can
+     definitely handle type-safe printf for constant strings [2].
+    Scala LMS [3] seems to be more powerful any either way Scala's
+     compiler plugins [4] are at least as powerful as Racket's macros.
+
+  * Rust's macros cannot implement our interpretation functions, but
+     their compiler plugins [5] are on-par with Scala's.
+
+  Sources:
+    [1] https://github.com/clojure/tools.macro
+    [2] http://docs.scala-lang.org/overviews/macros/overview.html
+    [3] https://scala-lms.github.io/
+    [4] http://www.scala-lang.org/old/node/8656
+    [5] https://doc.rust-lang.org/book/compiler-plugins.html
+
+
+--------------------------------------------------------------------------------
+--- RA RB, re: (printf ~a)
+
+   Calling (printf "~a") raises an arity error in our implementation because
+    "~a" is a valid format specifier yet `printf` is called with zero additional
+    arguments.
+   Calling (printf "~b") would give the exact same error --- Racket functions
+    are not curried.
+
+   But (printf "~a") is definitely a typo.
+   We intended to use "~s" instead.
+   (Both specifiers accept any value but format the result slightly differently)
+
+   The final version of the paper will give actual error messages instead of
+    using ⊥.
+
+
+--------------------------------------------------------------------------------
+--- RA, re: Dialyzer
+
+TODO
+
+
+-----------------------------------------------------------------------------
+--- RA, re: using #false in interpretations
+
+   This was a careless error on our part.
+   Instead of `#false` we mean to use a unique sentinel value.
+
+
+--------------------------------------------------------------------------------
+--- RA, re: how many casts and annotations were made redundant?
+
+   We removed casts around every call to `regexp-match` we found in typed code.
+   But that was only 10 calls and unfortunately this is the biggest usability
+    success story:
+
+   * Existing uses of printf, arithmetic, and vectors were already type-correct
+
+   * Most casts on numeric values dealt with non-constants --- usually
+      variables bound as function parameters.
+
+   * We found no typed programs using SQL.
+
+
+--------------------------------------------------------------------------------
+--- RA, re: type error messages
+
+   The error messages have been very good.
+   When we can immediately reject a program (due to out-of-bounds vector access,
+    etc) we also give a specific error message.
+   When deferring errors to Typed Racket, the error message has always been
+    triggered by a new annotation added to the original source code, so errors
+    are typically caught earlier than normal.
+
+
+--------------------------------------------------------------------------------
+--- RA, re: small comments
+
+   Thanks for showing us the Formatting package!
+   We thought Template Haskell was the Haskell programmers' only way to safety.
+
+
+--------------------------------------------------------------------------------
+--- RB, re: "most languages fail at runtime" on printf
+
+   gcc does indeed print a warning for invalid & mismatched format specifiers.
+   It also complains when called on non-literal strings.
+
+   We will say "many" languages instead of "most".
+
