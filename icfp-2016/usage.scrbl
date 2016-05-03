@@ -50,7 +50,7 @@ Annotations and casts normally have two different syntaxes, respectively
 
 @; TODO add note about the ridiculous survey figure? Something like 4/5 doctors
 @; TODO note regexp is the first?
-Format strings are the world's second most-loved domain-specific language (DSL).
+Format strings are the world's second most-loved domain-specific language.
 @; @~cite[wmpk-algol-1968]
 All strings are valid format strings; additionally, a format string may contain
  @emph{format directives} describing @emph{where} and @emph{how} values can be
