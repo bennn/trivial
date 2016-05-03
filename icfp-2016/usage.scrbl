@@ -248,7 +248,7 @@ This same technique can be used to implement generalized @racket[map] in
 
 @racketblock[
 > (define (cite (p : String) (d : String))
-    (printf "~a v. ~a, U.S.\n" p d))
+    (printf "~s v. ~s, U.S.\n" p d))
 > (define plaintiff*
     '("Rasul" "Chisholm"))
 > (define defendant*
