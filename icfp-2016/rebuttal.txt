@@ -1,43 +1,49 @@
-0. Thanks!
+Thanks!
 
+1. The purpose of this pearl is to describe a language-agnostic technique
+   for augmenting the rich "simple" type systems of functional languages
+   ---via libraries that any programmer may implement and even prove correct.
 
-1. The purpose of this pearl is to describe a language agnostic technique
-    for augmenting a traditional type checker.
+2. Typed Racket serves as the vehicle for a sample implementation for a
+   range of concrete augmentations, because it allows us to fit the ENTIRE
+   CORE IMPLEMENTATION into the paper. We will supply the remaining few
+   bits. The existing page limits accommodate this addition; more than
+   suffices; we just thought they were too obvious.
 
+   [[The pearl also illustrates the power of Racket's macro expander once
+   again, but this has been shown many times before and is NOT the goal.]]
 
-2.  We use Typed Racket to illustrate the technique ONLY because the
-    choice allows us to fit the ENTIRE core implementation in Sections 5.1
-    and 5.2.
+3. It is correct that neither our elaboration mechanism nor our examples in
+   Section 3 are new. That is precisely why this is a PEARL and NOT A
+   RESEARCH PAPER.
 
-    [[ Section 5 illustrates the power of Racket's macro expander,
-       but this has been shown many times before. ]]
+   Like any other functional pearl, ours demonstrates a novel combination
+   of old ideas with concise, elegant code (basically functional rewrite
+   rules on syntax).
 
+   * Any programmer can use our technique to implement a type system
+     extension as a library. (The Typed Racket implementation is
+     validation.)
 
-3. It is correct that neither our elaboration mechanism nor our examples
-   in Section 3 are new. That is precisely why this is a PEARL.
+   * Our technique is compositional.  All examples are local transformation
+     that structurally traverse arbitrarily deep expressions to synthesize
+     [check] types in a hierarchical manner.
 
-   Like a functional pearl written in any other language, our pearl demonstrates
-    a novel combination of old ideas with concise, elegant code.
+   * The guarantees for an augmented type system are as strong as a type
+     system designed in a holistic manner.
 
-   * Our technique can be implemented by language users i.e. as a library.
-     (The Typed Racket implementation is proof.)
+     The proof obligations for such basic guarantees are stated explicitly
+     in section 2.
 
-   * Our technique is compositional.
-     All examples are local transformations that work up to arbitrary
-      expression nesting and cooperate with definition forms.
+     Specific guarantees like "the new division function raises
+     compile-time errors when called with a 0 denominators" are theorems
+     that may be stated and proven correct in the same was as Haskell's or
+     ML's type system is proven correct.
 
-   * Our technique provides guarantees.
-
-     The basic guarantees and proof obligations necessary to obtain them
-      are explicitly stated in Section 2.
-
-     Specific guarantees like "the new division function raises compile-time
-      errors when called with a 0 denominators" are theorems that may be
-      stated and proved using a suitable dependent type system.
-
-     We chose our examples to suggest theorems that a user might want to prove
-      about their own implementation of the technique.
-
+     The examples are chosen precisely because they suggest theorems that a
+     programmer might wish to prove. Doing so is, however, beyond the scope
+     of a pearl that demonstrates how unusual but elegant functional code
+     can achieve this highly desirable goal.
 
 ================================================================================
 === END OF FORMAL RESPONSE. Detailed comments to reviewers (RA RB RC) follow.
@@ -170,7 +176,7 @@
    Besides removing casts, the library is also useful for early detection of
     bugs when writing programs.
    Our personal experience has been good and we are currently in the process
-    of soliciting feedback from Typed Racket users 
+    of soliciting feedback from Typed Racket users
 
 
 --------------------------------------------------------------------------------
