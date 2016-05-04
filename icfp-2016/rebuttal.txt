@@ -1,29 +1,26 @@
 Thanks!
 
 1. The purpose of this pearl is to describe a language-agnostic technique
-   for augmenting the rich "simple" type systems of functional languages
+   for augmenting the type systems of functional languages
    via libraries that any programmer may implement and prove correct.
 
-2. Typed Racket serves as the vehicle for a sample implementation for a
+2. Typed Racket serves as the vehicle for a sample implementation of a
    range of concrete augmentations because it allows us to fit the
    entire core implementation into the paper (Sections 5.1 and 5.2).
-
-   [[The pearl once again illustrates the power of Racket's macro expander,
-   but this has been shown many times before and is not the goal.]]
 
 3. It is correct that neither our elaboration mechanism nor our examples in
    Section 3 are new. That is precisely why this is a *pearl* and
    not a research paper.
 
-   Like a functional pearl written in any other language, ours demonstrates
-   a novel combination of old ideas with concise, elegant code.
+   Like any functional pearl, ours demonstrates a novel combination of
+   old ideas.
 
    * Any programmer can use our technique to implement a type system
-     extension as a library. The Typed Racket implementation is validation.
+     augmentation as a library. The Typed Racket implementation is validation.
 
-   * Our technique is compositional. All examples are local transformations
-     that structurally traverse arbitrarily deep expressions to synthesize
-     and check types in a hierarchical manner.
+   * Our technique is compositional. All examples are implemented with local
+     transformations. The macro expander composes these transformations into a
+     complete structural recursive traversal.
 
    * The guarantees for an augmented type system are as strong as the
      guarantees for a type system designed in a holistic manner.
@@ -47,6 +44,8 @@ Thanks!
 
 --------------------------------------------------------------------------------
 --- RA RB, re: translating the ideas to Typed Clojure, Scala, and Rust
+
+  These languages have sufficiently powerful syntax extensions.
 
   Clojure's macros will run arbitrary Clojure code at compile-time.
   Scala's compiler plugin API [1] allows custom source code transformations.
@@ -90,26 +89,6 @@ Thanks!
 
    This was a careless error on our part.
    We meant to use a unique sentinel value, such as a gensymed symbol.
-
-
---------------------------------------------------------------------------------
---- RA, re: how many casts and annotations were made redundant?
-
-   We removed casts around every call to `regexp-match` we found in typed code,
-   but that was only 10 calls. We have also found the library useful for
-   catching bugs in new code and have observed performance speedups on
-   microbenchmarks using fixed-size vectors, but a comprehensive experience
-   report is beyond the scope of the pearl.
-
-
---------------------------------------------------------------------------------
---- RA, re: the quality of type error messages
-
-   Compile errors raised by our implementation point out exactly what values
-   caused the local transformation to fail.
-
-   Type errors raised in post-elaboration code are caused by introduced
-   type annotations on specific variables.
 
 
 --------------------------------------------------------------------------------
