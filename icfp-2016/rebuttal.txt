@@ -39,22 +39,22 @@ Thanks!
      functional code can achieve this highly desirable goal.
 
 ================================================================================
-=== END OF FORMAL RESPONSE. Detailed comments to reviewers (RA RB RC) follow.
+## END OF FORMAL RESPONSE. Detailed comments to reviewers (RA RB RC) follow.
 ================================================================================
 
 --------------------------------------------------------------------------------
---- RA RB, re: (printf "~a")
+#### RA RB, re: `(printf "~a")`
 
-   Calling (printf "~a") raises an arity error in our implementation because
+   Calling `(printf "~a")` raises an arity error in our implementation because
    "~a" is a valid format specifier yet `printf` is called with zero additional
-   arguments.  Calling (printf "~b") would give the same arity error.
+   arguments.  Calling `(printf "~b")` would give the same arity error.
    These both compile in Typed Racket and fail at runtime.
 
-   But writing (printf "~a") was a typo on our part. We intended to use "~s".
+   But writing `(printf "~a")` was a typo on our part. We intended to use "~s".
 
 
 --------------------------------------------------------------------------------
---- RA RB, re: translating the ideas to Typed Clojure, Scala, and Rust
+#### RA RB, re: translating the ideas to Typed Clojure, Scala, and Rust
 
   These languages have sufficiently powerful syntax extensions.
 
@@ -67,7 +67,7 @@ Thanks!
 
 
 --------------------------------------------------------------------------------
---- RA, re: Dialyzer
+#### RA, re: Dialyzer
 
    The Dialyzer belongs in our discussion of related work.
    Its guarantees match our third requirement for elaborations:
@@ -85,14 +85,14 @@ Thanks!
 
 
 -----------------------------------------------------------------------------
---- RA, re: using #false in interpretations
+#### RA, re: using `#false` in interpretations
 
    This was a careless error on our part.
    We meant to use a unique sentinel value, such as a gensymed symbol.
 
 
 --------------------------------------------------------------------------------
---- RB, re: "most languages fail at runtime" on printf
+#### RB, re: "most languages fail at runtime" on printf
 
    gcc does indeed print a warning for invalid and mismatched format specifiers.
    It also complains when called on non-literal strings.
@@ -103,7 +103,7 @@ Thanks!
 
 
 --------------------------------------------------------------------------------
---- RC, re: flow of Sec. 3
+#### RC, re: flow of Sec. 3
 
    RC writes:
 
