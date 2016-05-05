@@ -2,10 +2,10 @@ Thanks!
 
 1. The purpose of this pearl is to describe a language-agnostic technique
    for augmenting the type systems of functional languages
-   via libraries that any programmer may implement and prove correct.
+   --- via libraries that any programmer may implement and prove correct.
 
-2. Typed Racket serves as the vehicle for a sample implementation of a
-   range of concrete augmentations because it allows us to fit the
+2. Typed Racket serves as the vehicle for sample implementations of a
+   range of concrete augmentations --- only because it allows us to fit the
    entire core implementation into the paper (Sections 5.1 and 5.2).
 
 3. It is correct that neither our elaboration mechanism nor our examples in
@@ -20,7 +20,7 @@ Thanks!
 
    * Our technique is compositional. All examples are implemented with local
      transformations. The macro expander composes these transformations into a
-     complete structural recursive traversal.
+     structurally recursive traversal.
 
    * The guarantees for an augmented type system are as strong as the
      guarantees for a type system designed in a holistic manner.
@@ -30,7 +30,7 @@ Thanks!
 
      Specific guarantees like "the augmented division function raises
      compile-time errors when called with 0 denominators" are theorems
-     that may be stated and proven correct in the same way as Haskell's or
+     that may be stated and proven correct in the same way that Haskell's or
      ML's type systems are proven correct.
 
      The code samples in Section 3 are chosen precisely because they suggest
@@ -43,6 +43,17 @@ Thanks!
 ================================================================================
 
 --------------------------------------------------------------------------------
+--- RA RB, re: (printf "~a")
+
+   Calling (printf "~a") raises an arity error in our implementation because
+   "~a" is a valid format specifier yet `printf` is called with zero additional
+   arguments.  Calling (printf "~b") would give the same arity error.
+   These both compile in Typed Racket and fail at runtime.
+
+   But writing (printf "~a") was a typo on our part. We intended to use "~s".
+
+
+--------------------------------------------------------------------------------
 --- RA RB, re: translating the ideas to Typed Clojure, Scala, and Rust
 
   These languages have sufficiently powerful syntax extensions.
@@ -53,17 +64,6 @@ Thanks!
 
   [1] http://www.scala-lang.org/old/node/8656
   [2] https://doc.rust-lang.org/book/compiler-plugins.html
-
-
---------------------------------------------------------------------------------
---- RA RB, re: (printf "~a")
-
-   Calling (printf "~a") raises an arity error in our implementation because
-   "~a" is a valid format specifier yet `printf` is called with zero additional
-   arguments.  Calling (printf "~b") would give the same arity error.
-   These both compile in Typed Racket and fail at runtime.
-
-   But writing (printf "~a") was a typo on our part. We intended to use "~s".
 
 
 --------------------------------------------------------------------------------
