@@ -96,7 +96,7 @@
      [(~or (null)
            (#%plain-app null))
       0]
-     [+ #f]))
+     [_ #f]))
 
   (define-values (lst-length-key lst? lst-define lst-let)
     (make-value-property 'list:length parse-list-length))
