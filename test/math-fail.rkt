@@ -15,6 +15,7 @@
   (ann (let ([n 4]) (/: n n)) One)
   (ann (let ([n 2]) (expt: 3 (-: n n))) One)
   (ann (expt: 3 2) Zero)
+  (ann ((lambda ([x : Natural]) (expt x 3)) 2) Index)
   ;; -- lambda => back to racket/base
   (ann ((lambda ([f : (-> Natural Natural Natural)]) (f 0 0)) +:) Zero)
   (ann ((lambda ([f : (-> Natural Natural Integer)]) (f 0 0)) -:) Zero)

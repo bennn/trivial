@@ -119,6 +119,11 @@
    [(_ n1 n2)
     (let ([v1 (stx->num #'n1)]
           [v2 (stx->num #'n2)])
-      (and v1 v2 ;; Should never fail
-        (quasisyntax/loc stx #,(expt v1 v2))))]
+      (cond
+       [(and v1 v2)
+        (quasisyntax/loc stx #,(expt v1 v2))]
+       [(and v2 (<= 0 v2 10))
+        (quasisyntax/loc stx (* #,@(for/list ([_i (in-range v2)]) (quasisyntax/loc stx n1))))]
+       [else
+        #f]))]
    [_ #f]))))

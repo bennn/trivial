@@ -151,5 +151,8 @@
       (define-num: n2 2)
       (ann (-: (expt: n1 n2) 64) Zero))
     0)
-
+  (check-true
+    (and (ann (lambda ([n : Natural]) (expt: n 0)) (-> Natural One)) #t))
+  (check-true
+    (and (ann (lambda ([n : Index]) (expt: n 1)) (-> Index Index)) #t))
 )
