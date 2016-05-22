@@ -1,0 +1,11 @@
+*.aux
+*.bbl
+*.blg
+*.cls
+*.log
+*.out
+*.pdf
+
+*.css
+*.html
+*.js
