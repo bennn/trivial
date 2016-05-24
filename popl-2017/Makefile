@@ -1,0 +1,22 @@
+PAPER=paper
+
+all: setup ${PAPER}.pdf
+
+compiled/pearl_scrbl.zo: *.rkt *.scrbl
+	raco make -v $(PAPER).scrbl
+
+${PAPER}.pdf: pkg compiled/${PAPER}_scrbl.zo texstyle.tex
+	scribble ++extra mathpartir.sty ++style texstyle.tex --pdf $(PAPER).scrbl
+
+${PAPER}.tex: pkg compiled/${PAPER}_scrbl.zo texstyle.tex
+	scribble ++style texstyle.tex --latex $(PAPER).scrbl
+
+pkg:
+	raco pkg install --skip-installed trivial
+
+setup:
+	raco make ${PAPER}.scrbl
+
+clean:
+	rm -r compiled
+

@@ -1,0 +1,51 @@
+% Better horizontal rules
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{stmaryrd}
+\usepackage{mathpartir}
+\lstset{language=ML}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{multicol}
+\usepackage{tikz}
+
+% Override Scribble's default SecRef to numeric only
+\renewcommand{\SecRef}[2]{~#1}
+
+\hypersetup{hidelinks}
+
+\usepackage[scaled=0.95]{zi4}
+\usepackage[T1]{fontenc}
+
+% For bib style
+\newcommand{\Thyperref}[2]{\hyperref[#2]{#1}}
+
+%% To show overfull, turn off for production!!!
+\overfullrule=1mm
+
+%% balance last page columns
+\usepackage{flushend}
+
+%% for figure 2
+\let\ulcorner\relax
+\let\urcorner\relax
+\let\llcorner\relax
+\let\lrcorner\relax
+\usepackage{amssymb}
+
+\newcommand{\interp}{\mathcal{I}}
+\newcommand{\untyped}[1]{{\,#1}_\flat}
+\newcommand{\trans}{\mathcal{T}}
+\newcommand{\elab}{\mathcal{E}}
+\newcommand{\elabfe}[1]{\llbracket #1 \rrbracket}
+\newcommand{\elabf}{\elabfe{\cdot}}
+\newcommand{\subt}{\mathbf{<:\,}}
+\newcommand{\tos}{\mathsf{types_of_spec}}
+\newcommand{\trt}[1]{\emph{#1}}
+\newcommand{\tprintf}{\mathsf{t_printf}}
+\newcommand{\mod}[1]{$\mathsf{#1}$}
+\newcommand{\evalsto}{\RktMeta{}\RktSym{=={\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}}
+\newcommand{\tvar}[1]{\mathsf{#1}}
+\newcommand{\tint}{\tvar{Int}}
+\newcommand{\tnum}{\tvar{Num}}
+\newcommand{\tlist}[1]{\tvar{List~#1}}
+\newcommand{\Progn}{\mathcal{P}}
