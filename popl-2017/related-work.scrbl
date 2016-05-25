@@ -1,8 +1,8 @@
-#lang scribble/sigplan
+#lang scribble/sigplan @onecolumn
+
 @require["common.rkt"]
 
-
-@title[#:tag "sec:rw"]{Related Work}
+@title[#:tag "sec:related-work"]{Experts}
 
 SoundX is a system for modeling programming languages and defining type-sound
  extensions, e.g. defining a type derivation for @tt{let} in terms of a type

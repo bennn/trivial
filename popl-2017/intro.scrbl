@@ -1,10 +1,44 @@
 #lang scribble/sigplan @onecolumn
 
-
 @require["common.rkt" (only-in scribble/base nested)]
 
+@title[#:tag "sec:intro"]{Type Eleborators Need APIs}
 
-@title[#:tag "sec:intro"]{Introduction}
+The implementations of richhly typed programming languages tend to employ
+an elaboration pass. As the elaborator traverses the (parsed) synatx, it
+simultaneously reconstructs types, checks their consistency according to
+the underlying type theory, replaces many of the surface-syntax constructs
+with constructs from the kernel language, and inserts type information to
+create a (n often) fully annotated representation. 
+
+Some (implementations of) programming languages also support a way to
+programmatically direct the elaborator. For example, Rust and Scala come
+with compiler plug-ins. Typed Racket and Types Clojure inherit the macro
+mechanisms of their parent languages. 
+
+In this paper, we show that such APIs allow programmers to tailor the
+underlying type theories to their needs and that such tailorings look
+highly promising (section 2). The ``tailor'' can ... correctness ...
+
+ For convenience, we use Typed Racket and its
+API to the elaborator (section 3). To illustrate the usefulness of the
+idea, we implement two tailorings. The first one---chosen for the wide
+familiarity of the domain---enriches the type-checking of
+vector-referencing operations (section 4). The second example explains how
+the implementor of a string-based embedded DSL---a regexp-matching
+DSL---may tailor the types of the interpretation function (section 5). Our
+evaluation validate that both tailorings reduce the number of casts that
+the programmer or the elaborator have to insert.
+
+
+
+
+
+
+
+
+
+
 
 Typecheckers for polymorphic languages like Haskell incredibly wasteful.
 Given an AST, they immediately throw away the rich @emph{syntax} of expression

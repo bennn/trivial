@@ -2,38 +2,38 @@
 
 @(require "common.rkt")
 
-@authorinfo["???" "???" ""]
-@;@authorinfo["Ben Greenman and Stephen Chang"
-@;            "PLT @ Northeastern University, Boston, USA"
-@;            ""]
-
-@title{Breaking the Abstraction Barrier}
+@title{Tailoring Type Theories (T.T.T)}
+@authorinfo["Piet Hein" "Dutchman" "piet at hein.com"]
 
 @abstract{
-  A static type system is a compromise between precision and usability.
-  Improving the ability of a type system to distinguish correct and erroneous
-   programs typically requires that programmers restructure their code or
-   provide more type annotations, neither of which are desirable tasks.
 
-  This paper presents an elaboration-based technique for refining the
-   analysis of an existing type system on existing code
-   without changing the type system or the code.
-  As a proof of concept, we have implemented the technique as a Typed Racket library.
-  From the programmers' viewpoint, simply importing the library makes the type
-   system more perceptive---no annotations or new syntax are required.
+A static type system is a compromise between precision and usability.
+ Improving the ability of a type system to distinguish correct and
+ erroneous programs typically requires that programmers restructure their
+ code or provide more type annotations, neither of which are desirable
+ tasks.
+
+This paper presents an elaboration-based technique for refining the
+ analysis of an existing type system on existing code without changing the
+ type system or the code.  As a proof of concept, we have implemented the
+ technique as a Typed Racket library.  From the programmers' viewpoint,
+ simply importing the library makes the type system more perceptive---no
+ annotations or new syntax are required.  
+
 }
 
 @;@category["D.3.3" "Programming Languages" "Language Constructs and Features"]
 @;@terms{Performance, Experimentation, Measurement}
 @;@keywords{Gradual typing, performance evaluation}
 
+@; See OUTLINE.md for explanation
 @include-section{intro.scrbl}
-
-@; @section{Code}
-@;
-@; Our implementation is available as a Racket package.
-@; To install the library, download Racket and then run @racket[raco pkg install ???].
-@; The source code is on Github at: @url["https://github.com/???/???"].
+@include-section{background.scrbl}
+@include-section{examples.scrbl}
+@include-section{discussion.scrbl}
+@include-section{friends.scrbl}
+@include-section{related-work.scrbl}
+@include-section{conclusion.scrbl}
 
 @section[#:style 'unnumbered]{Acknowledgments}
 
