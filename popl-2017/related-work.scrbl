@@ -4,6 +4,7 @@
 
 @title[#:tag "sec:related-work"]{Experts}
 
+@section{SoundX}
 SoundX is a system for modeling programming languages and defining type-sound
  extensions, e.g. defining a type derivation for @tt{let} in terms of a type
  derivation for @tt{λ} expressions.
@@ -32,3 +33,35 @@ We propose a deeper notion of correctness for our syntactic transformations, but
 ]
 Though we fail on the third point.
 
+
+@section{Wepa}
+
+Our general approach and outlook on type soundness is informed by Cousot.
+
+@section{Compiler Plugings}
+
+GHC (constraint solvers)
+Rust (macros)
+Scala (macros)
+
+
+@section{Parsec}
+
+Haskell / ML don't really use regular expressions.
+They use parser combinators.
+
+Matthias: give up ENTIRE TOOLCHAIN if you go external
+
+
+@section{Typechecker Plugins}
+OutsideIn
+Adam Gundry units plugin
+Fsharp packs?
+extensible records for haskell
+
+@section{Why no types?}
+Could save work in map if we got function arity from type.
+Clearly strong argument for mixing types and syntax extensions.
+But that's research; requires careful design and definitely not a drop-in
+ solution like we propose here.
+(Would apparaently require sweeping changes)

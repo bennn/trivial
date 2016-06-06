@@ -3,6 +3,7 @@
 \usepackage{listings}
 \usepackage{stmaryrd}
 \usepackage{mathpartir}
+\usepackage{fourier-orns}
 \lstset{language=ML}
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{multicol}
@@ -23,7 +24,7 @@
 \overfullrule=1mm
 
 %% balance last page columns
-\usepackage{flushend}
+%\usepackage{flushend}
 
 %% for figure 2
 \let\ulcorner\relax
@@ -32,20 +33,57 @@
 \let\lrcorner\relax
 \usepackage{amssymb}
 
-\newcommand{\interp}{\mathcal{I}}
-\newcommand{\untyped}[1]{{\,#1}_\flat}
-\newcommand{\trans}{\mathcal{T}}
-\newcommand{\elab}{\mathcal{E}}
-\newcommand{\elabfe}[1]{\llbracket #1 \rrbracket}
-\newcommand{\elabf}{\elabfe{\cdot}}
-\newcommand{\subt}{\mathbf{<:\,}}
-\newcommand{\tos}{\mathsf{types_of_spec}}
-\newcommand{\trt}[1]{\emph{#1}}
-\newcommand{\tprintf}{\mathsf{t_printf}}
-\newcommand{\mod}[1]{$\mathsf{#1}$}
-\newcommand{\evalsto}{\RktMeta{}\RktSym{=={\Stttextmore}}\RktMeta{}\mbox{\hphantom{\Scribtexttt{x}}}}
+%% -- types
 \newcommand{\tvar}[1]{\mathsf{#1}}
+\newcommand{\tnat}{\tvar{Natural}}
+\newcommand{\tarray}{\tvar{Array}}
 \newcommand{\tint}{\tvar{Int}}
 \newcommand{\tnum}{\tvar{Num}}
 \newcommand{\tlist}[1]{\tvar{List~#1}}
-\newcommand{\Progn}{\mathcal{P}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\ints}{\mathbb{Z}}
+
+%% -- terms
+\newcommand{\vectorgen}[1]{\langle #1 \rangle}
+\newcommand{\vectoren}{\vectorgen{e_0, \ldots, e_{n-1}}}
+\newcommand{\vectorvn}{\vectorgen{v_0, \ldots, v_{n-1}}}
+\newcommand{\vectorxn}{\vectorgen{x_0, \ldots, x_{n-1}}}
+\newcommand{\vlam}[2]{\lambda\,#1\,.\,#2}
+\newcommand{\aref}[2]{#1@#2}
+\newcommand{\checkedref}{\tvar{checked\mbox{-}ref}}
+\newcommand{\unsaferef}{\tvar{unsafe\mbox{-}ref}}
+\newcommand{\segfault}{\mathsf{segfault}}
+\newcommand{\indexerror}{\mathsf{IndexError}}
+
+%% -- evaluation contexts
+\newcommand{\ectx}{E}
+\newcommand{\ehole}{[\cdot]}
+
+%% -- type environments
+\newcommand{\tenv}{\Gamma}
+\newcommand{\tenvempty}{\cdot}
+\newcommand{\tenvcons}[3]{#1:#2,#3}
+
+%% -- typing
+\newcommand{\typestogen}[3]{#1 \vdash #2 : #3}
+\newcommand{\typestoclosed}[2]{\typestogen{\tenvempty}{#1}{#2}}
+\newcommand{\typesto}[2]{\typestogen{\tenv}{#1}{#2}}
+
+%% -- elaboration
+\newcommand{\elabarrow}{\rightsquigarrow}
+\newcommand{\elabarrowplus}{\elabarrow^{+}}
+\newcommand{\elabstogen}[5]{\typestogen{#1}{#2 #3 #4}{#5}}
+\newcommand{\elabstoclosedplus}[3]{\elabstogen{\tenvempty}{#1}{\elabarrowplus}{#2}{#3}}
+\newcommand{\elabstoclosed}[3]{\elabstogen{\tenvempty}{#1}{\elabarrow}{#2}{#3}}
+\newcommand{\elabsto}[3]{\elabstogen{\tenv}{#1}{\elabarrow}{#2}{#3}}
+
+%% -- evaluation
+\newcommand{\bigstep}[2]{#1 \Downarrow #2}
+\newcommand{\bigstepplus}[2]{#1 \Downarrow^+ #2}
+\newcommand{\smallstepstar}[2]{#1 \rightarrow^* #2}
+\newcommand{\smallstep}[2]{#1 \rightarrow #2}
+
+%% -- misc
+\newcommand{\esubst}[2]{[#2/#1]}
+\newcommand{\qed}{$\square$}
+

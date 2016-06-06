@@ -4,174 +4,116 @@
 
 @title[#:tag "sec:intro"]{Type Eleborators Need APIs}
 
-The implementations of richhly typed programming languages tend to employ
-an elaboration pass. As the elaborator traverses the (parsed) synatx, it
-simultaneously reconstructs types, checks their consistency according to
-the underlying type theory, replaces many of the surface-syntax constructs
-with constructs from the kernel language, and inserts type information to
-create a (n often) fully annotated representation. 
+Type systems such as ML's, Haskell's, or Scala's help developers convey
+their thinking to their successors in a sound and concise manner.  The
+implementations of such type systems tend to employ elaboration passes to
+check the types of a specific program. As an elaborator traverses the
+(parsed) synatx, it simultaneously reconstructs types, checks their
+consistency according to the underlying type theory, replaces many of the
+surface-syntax constructs with constructs from the kernel language, and
+inserts type information to create an annotated representation.
 
-Some (implementations of) programming languages also support a way to
+Some (implementations of such) programming languages also support a way to
 programmatically direct the elaborator. For example, Rust and Scala come
 with compiler plug-ins. Typed Racket and Types Clojure inherit the macro
-mechanisms of their parent languages. 
+mechanisms of their parent languages. Here we refer to such mechanisms as
+@defterm{elaborator API}s. 
 
-In this paper, we show that such APIs allow programmers to tailor the
-underlying type theories to their needs and that such tailorings look
-highly promising (section 2). The ``tailor'' can ... correctness ...
+Equipping type-checking elaborators with APIs---or using the existing
+APIs---promises new ways to expand the power of type checking at a
+relatively low cost. Specifically, the developers of libraries can
+@defterm{tailor} typing rules to the exported functions and linguistic
+constructs.
 
- For convenience, we use Typed Racket and its
-API to the elaborator (section 3). To illustrate the usefulness of the
-idea, we implement two tailorings. The first one---chosen for the wide
-familiarity of the domain---enriches the type-checking of
-vector-referencing operations (section 4). The second example explains how
-the implementor of a string-based embedded DSL---a regexp-matching
-DSL---may tailor the types of the interpretation function (section 5). Our
-evaluation validate that both tailorings reduce the number of casts that
-the programmer or the elaborator have to insert.
+Consider the example of tailoring the API of a library that implements a
+string-based, domain-specific languages. Examples of such libraries abound:
+formatting, regular-expression matching, database queries, and so on.  The
+creators of these DSLs tend to know a lot about how programs written in
+these DSLs relate to the host program, but they cannot express this
+knowledge in API types without resorting to such rich systems as
+dependent type theory.
 
+Type tailoring allows such programmers to refine the typing rules for the
+APIs in a relatively straightforward way. Recall the API of the
+regular-expression library. In a typical typed language, the matching
+function is exported with a type like this: 
+@;
+@verbatim[#:indent 4]{
 
+reg_exp_match: String -> Option [Listof String]
 
+}
+@;
+When the result is a list of strings, the length of the list depends on the
+argument string---but the API for the regular-expression library cannot
+express this relationship between the regular expression and the
+surrounding host program. As a result, the author of the host program must
+inject additional complexity, often in the form of (hidden) run-time checks.
 
+If type tailoring is available, the creator of the library can refine the
+type of @tt{reg_exp_match} with rules such as these:
+@;
+@verbatim[#:indent 4]{
 
-
-
-
-
-
-
-Typecheckers for polymorphic languages like Haskell incredibly wasteful.
-Given an AST, they immediately throw away the rich @emph{syntax} of expression
- and value forms in favor of a @emph{type} abstraction.
-So whereas any novice programmer can tell that the expression @tt{(/ 1 0)}
- will go wrong, the typechecker cannot because all it sees is @tt{(/ @emph{Num} @emph{Num})}.
-
-These typecheckers are also incredibly stubborn, and cannot handle basic
- forms of polymorphism that are not part of their type algebra.
-For instance, the behavior of the function @tt{map} can be stated in clear
- English:
-
- @nested[@elem[#:style 'italic]{
-   @tt{(map proc lst ...+) → list?}
-   Applies @tt{proc} to the elements of the @tt{lsts} from the first elements to the last.
-   The @tt{proc} argument must accept the same number of arguments as the number
-   of supplied @tt{lsts}, and all @tt{lsts} must have the same number of elements.
-   The result is a list containing each result of @tt{proc} in order.
- }]
-
-But the Haskell typechecker can only validate indexed versions of @tt{map}
- defined for a fixed number of lists.
-Programmers are thus forced to choose between @tt{map}, @tt{zipWith}, and @tt{zipWith3}
- depending on the number of lists they want to map over.@note{Maybe need a better
-  example than @tt{map} because polydots handle it. @tt{curry}?}
-
-There are a few solutions to these problems. Blah blah.
-They all require migrating to a new programming language or instrumenting call
- sites across the program, neither of which are desirable solutions for the
- working programmer.
-
-We propose @emph{extending} a language's type system with
- @emph{introspective} typing rules that capture value information as well as type
- information.
-Given a proof theory @exact|{$\Progn \vDash {\tt P}$}| for inferring propositions
- @tt{P} from the program text @exact{$\Progn$}, the rule for division would be:
-
-  @exact|{
-    \begin{mathpar}
-      \inferrule*[]{
-          \Gamma; \Progn \vdash n_1 : \tnum
-          \\
-          \Gamma; \Progn \vdash n_2 : \tnum
-          \\\\
-          \Progn \vDash n_2 \neq 0
-        }{
-          \Gamma; \Progn \vdash {\tt /}~n_1~n_2 : \tnum
-      }
-    \end{mathpar}
-  }|
-
-and the rule for @tt{map} would be:
-
-  @exact|{
-    \begin{mathpar}
-      \inferrule*{
-          \Gamma; \Progn \vdash f : \overline{\tvar{A}} \rightarrow \tvar{B}
-          \\
-          \Gamma; \Progn \vdash \overline{x} : \overline{\tlist{A}}
-          \\\\
-          \Progn \vDash {\tt length}(\overline{\tvar{A}}) = {\tt length}(\overline{\tlist{A}})
-        }{
-          \Gamma; \Progn \vdash {\tt map}~f~\overline{x} : \tlist{B}
-      }
-    \end{mathpar}
-  }|
-
-These rules would augment---not replace---the existing rules for division
- and @tt{map}.
-In the case that no information about subterms can be inferred from the program
- text, we defer to the division rule that admits runtime errors and the @tt{map}
- rule that can only be called with a single list.
+   Program |- s : does not contain grouping
+------------------------------------------------
+  G |- reg_exp_match(s) : Option [List String]
 
 
-@; =============================================================================
-@parag{Contributions}
-@itemlist[
-  @item{
-    We propose ``typechecking modulo theories'' (or something):
-     using the text of the program to refine typechecking judgments.
-  }
-  @item{
-    As a proof of concept, we implement a simple theory within the Racket
-     macro expander and use it enhance the user experience of Typed Racket.
-    The implementation is just a library; we suspect Typed Clojure and TypeScript
-     programmers could build similar libraries using Clojure's macros and sweet.js.
-  }
-  @item{
-    Our Racket implementation leverages a novel class of macros.
-    We define the class, state proof conditions for a new macro
-     to enter the class, and prove our macros are in the class.
-  }
-]
+Program |- s : contains one grouping w/o alternative 
+-----------------------------------------------------
+ G |- reg_exp_match(s) : Option [List String String]
 
+}
+@;
+That is, when the extended elaborator can use (a fragment of) the program
+to prove that the given string for a specific use of @tt{reg_exp_match}
+does not contain grouping specifications---ways to extract a sub-string via
+matching---then the @tt{Some} result type is a list that contains a single
+string. Similarly, if the string contains exactly one such grouping (and no
+alternative), then a match produces a list of two strings. In all other
+cases, the type checker uses the default type for the function.
 
-@; =============================================================================
-@parag{Guarantees}
-@itemlist[
-  @item{
-    Refinement of the existing type system.
-    Adding @exact{$\Progn \vDash$} only rejects programs that would go
-     wrong dynamically and/or accept programs that are ill-typed, but go
-     right dynamically.
-  }
-  @item{
-    Errors reported by our implementation are in terms of the source program,
-     not of expanded/transformed code.
-  }
-]
+A vector library is another familiar example that offers opportunities for
+type tailoring. Often such a library exports a dereferencing construct with
+the following type rule: 
+@;
+@verbatim[#:indent 4]{
 
+  G |- v : Vector[X]   G |-e : Integer
+----------------------------------------
+  G |- v[e] ~~> checked_ref(v,e) : X
+}
+@;
+If the elaborator can prove, however, that the indexing expression @tt{e}
+is equal to or evaluates to a specific integer @tt{i}, the rule can be
+strengthened as follows: 
+@;
+@verbatim[#:indent 4]{
 
-@; =============================================================================
-@parag{Applications}
+  Program |- e = i for some i in Natural
+  && Program |- v is vector of length n
+  && i < n
 
-This table summarizes the ICFP pearl.
-We infer values from various syntactic domains and use the inferred data to
- justify small program transformations.
+  G |- v : Vector[X]   G |-e : Integer
+----------------------------------------
+  G |- v[e] ~~> unsafe-ref(v,e) : X
+}
+@;
+ That is, the elaborator can then eliminate a possibly expensive run-time
+ check.
 
-@tabular[#:style 'boxed
-         #:sep @hspace[2]
-         #:row-properties '(bottom-border ())
-         #:column-properties '(right right right)
-  (list (list @bold{Domain}      @bold{Infers}    @bold{Use})
-        (list "format strings"   "arity + type"   "guard input")
-        (list "regexp strings"   "# groups"       "prove output")
-        (list "λ"                "arity"          "implement curry_i")
-        (list "numbers"          "value"          "constant folding")
-        (list "vectors"          "size"           "guard, optimize")
-        (list "sql schema"       "types"          "guard input, prove output"))]
-
-@; =============================================================================
-@parag{Lineage}
-
-Herman and Meunier used macros for partial evaluation of string DSLs@~cite[hm-icfp-2004].
-Lorenzen and Erdweg defined criteria for sane deguarings@~cite[le-popl-2016].
-
+This paper demonstrates the idea with concrete case studies of type
+tailoring (section 2) in the context of Typed Racket and its API to the
+elaborator (section 3).  To illustrate the usefulness of the idea, we
+implement two tailorings. The first one---chosen for the wide familiarity
+of the domain---enriches the type-checking of vector-referencing operations
+(section 4). The second example explains how the implementor of a
+string-based embedded DSL---a regexp-matching DSL---may tailor the types of
+the interpretation function (section 5). Our evaluations confirm that these
+tailorings reduce the number of run-time checks that the programmer or the
+elaborator have to insert into the host program. In addition, we sketch
+several other applications of type tailoring in Typed Racket (section
+6). We also explain how the creator of such libraries can refine the
+existing type soundness proof of the host language to argue the correctness
+of the tailoring.

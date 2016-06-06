@@ -1,0 +1,32 @@
+\fbox{$\elabsto{e}{e}{\tau}$}
+
+\begin{mathpar}
+
+  \inferrule*[left=S-RefPass]{
+    \elabsto{e_1}{\vectorvn}{\tarray}
+    \\
+    \elabsto{e_2}{i}{\tint}
+    \\\\
+    i \in \ints
+    \\
+    0 \le i < n
+  }{
+    \elabsto{\aref{e_1}{e_2}}{\unsaferef~\vectorvn~i}{\tint}
+  }
+
+
+  \inferrule*[left=S-RefFail]{
+    \elabsto{e_1}{\vectorvn}{\tarray}
+    \\
+    \elabsto{e_2}{i}{\tint}
+    \\\\
+    i \in \ints
+    \\
+    i < 0 ~~\vee~~ i \ge n
+  }{
+    \elabsto{\aref{e_1}{e_2}}{\indexerror}{\tint}
+  }
+
+\end{mathpar}
+
+

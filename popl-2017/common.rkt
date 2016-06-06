@@ -16,8 +16,11 @@
          nrightarrow
          parag
          sf
+         sc
+         bot
          id
          todo
+         proof
          )
 
 (require "bib.rkt"
@@ -114,6 +117,8 @@
 
 (define (sf x) (elem #:style "sfstyle" x))
 
+(define (sc x) (exact "\\textsc{" x "}"))
+
 (define (parag . x) (apply elem #:style "paragraph" x))
 
 (define (exact . items)
@@ -130,6 +135,9 @@
       (cons (if term (element #f (list " (" (defterm term) ") ")) " ") x)
       (mt-line))))
 
+(define bot (exact "$\\bot$"))
+
+
 ;; Format an identifier
 ;; Usage: @id[x]
 (define (id x)
@@ -141,3 +149,28 @@
 (define (second)
   (make-element (make-style "relax" '(exact-chars))
                 "$2^\\emph{nd}$"))
+
+(define (defthing title #:thing thing #:tag tag . txt)
+  ;; TODO use tag
+  (nested #:style 'inset
+    (list (bold thing " (" (emph title) ")" ":")
+          (exact "~~")
+          txt)))
+          ;;(list txt))))
+
+(define-syntax-rule (define-defthing* id* ...)
+  (begin
+    (begin
+      (define (id* title #:tag [tag #f] . txt)
+        (defthing title #:thing (string-titlecase (symbol->string (object-name id*))) #:tag tag txt))
+      (provide id*)) ...))
+
+(define-defthing* definition theorem lemma)
+
+(define (proof . txt)
+  (nested
+    (list (emph "Proof:")
+          (exact "~~")
+          txt
+          (exact "\\hfill\\qed"))))
+

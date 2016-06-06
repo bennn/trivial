@@ -1,0 +1,61 @@
+\[
+   \begin{array}{l l l}
+     v     & \coloneq & x \mid \vlam{x}{e} \mid \ints \mid \vectorvn
+   \\[8pt]
+     e     & \coloneq & v \mid e~e \mid \vectoren \mid \aref{e}{e}
+   \\[8pt]
+     \tau  & \coloneq & \tint \mid \tarray \mid \tau \rightarrow \tau
+   \\[8pt]
+     \tenv & \coloneq & \tenvempty \mid x:\tau,\tenv
+   \end{array}
+\]
+
+
+\fbox{$\typesto{e}{\tau}$}
+\begin{mathpar}
+  \inferrule*[left=T-Var]{
+    \tenv(x) = \tau
+  }{
+    \typesto{x}{\tau}
+  }
+
+  \inferrule*[left=T-Lam]{
+    \typestogen{x:\tau,\tenv}{e}{\tau'}
+  }{
+    \typesto{\vlam{x}{e}}{\tau \rightarrow \tau'}
+  }
+
+  \inferrule*[left=T-App]{
+    \typesto{e_1}{\tau \rightarrow \tau'}
+    \\
+    \typesto{e_2}{\tau}
+  }{
+    \typesto{e_1~e_2}{\tau'}
+  }
+
+  \inferrule*[left=T-Int]{
+    i \in \ints
+  }{
+    \typesto{i}{\tint}
+  }
+
+  \inferrule*[left=T-Arr]{
+    \typesto{e_0}{\tint}
+    \\
+    \ldots
+    \\
+    \typesto{e_{n-1}}{\tint}
+  }{
+    \typesto{\vectoren}{\tarray}
+  }
+
+  \inferrule*[left=T-Ref]{
+    \typesto{e_1}{\tarray}
+    \\
+    \typesto{e_2}{\tint}
+  }{
+    \typesto{\aref{e_1}{e_2}}{\tint}
+  }
+
+\end{mathpar}
+

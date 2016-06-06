@@ -1,6 +1,18 @@
 Outline of paper
 ---
 
+- λ ∈ ℕ Σ
+- expand is NOT guaranteed to make well-typed terms; you can call it on any expr.
+- idea; values carry latent "type" information
+  (but ya know, this is kind of just demonstrating that expand is useful)
+- (afterwards) add set!
+  nevermind how \tau handles it ... here are rules for expand to handle it
+- note: OCaml is firm about maintaining a fast compiler, NOT a big standard library
+-       thats a totally reasonable separation of concerns/labor
+
+TODO
+- use more RACKET, less math (@racket[...] for identifiers)
+
 
 0 intro.scrbl
 ---
@@ -12,10 +24,8 @@ other promises
 
 1 background.scrbl
 ---
-define typed racket,
-explain macro API without the word "macro",
-goals for extensions
-correctness for extensions
+define types
+define macros (without the word 'macro')
 
 
 2. examples.scrbl
@@ -31,6 +41,14 @@ evaluations
 limits of the extensions (need a value),
 suggestions to overcome limits (assertions, better analysis),
 even more extensions + implications
+
+"""
+Our technique is implemented as a library of local transformations that
+ compose to form a function @exact{$\elaborate$} defined over syntactically
+ well-formed terms.
+Using the library is a one-line change for existing programs; however, the
+ user may wish to remove type casts made redundant by the elaboration.
+"""
 
 
 4. friends.scrbl

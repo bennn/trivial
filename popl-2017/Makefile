@@ -6,7 +6,13 @@ compiled/pearl_scrbl.zo: *.rkt *.scrbl
 	raco make -v $(PAPER).scrbl
 
 ${PAPER}.pdf: pkg setup texstyle.tex
-	scribble ++extra mathpartir.sty ++style texstyle.tex --pdf $(PAPER).scrbl
+	scribble ++extra fig-stlc-surface.tex \
+           ++extra fig-stlc-core.tex \
+           ++extra fig-elab0.tex \
+           ++extra fig-elab1.tex \
+           ++extra mathpartir.sty \
+           ++style texstyle.tex \
+           --pdf $(PAPER).scrbl
 
 ${PAPER}.tex: pkg setup texstyle.tex
 	scribble ++style texstyle.tex --latex $(PAPER).scrbl

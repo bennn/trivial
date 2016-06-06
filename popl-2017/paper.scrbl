@@ -3,22 +3,27 @@
 @(require "common.rkt")
 
 @title{Tailoring Type Theories (T.T.T)}
-@authorinfo["Piet Hein" "Dutchman" "piet at hein.com"]
+@authorinfo["Piet Hein" "Funen, Denmark" "gruk at piethein.com"]
 
 @abstract{
 
-A static type system is a compromise between precision and usability.
- Improving the ability of a type system to distinguish correct and
- erroneous programs typically requires that programmers restructure their
- code or provide more type annotations, neither of which are desirable
- tasks.
+Many typed APIs implicitly acknowledge the @emph{diktat} that the host type
+ system imposes on the creators of libraries. When a library implements a
+ string-based domain-specific language, the problem is particularly obvious.
+ The interpretation functions for the programs in this embedded language
+ come with the uninformative type that maps a string to some other host
+ type. Only dependently typed languages can improve on this scenario at the
+ moment, but they impose a steep learning curve on programmers. 
 
-This paper presents an elaboration-based technique for refining the
- analysis of an existing type system on existing code without changing the
- type system or the code.  As a proof of concept, we have implemented the
- technique as a Typed Racket library.  From the programmers' viewpoint,
- simply importing the library makes the type system more perceptive---no
- annotations or new syntax are required.  
+This paper proposes to tackle this problem with APIs for type
+ checkers. Specifically, it observes that most typed languages already
+ employ an elaboration pass to type-check programs. If this elaborator
+ comes with a sufficiently rich API, the author of a library can supplement
+ the default types of the library's API with typing rules that improve the
+ collaboration between host programs and uses of the library. The
+ evaluation uses a prototype for Typed Racket and illustrates how useful
+ the idea is for widely available libraries. Also the paper sketches how
+ the authors of such ``tailored'' rules can argue their soundness.
 
 }
 
@@ -29,11 +34,12 @@ This paper presents an elaboration-based technique for refining the
 @; See OUTLINE.md for explanation
 @include-section{intro.scrbl}
 @include-section{background.scrbl}
-@include-section{examples.scrbl}
-@include-section{discussion.scrbl}
-@include-section{friends.scrbl}
-@include-section{related-work.scrbl}
-@include-section{conclusion.scrbl}
+@include-section{segfault.scrbl}
+@;@include-section{examples.scrbl}
+@;@include-section{discussion.scrbl}
+@;@include-section{friends.scrbl}
+@;@include-section{related-work.scrbl}
+@;@include-section{conclusion.scrbl}
 
 @section[#:style 'unnumbered]{Acknowledgments}
 
