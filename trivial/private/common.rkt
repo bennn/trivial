@@ -27,6 +27,7 @@
 )
 
 (require
+  trivial/private/parameters
   racket/syntax
   syntax/parse
   syntax/id-table
@@ -121,21 +122,31 @@
     f-let))
 
 (define ((make-alias id-stx parser) stx)
-  (or (parser stx)
-      (syntax-parse stx
-       [_:id
-        id-stx]
-       [(_ e* ...)
-        #:with app-stx (format-id stx "#%app")
-        #`(app-stx #,id-stx e* ...)])))
+  (cond
+   [(parser stx)
+    => (lambda (r)
+    (when (*TRIVIAL-LOG*) (printf "[LOG] alias ~a\n" (syntax->datum id-stx)))
+    r)]
+   [else
+    (syntax-parse stx
+     [_:id
+      id-stx]
+     [(_ e* ...)
+      #:with app-stx (format-id stx "#%app")
+      #`(app-stx #,id-stx e* ...)])]))
 
 (define ((make-keyword-alias id-sym parser) stx)
-  (or (parser stx)
+  (cond
+   [(parser stx)
+    => (lambda (r)
+      (when (*TRIVIAL-LOG*) (printf "[LOG] keyword ~a\n" id-sym))
+      r)]
+   [else
     (syntax-parse stx
-     [(_ e* ...)
-      #:with id-stx (case id-sym
-                     [(define) #'tr:define]
-                     [(let)    #'tr:let]
-                     [(set!)   #'tr:set!]
-                     [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
-      (syntax/loc stx (id-stx e* ...))])))
+      [(_ e* ...)
+       #:with id-stx (case id-sym
+                      [(define) #'tr:define]
+                      [(let)    #'tr:let]
+                      [(set!)   #'tr:set!]
+                      [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
+       (syntax/loc stx (id-stx e* ...))])]))
