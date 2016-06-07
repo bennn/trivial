@@ -9,6 +9,7 @@
   ;;  but try to simplify arguments during expansion.
 
   expt:
+  quotient:
 
   define-num: let-num:
 
@@ -127,3 +128,12 @@
        [else
         #f]))]
    [_ #f]))))
+
+(define-syntax quotient: (make-alias #'quotient
+  (lambda (stx) (syntax-parse stx
+    [(_ n1 n2)
+      (let ([v1 (stx->num #'n1)]
+            [v2 (stx->num #'n2)])
+        (and v1 v2
+          (quasisyntax/loc stx #,(quotient v1 v2))))]
+    [_ #f]))))

@@ -8,4 +8,5 @@
   [*: *]
   [/: /]
   [expt: expt]
+  [quotient: quotient]
 ))

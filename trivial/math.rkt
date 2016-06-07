@@ -9,6 +9,7 @@
   ;;  but try to simplify arguments during expansion.
 
   expt:
+  quotient:
 
   define-num: let-num:
 
@@ -18,4 +19,4 @@
 (require
   trivial/private/set-bang
   (only-in trivial/private/math
-    +: -: *: /: expt: let-num: define-num:))
+    +: -: *: /: expt: quotient: let-num: define-num:))

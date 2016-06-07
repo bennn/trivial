@@ -155,4 +155,12 @@
     (and (ann (lambda ([n : Natural]) (expt: n 0)) (-> Natural One)) #t))
   (check-true
     (and (ann (lambda ([n : Index]) (expt: n 1)) (-> Index Index)) #t))
+
+  ;; -- quotient
+  (check-equal?
+    (ann (quotient: 9 9) One)
+    1)
+  (check-equal?
+    (ann (quotient: (+ 99 99) (+ 32 1)) Index)
+    6)
 )
