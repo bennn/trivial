@@ -34,15 +34,22 @@
 (define (log->data ln)
   (string->symbol (last (string-split ln))))
 
-(define (summarize H)
+(define (summarize fname H)
+  (summarize-sexp fname H))
+
+(define (summarize-sexp fname H)
+  (printf "(~a" fname)
+  (define-values (kv* pad-to) (hash->kv+pad H))
+  (for ([kv (in-list (sort kv* > #:key cdr))])
+    (newline)
+    (printf "  (~a\t~a)" (~a (car kv) #:min-width pad-to) (cdr kv)))
+  (printf ")\n"))
+
+(define (summarize-ascii H)
   (define msg "Summary of trivial HITS:")
   (displayln msg)
   (displayln (make-string (string-length msg) #\=))
-  (define-values (kv* pad-to)
-    (for/fold ([acc '()]
-               [pad-to 0])
-              ([(k v) (in-hash H)])
-      (values (cons (cons k v) acc) (max pad-to (string-length (symbol->string k))))))
+  (define-values (kv* pad-to) (hash->kv+pad H))
   (for ([kv (in-list (sort kv* > #:key cdr))])
     (displayln (string-append
       "- "
@@ -50,8 +57,14 @@
       "\t"
       (number->string (cdr kv))))))
 
+(define (hash->kv+pad H)
+  (for/fold ([acc '()]
+             [pad-to 0])
+            ([(k v) (in-hash H)])
+    (values (cons (cons k v) acc) (max pad-to (string-length (symbol->string k))))))
+
 (define (remove-compiled ps)
-  (define c-dir (build-path (path-only ps) "compiled"))
+  (define c-dir (build-path (or (path-only ps) (current-directory)) "compiled"))
   (define fname (path-replace-extension (file-name-from-path ps) "_rkt.zo"))
   (define c-file (build-path c-dir fname))
   (cond
@@ -109,7 +122,7 @@
    (close-output-port out)
    (close-input-port err)
    ;; --
-   (summarize H)
+   (summarize fname H)
 ))
 
 ;; -----------------------------------------------------------------------------
