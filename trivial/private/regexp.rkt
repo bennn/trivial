@@ -72,12 +72,14 @@
      [(null? (cdr alt*))
       (parse-groups-for-alt (car alt*) #:src stx)]
      [else
-      (define num-groups
-        (for/fold ([num-groups 0])
-                  ([alt (in-list alt*)])
-          (define ng+null* (parse-groups-for-alt alt #:src stx))
-          (+ num-groups (car ng+null*))))
-      (list num-groups (range num-groups))]))
+      ;(define num-groups
+      ;  (for/fold ([num-groups 0])
+      ;            ([alt (in-list alt*)])
+      ;    (define ng+null* (parse-groups-for-alt alt #:src stx))
+      ;    (+ num-groups (car ng+null*))))
+      (parse-groups-for-alt str #:src stx)
+      #f
+      #;(list num-groups (range num-groups))]))
 
   ;; Count the number of matched parentheses in a regexp pattern.
   ;; Raise an exception if there are unmatched parens.
@@ -88,9 +90,9 @@
       (if (> i last-index)
         (cond
          [(not (null? in-paren))
-          (group-error str (format "'(' at index ~a" (car in-paren)))]
+          (group-error stx str (format "'(' at index ~a" (car in-paren)))]
          [(unbox in-square?)
-          (group-error str (format "'[' at index ~a" (car in-paren)))]
+          (group-error stx str (format "'[' at index ~a" (car in-paren)))]
          [else
           (list num-groups null-idx*)])
         (if (unbox in-square?)
@@ -112,7 +114,7 @@
            [(#\))
             (cond
              [(null? in-paren)
-              (group-error str (format "')' at index ~a" i))]
+              (group-error stx str (format "')' at index ~a" i))]
              [(eq? #f (car in-paren))
               ;; Matched closing paren, but does not count as a group
               (loop (+ i 1) (cdr in-paren) num-groups null-idx*)]
@@ -129,9 +131,9 @@
                      (eq? #\\ (string-ref str (+ i 1))))
               (loop (+ i 3) in-paren num-groups null-idx*)
               (loop (+ i 2) in-paren num-groups null-idx*))]
-           [(#\|)
-            ;; Nope! Can't handle pipes
-            (error 'internal-error "Found '|' character in regexp string.")]
+           ;[(#\|)
+           ; ;; Nope! Can't handle pipes
+           ; (error 'internal-error "Found '|' character in regexp string.")]
            [else
             (loop (+ i 1) in-paren num-groups null-idx*)])))))
 

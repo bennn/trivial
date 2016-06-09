@@ -72,12 +72,8 @@
      [(null? (cdr alt*))
       (parse-groups-for-alt (car alt*) #:src stx)]
      [else
-      (define num-groups
-        (for/fold ([num-groups 0])
-                  ([alt (in-list alt*)])
-          (define ng+null* (parse-groups-for-alt alt #:src stx))
-          (+ num-groups (car ng+null*))))
-      (list num-groups (range num-groups))]))
+      (parse-groups-for-alt str #:src stx)
+      #f]))
 
   ;; Count the number of matched parentheses in a regexp pattern.
   ;; Raise an exception if there are unmatched parens.
@@ -129,9 +125,6 @@
                      (eq? #\\ (string-ref str (+ i 1))))
               (loop (+ i 3) in-paren num-groups null-idx*)
               (loop (+ i 2) in-paren num-groups null-idx*))]
-           [(#\|)
-            ;; Nope! Can't handle pipes
-            (error 'internal-error "Found '|' character in regexp string.")]
            [else
             (loop (+ i 1) in-paren num-groups null-idx*)])))))
 

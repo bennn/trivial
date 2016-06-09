@@ -8,6 +8,11 @@
     trivial/regexp
     typed/rackunit)
 
+  ;; -- regexp
+  (let ()
+    ;; TODO (what groups does this return? re-read regexp spec)
+    (check-true (and (regexp: "^(\r|\n|(\r\n))") #t)))
+
   ;; -- regexp-match:
   (check-equal?
     (ann
@@ -308,17 +313,18 @@
     '("alot"))
 
   ;; -- pipes = take min groups
-  (check-equal?
-    (ann
-      (regexp-match: "^(a*)|(b*)$" "aaa")
-      (U #f (List String (U #f String) (U #f String))))
-    '("aaa" "aaa" #f))
+  ;;    2016-06-08: currently disabled
+  ;(check-equal?
+  ;  (ann
+  ;    (regexp-match: "^(a*)|(b*)$" "aaa")
+  ;    (U #f (List String (U #f String) (U #f String))))
+  ;  '("aaa" "aaa" #f))
 
-  (check-equal?
-    (ann
-      (regexp-match: "^(aa*)(c*)|(b*)$" "b")
-      (U #f (List String (U #f String) (U #f String) (U #f String))))
-    '("b" #f #f "b"))
+  ;(check-equal?
+  ;  (ann
+  ;    (regexp-match: "^(aa*)(c*)|(b*)$" "b")
+  ;    (U #f (List String (U #f String) (U #f String) (U #f String))))
+  ;  '("b" #f #f "b"))
 
   ;; -- nested gropus
   (check-equal?
