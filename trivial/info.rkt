@@ -18,4 +18,4 @@
 (define version "1")
 (define pkg-authors '(ben))
 (define scribblings '(("scribblings/trivial.scrbl" () ("typed-racket"))))
-(define raco-commands '(("trivial" (submod trivial/private/command-line main) "Compile and log optimizations" #f)))
+(define raco-commands '(("trivial" (submod trivial/private/raco-command main) "Compile and log optimizations" #f)))
