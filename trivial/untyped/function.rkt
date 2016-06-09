@@ -85,5 +85,6 @@
     #:with (e+* ...)
       (for/list ([e (in-list (syntax-e #'(e* ...)))])
         (quasisyntax/loc stx #,e))
-    (syntax/loc stx (map p.expanded e+* ...))]))))
+    (syntax/loc stx (map p.expanded e+* ...))]
+   [_ #f]))))
 
