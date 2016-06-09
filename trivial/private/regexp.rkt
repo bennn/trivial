@@ -42,10 +42,12 @@
 (begin-for-syntax
   (define errloc-key     'regexp-match:)
 
-  (define (group-error str reason)
-    (raise-argument-error
-      errloc-key
-      (format "Invalid regexp pattern (unmatched ~a)" reason)
+  (define (group-error stx str reason)
+    (raise-user-error errloc-key
+      "(~a:~a) Invalid regexp pattern (unmatched ~a) in ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      reason
       str))
 
   ;; Dispatch for counting groups

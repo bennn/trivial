@@ -42,10 +42,12 @@
 (begin-for-syntax
   (define errloc-key     'regexp-match:)
 
-  (define (group-error str reason)
-    (raise-argument-error
-      errloc-key
-      (format "Invalid regexp pattern (unmatched ~a)" reason)
+  (define (group-error stx str reason)
+    (raise-user-error errloc-key
+      "(~a:~a) Invalid regexp pattern (unmatched ~a) in ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      reason
       str))
 
   ;; Dispatch for counting groups
@@ -86,9 +88,9 @@
       (if (> i last-index)
         (cond
          [(not (null? in-paren))
-          (group-error str (format "'(' at index ~a" (car in-paren)))]
+          (group-error stx str (format "'(' at index ~a" (car in-paren)))]
          [(unbox in-square?)
-          (group-error str (format "'[' at index ~a" (car in-paren)))]
+          (group-error stx str (format "'[' at index ~a" (car in-paren)))]
          [else
           (list num-groups null-idx*)])
         (if (unbox in-square?)
@@ -110,7 +112,7 @@
            [(#\))
             (cond
              [(null? in-paren)
-              (group-error str (format "')' at index ~a" i))]
+              (group-error stx str (format "')' at index ~a" i))]
              [(eq? #f (car in-paren))
               ;; Matched closing paren, but does not count as a group
               (loop (+ i 1) (cdr in-paren) num-groups null-idx*)]
