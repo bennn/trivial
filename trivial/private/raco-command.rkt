@@ -10,13 +10,18 @@
 ;; - automatically (require trivial)
 ;; - work for typed OR untyped files
 
+(provide
+  collect-and-summarize
+)
+
 (require
-  (only-in racket/string string-split string-prefix?)
-  (only-in racket/list last)
-  racket/path
-  (only-in racket/format ~a)
   (only-in racket/file delete-directory/files)
+  (only-in racket/format ~a ~r)
+  (only-in racket/list last)
+  (only-in racket/string string-split string-prefix? string-contains?)
   (only-in racket/system process)
+  racket/path
+  syntax/modread
 )
 
 ;; =============================================================================
@@ -34,15 +39,23 @@
 (define (log->data ln)
   (string->symbol (last (string-split ln))))
 
-(define (summarize fname H)
-  (summarize-sexp fname H))
+(define (rnd n)
+  (~r n #:precision '(= 2)))
 
-(define (summarize-sexp fname H)
+(define (summarize fname H M)
+  (summarize-sexp fname H M))
+
+(define (summarize-sexp fname H M)
   (printf "(~a" fname)
   (define-values (kv* pad-to) (hash->kv+pad H))
   (for ([kv (in-list (sort kv* > #:key cdr))])
+    (define k (car kv))
+    (define num-hits (cdr kv))
+    (define num-miss (hash-ref M k 0))
+    (define total (+ num-hits num-miss))
+    (define pct (rnd (* 100 (/ num-hits total))))
     (newline)
-    (printf "  (~a\t~a)" (~a (car kv) #:min-width pad-to) (cdr kv)))
+    (printf "  (~a\t~a\t~a\t~a)" (~a k #:min-width pad-to) num-hits num-miss pct))
   (printf ")\n"))
 
 (define (summarize-ascii H)
@@ -76,43 +89,51 @@
    [else
     (void)]))
 
-(module+ main
-  (require
-    racket/cmdline
-    syntax/modread)
-  (command-line
-   #:once-each
-   [("--clean" "--all") "Make clean before running" (*ANNIHILATE* #t)]
-   #:args (fname)
+(define (hit? line)
+  (string-contains? line "HIT"))
+
+(define (miss? line)
+  (string-contains? line "MISS"))
+
+(define (make-counter)
+  (let* ([H (make-hasheq)]
+         [H++ (lambda (k)
+                (define old (hash-ref H k (lambda () #f)))
+                (if old
+                  (hash-set! H k (+ old 1))
+                  (hash-set! H k 1)))])
+    (values H H++)))
+
+(define (collect-and-summarize fname)
    (remove-compiled fname)
    (define cmd (format "raco make ~a" fname))
    (define-values (in out pid err check-status) (apply values (process cmd)))
-   (define-values (H H++)
-     (let* ([H (make-hasheq)]
-            [H++ (lambda (k)
-                   (define old (hash-ref H k (lambda () #f)))
-                   (if old
-                     (hash-set! H k (+ old 1))
-                     (hash-set! H k 1)))])
-       (values H H++)))
+   (define-values (H H++) (make-counter))
+   (define-values (M M++) (make-counter))
    (define num-lines (box 0))
    (define (subprocess-read)
      (for ([line (in-lines in)])
        (set-box! num-lines (+ 1 (unbox num-lines)))
        (cond
         [(string-prefix? line TRIVIAL-LOG-PREFIX)
-         (H++ (log->data line))]
+         (cond
+          [(miss? line)
+           (M++ (log->data line))]
+          [else
+           (H++ (log->data line))]
+          #;[else
+           (printf "WARNING: error parsing log message ~a\n" line)])]
         [else
          (void)])))
    (let loop ()
      (case (check-status 'status)
       [(running)
-       (debug "Subprocess running, reading output so far")
+       #;(debug "Subprocess running, reading output so far")
        (subprocess-read)
        (loop)]
       [(done-ok)
        (subprocess-read)
-       (debug "Subprocess finished cleanly. Produced ~a lines of output." (unbox num-lines))]
+       #;(debug "Subprocess finished cleanly. Produced ~a lines of output." (unbox num-lines))]
       [(done-error)
        (parameterize ([current-output-port (current-error-port)])
          (for ([line (in-lines err)]) (displayln line)))
@@ -122,8 +143,17 @@
    (close-output-port out)
    (close-input-port err)
    ;; --
-   (summarize fname H)
-))
+   (summarize fname H M))
+
+;; -----------------------------------------------------------------------------
+
+(module+ main
+  (require racket/cmdline)
+  (command-line
+   #:once-each
+   [("--clean" "--all") "Make clean before running" (*ANNIHILATE* #t)]
+   #:args (fname)
+   (collect-and-summarize fname)))
 
 ;; -----------------------------------------------------------------------------
 ;; -- trash

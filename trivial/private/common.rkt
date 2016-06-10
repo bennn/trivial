@@ -97,8 +97,9 @@
     (lambda (stx)
       (syntax-parse stx #:literals (tr:#%plain-lambda)
        [(_ name:id v)
-        #:with (tr:#%plain-lambda (_) v+)
-            (expand-expr (syntax/loc stx (tr:lambda (name) v)))
+        #:with v+
+          (parameterize ([*STOP-LIST* (cons (syntax/loc stx name) (*STOP-LIST*))])
+            (expand-expr (syntax/loc stx v)))
         #:when (syntax-e (syntax/loc stx v+))
         #:with m (f-parse (syntax/loc stx v+))
         #:when (syntax-e (syntax/loc stx m))
@@ -133,9 +134,10 @@
   (cond
    [(parser stx)
     => (lambda (r)
-    (when (*TRIVIAL-LOG*) (log stx "alias ~a" (syntax->datum id-stx)))
+    (when (*TRIVIAL-LOG*) (log stx "HIT ~a" (syntax->datum id-stx)))
     r)]
    [else
+    (when (*TRIVIAL-LOG*) (log stx "MISS ~a" (syntax->datum id-stx)))
     (syntax-parse stx
      [_:id
       id-stx]
@@ -146,7 +148,6 @@
 (define ((make-keyword-alias id-sym parser) stx)
   (or (with-handlers ((exn:fail? (lambda (e) #f))) (parser stx))
       ;; 2016-06-08: sometimes parser raises error ... i.e. "unbound local member name"
-      (parser stx)
       (syntax-parse stx
         [(_ e* ...)
          #:with id-stx (case id-sym
