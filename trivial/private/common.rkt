@@ -47,8 +47,11 @@
     #:attr evidence #'p+
     #:attr expanded #'e+)))
 
+(define-syntax-rule (log stx msg arg* ...)
+  (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
+
 (define (expand-expr stx)
-  (local-expand stx 'expression '()))
+  (local-expand stx 'expression (*STOP-LIST*)))
 
 (define (quoted-stx-value? stx)
   (and
@@ -94,11 +97,15 @@
     (lambda (stx)
       (syntax-parse stx #:literals (tr:#%plain-lambda)
        [(_ name:id v)
-        #:with (tr:#%plain-lambda (_) v+) (expand-expr (syntax/loc stx (tr:lambda (name) v)))
+        #:with (tr:#%plain-lambda (_) v+)
+          (parameterize ([*STOP-LIST* (cons #'name (*STOP-LIST*))])
+            (expand-expr (syntax/loc stx (tr:lambda (name) v))))
         #:when (syntax-e (syntax/loc stx v+))
         #:with m (f-parse (syntax/loc stx v+))
         #:when (syntax-e (syntax/loc stx m))
         (free-id-table-set! tbl #'name (syntax-e #'m))
+        (when (*TRIVIAL-LOG*)
+          (log stx "define ~a" sym))
         (syntax/loc stx
           (tr:define name v+))]
        [_ #f])))
@@ -109,6 +116,8 @@
         #:with (v+* ...) (map expand-expr (syntax-e (syntax/loc stx (v* ...))))
         #:with (m* ...) (map f-parse (syntax-e (syntax/loc stx (v+* ...))))
         #:when (andmap syntax-e (syntax-e (syntax/loc stx (m* ...))))
+        (when (*TRIVIAL-LOG*)
+          (log stx "let ~a" sym))
         (quasisyntax/loc stx
           (tr:let ([name* v+*] ...)
             (tr:let-syntax ([name* (make-rename-transformer
@@ -125,7 +134,7 @@
   (cond
    [(parser stx)
     => (lambda (r)
-    (when (*TRIVIAL-LOG*) (printf "[LOG] alias ~a\n" (syntax->datum id-stx)))
+    (when (*TRIVIAL-LOG*) (log stx "alias ~a" (syntax->datum id-stx)))
     r)]
    [else
     (syntax-parse stx
@@ -136,17 +145,14 @@
       #`(app-stx #,id-stx e* ...)])]))
 
 (define ((make-keyword-alias id-sym parser) stx)
-  (cond
-   [(parser stx)
-    => (lambda (r)
-      (when (*TRIVIAL-LOG*) (printf "[LOG] keyword ~a\n" id-sym))
-      r)]
-   [else
-    (syntax-parse stx
-      [(_ e* ...)
-       #:with id-stx (case id-sym
-                      [(define) #'tr:define]
-                      [(let)    #'tr:let]
-                      [(set!)   #'tr:set!]
-                      [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
-       (syntax/loc stx (id-stx e* ...))])]))
+  (or (with-handlers ((exn:fail? (lambda (e) #f))) (parser stx))
+      ;; 2016-06-08: sometimes parser raises error ... i.e. "unbound local member name"
+      (parser stx)
+      (syntax-parse stx
+        [(_ e* ...)
+         #:with id-stx (case id-sym
+                        [(define) #'tr:define]
+                        [(let)    #'tr:let]
+                        [(set!)   #'tr:set!]
+                        [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
+         (syntax/loc stx (id-stx e* ...))])))

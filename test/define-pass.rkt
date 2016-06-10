@@ -8,13 +8,13 @@
   trivial/vector)
 
 (module+ test
-  (require typed/rackunit)
+  (require typed/rackunit typed/racket/class)
 
   (check-equal?
     (let ()
-      (define: n 3)
+      (define: n 3) ;; TODO define is broken
       (let: ([m n])
-        (ann (-: n m) Zero)))
+        (ann (-: m n) Zero)))
     0)
 
   (check-equal?
@@ -35,4 +35,20 @@
              [ys '(4 3 1)])
       (map: f xs ys)))
     '("hello(hi) and 100" "hello(hi) and 11" "hello(HI) and 1"))
+
+  ;; Should be okay with "Indiana-style" defines
+  (let ()
+    (define fact : (-> Integer Integer)
+      (lambda (n)
+        (if (< n 2) 1 (* n (fact (- n 1))))))
+    (check-equal? (fact 5) 120))
+
+  ;; Also with classes
+  (let ()
+    (define f% : (Rec t (Class (yolo (-> (Instance t)))))
+      (class object%
+        (super-new)
+        (define/public (yolo)
+          (new f%))))
+    (check-false (not (new f%))))
 )

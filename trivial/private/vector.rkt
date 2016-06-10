@@ -1,5 +1,8 @@
 #lang typed/racket/base
 
+;; TODO:
+;; - use unsafe-vector* operations? (will we ever have an impersonator? not yet)
+
 (provide
   define-vector:
   let-vector:

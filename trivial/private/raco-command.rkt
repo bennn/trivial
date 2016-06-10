@@ -21,7 +21,7 @@
 
 ;; =============================================================================
 
-(define TRIVIAL-LOG-PREFIX "[LOG]")
+(define TRIVIAL-LOG-PREFIX "[LOG")
 
 (define *ANNIHILATE* (make-parameter #f))
 
