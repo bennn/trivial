@@ -10,8 +10,19 @@
 
   ;; -- regexp
   (let ()
-    ;; TODO (what groups does this return? re-read regexp spec)
     (check-true (and (regexp: "^(\r|\n|(\r\n))") #t)))
+
+  (let ([str "Pete would gain 4."])
+    (check-equal?
+      (ann (regexp-match: #px"^(.*?) would (gain|lose) (\\d+)\\.$"  str)
+           (U #f (List String String String String)))
+      (list str "Pete" "gain" "4")))
+
+  (let ([str "| yo"]) ;; from John Clement's morse-code-trainer
+    (check-equal?
+      (ann (regexp-match: #px"hey [|] (yo)" str)
+           (U #f (List String String)))
+      #f))
 
   ;; -- regexp-match:
   (check-equal?
@@ -248,7 +259,7 @@
       (U #f (List String String String)))
     '("ab" "ab" "a"))
 
-  ;; --- Can't handle |, yet
+  ;; --- Can't handle |
   (check-equal?
     (ann
       (regexp-match: "this(group)|that" "that")
@@ -312,19 +323,19 @@
       (U #f (List String)))
     '("alot"))
 
-  ;; -- pipes = take min groups
-  ;;    2016-06-08: currently disabled
-  ;(check-equal?
-  ;  (ann
-  ;    (regexp-match: "^(a*)|(b*)$" "aaa")
-  ;    (U #f (List String (U #f String) (U #f String))))
-  ;  '("aaa" "aaa" #f))
+  ; -- pipes = take min groups
+  ;    2016-06-08: currently disabled
+  (check-equal?
+    (ann
+      (regexp-match: "^(a*)|(b*)$" "aaa")
+      (U #f (List String (U #f String) (U #f String))))
+    '("aaa" "aaa" #f))
 
-  ;(check-equal?
-  ;  (ann
-  ;    (regexp-match: "^(aa*)(c*)|(b*)$" "b")
-  ;    (U #f (List String (U #f String) (U #f String) (U #f String))))
-  ;  '("b" #f #f "b"))
+  (check-equal?
+    (ann
+      (regexp-match: "^(aa*)(c*)|(b*)$" "b")
+      (U #f (List String (U #f String) (U #f String) (U #f String))))
+    '("b" #f #f "b"))
 
   ;; -- nested gropus
   (check-equal?
