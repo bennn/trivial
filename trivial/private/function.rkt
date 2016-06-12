@@ -88,7 +88,7 @@
     #:with (e+* ...)
       (for/list ([t (in-list (syntax-e #'p.evidence))]
                  [e (in-list (syntax-e #'(e* ...)))])
-        (quasisyntax/loc stx (ann #,e (Listof-stx #,(format-id stx "~a" (syntax-e t))))))
+        (quasisyntax/loc stx (ann #,e (Listof-stx #,(datum->syntax stx (syntax-e t))))))
     (syntax/loc stx (map p.expanded e+* ...))]
    [_ #f]))))
 
