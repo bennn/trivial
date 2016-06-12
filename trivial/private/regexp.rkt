@@ -149,6 +149,7 @@
   (define (unescaped-pos* str c*)
     (define L (string-length str))
     (define escaped? (box #f))
+    (define most-recent-char (box #f))
     (define (have-char-at-index? c i hist)
       (memv i (hash-ref hist c)))
     (define h-rev
@@ -157,7 +158,8 @@
         (define char (unsafe-string-ref str i))
         (cond
          [(unbox escaped?)
-          (unless (eq? #\\ char)
+          (when (or (not (eq? #\\ char))
+                    (eq? #\[ (unbox most-recent-char)))
             (set-box! escaped? #f))
           hist]
          [(eq? #\\ char)
@@ -173,7 +175,9 @@
          [else
           (let ([i* (hash-ref hist char #f)])
             (if i*
-              (hash-set hist char (cons i i*))
+              (begin
+                (set-box! most-recent-char char)
+                (hash-set hist char (cons i i*)))
               hist))])))
     ;; -- reverse all saved lists
     (for/hasheq ([(c i*) (in-hash h-rev)])

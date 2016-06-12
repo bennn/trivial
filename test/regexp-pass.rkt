@@ -13,6 +13,13 @@
 
   ;; -- regexps, from the world
 
+  (let ([str "dont care"]) ;; from `tests/racket/contract/multi-file.rkt`
+    (check-equal?
+      (ann
+        (regexp-match: #rx"[/\\]([-a-z0-9.]*)[^/\\]*$" str)
+        (U #f (List String String)))
+      #f))
+
   (let ([l "dont care"]) ;; from `morse-code-table.rkt`
     (check-equal?
       (ann
