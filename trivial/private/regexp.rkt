@@ -92,12 +92,14 @@
 
   ;; (-> String #:src Syntax (Listof Boolean))
   (define (parse-groups/untyped str #:src stx)
-    (define pos**
-      (unescaped-pos* str '(#\[ #\] #\( #\) #\| #\?)))
+    (define char->pos*
+      (let ([H (unescaped-pos* str '(#\[ #\] #\( #\) #\| #\?))])
+        (lambda (c)
+          (hash-ref H c (lambda () (raise-user-error 'parse-groups "No position data for '~a' character" c))))))
     ;; -- check that [] are matched
     (define brack-ivl*
-      (let* ([l-brack-pos* (car pos**)]
-             [r-brack-pos* (cadr pos**)]
+      (let* ([l-brack-pos* (char->pos* #\[)]
+             [r-brack-pos* (char->pos* #\])]
              [r (pair-up l-brack-pos* r-brack-pos*)])
         ;; ?? okay for brackets to nest?
         (if (list? r)
@@ -106,8 +108,9 @@
             (group-error stx str (format "'~a' at index ~a" brack-char r))))))
     ;; -- ignore characters between a pair of brackets
     (define-values (l-paren-pos* r-paren-pos* pipe-pos* ?-pos*)
-      (apply values (for/list ([pos* (in-list (cddr pos**))])
-                      (ivl-remove* brack-ivl* pos*))))
+      (apply values
+        (for/list ([c (in-list '(#\( #\) #\| #\?))])
+          (ivl-remove* brack-ivl* (char->pos* c)))))
     ;; -- check that () are matched
     (define paren-ivl*
       (let ([r (pair-up l-paren-pos* r-paren-pos*)])
@@ -146,8 +149,10 @@
   (define (unescaped-pos* str c*)
     (define L (string-length str))
     (define escaped? (box #f))
-    (map reverse
-      (for/fold ([hist (for/list ([c (in-list c*)]) '())])
+    (define (have-char-at-index? c i hist)
+      (memv i (hash-ref hist c)))
+    (define h-rev
+      (for/fold ([hist (for/hasheq ([c (in-list c*)]) (values c '()))])
                 ([i (in-range L)])
         (define char (unsafe-string-ref str i))
         (cond
@@ -158,12 +163,21 @@
          [(eq? #\\ char)
           (set-box! escaped? #t)
           hist]
+         ;; --- special case for singleton <rng>,
+         ;;     documented at `http://docs.racket-lang.org/reference/regexp.html`
+         [(and (eq? #\] char)
+               (or (have-char-at-index? #\[ (- i 1) hist)        ;; []] pattern
+                   (and (have-char-at-index? #\[ (- i 2) hist)
+                        (eq? #\^ (string-ref str (- i 1))))))    ;; [^]] pattern
+          hist]
          [else
-          (for/list ([h (in-list hist)]
-                     [c (in-list c*)])
-            (if (eq? c char)
-              (cons i h)
-              h))]))))
+          (let ([i* (hash-ref hist char #f)])
+            (if i*
+              (hash-set hist char (cons i i*))
+              hist))])))
+    ;; -- reverse all saved lists
+    (for/hasheq ([(c i*) (in-hash h-rev)])
+      (values c (reverse i*))))
 
   ;; (define-type Ivl (Pairof Natural Natural))
 

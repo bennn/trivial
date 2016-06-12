@@ -13,6 +13,18 @@
 
   ;; -- regexps, from the world
 
+  (let ([l "dont care"]) ;; from `morse-code-table.rkt`
+    (check-equal?
+      (ann
+        (regexp-match: #rx"[]] [^]]" l)
+        (U #f (List String)))
+      #f)
+    (check-equal?
+      (ann
+        (regexp-match: #px"^\\| \\[\\[[^]]*\\]\\] \\[([^]]*)\\] \\|\\| '''([^']*)'''" l)
+        (U #f (List String String String)))
+      #f))
+
   (let ([str "1cm"]) ;; from html-render.rkt
     (check-equal?
       (ann (regexp-match: #rx"^([+-]?[0-9]*\\.?([0-9]+)?)(em|ex|px|in|cm|mm|pt|pc|%|)$" str)
