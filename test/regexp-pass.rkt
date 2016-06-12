@@ -8,11 +8,32 @@
     trivial/regexp
     typed/rackunit)
 
-  ;; -- regexp
+  ;; -- TODO
+  ; (define re:normal-name (regexp (format "~a*<([^>]*)>~a*" blank blank)))
+
+  ;; -- regexps, from the world
+
+  (let ([str "1cm"]) ;; from html-render.rkt
+    (check-equal?
+      (ann (regexp-match: #rx"^([+-]?[0-9]*\\.?([0-9]+)?)(em|ex|px|in|cm|mm|pt|pc|%|)$" str)
+           (U #f (List String String (U #f String) String)))
+      (list str "1" #f "cm")))
+
+  (let ([expr "x+y*x"]) ;; from racket-doc/guide/scribblings/arith.rkt
+    (check-equal?
+      (ann (regexp-match: #px"^([a-z]|[0-9]+)(?:[-+*/]([a-z]|[0-9]+))*(?![-+*/])" expr)
+           (U #f (List String String String)))
+      (list expr "x" "x")))
+
+  (let ([str "(this and that!)"]) ;; from load-one.rkt
+    (check-equal?
+      (ann (regexp-match: #rx"^[(].*[)]$" str) (U #f (List String)))
+      (list str)))
+
   (let ()
     (check-true (and (regexp: "^(\r|\n|(\r\n))") #t)))
 
-  (let ([str "Pete would gain 4."])
+  (let ([str "Pete would gain 4."]) ;; from Matthew Butterick's Advent of Code solutions
     (check-equal?
       (ann (regexp-match: #px"^(.*?) would (gain|lose) (\\d+)\\.$"  str)
            (U #f (List String String String String)))
@@ -23,6 +44,13 @@
       (ann (regexp-match: #px"hey [|] (yo)" str)
            (U #f (List String String)))
       #f))
+
+  (let ([l "0  afAF09   AF09af   ABSD_asdf    ="]) ;; from racket/src/worksp/gendef.rkt
+    (define m : (U #f (List String String String))
+      (regexp-match:
+         #rx"([0-9]+) +(?:[0-9A-Fa-f]+) +(?:[0-9A-Fa-f]+) +([_A-Za-z][_A-Za-z0-9]*) +="
+         l))
+    (check-equal? m (list l "0" "ABSD_asdf")))
 
   ;; -- regexp-match:
   (check-equal?

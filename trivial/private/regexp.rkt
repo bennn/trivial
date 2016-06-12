@@ -165,10 +165,12 @@
               (cons i h)
               h))]))))
 
+  ;; (define-type Ivl (Pairof Natural Natural))
+
   ;; Match a list of left indices with a list of right indices.
   ;; Return a list of pairs on success
   ;;  and the unmatched index on failure.
-  ;; (-> (Listof Natural) (Listof Natural) (U Natural (Listof (Pairof Natural Natural))))
+  ;; (-> (Listof Natural) (Listof Natural) (U Natural (Listof Ivl)))
   (define (pair-up l* r*)
     (let loop ([i 0] [l* l*] [r* r*] [prev* '()])
       (cond
@@ -184,11 +186,23 @@
           (let ([r (loop (+ i 1) l* (cdr r*) (cdr prev*))])
             (if (integer? r)
               r
-              (cons (cons (car prev*) i) r))))]
+              (ivl-insert (cons (car prev*) i) r))))]
        [(or (null? l*) (< i (car l*)))
         (loop (+ i 1) l* r* prev*)]
        [(= i (car l*))
         (loop (+ i 1) (cdr l*) r* (cons i prev*))])))
+
+  ;; Assume `ivl*` is sorted by left position
+  ;; Insert `ivl` in sorted order
+  ;; (-> Ivl (Listof Ivl) (Listof Ivl))
+  (define (ivl-insert ivl ivl*)
+    (cond
+     [(null? ivl*)
+      (list ivl)]
+     [(< (car ivl) (caar ivl*))
+      (cons ivl ivl*)]
+     [else
+      (cons (car ivl*) (ivl-insert ivl (cdr ivl*)))]))
 
   (define (ivl-remove* ivl* i*)
     (for/list ([i (in-list i*)]
@@ -210,6 +224,7 @@
           (or (syntax-parse arg-stx
                 ((x:str) #t)
                 ((x) #:when (bytes? (syntax-e #'x)) #f)
+                ;; TODO ;; ((x) #:when (port? (syntax-e #'x)) #f)
                 (_ #t))))
       'String
       'Bytes))
