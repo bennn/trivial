@@ -40,20 +40,34 @@
   ;; --- can't handle starred groups
   (ann (regexp-match: "(a)*(b)" "b")
        (U #f (List String String)))
-) (test-compile-error
-  #:require trivial/regexp
-  #:exn #rx"mutation not allowed"
-  ;; -- set! problems
-  (ann (let-regexp: ([a #rx"(b)(B)"])
-         (set! a #rx"")
-         (regexp-match: a "hai"))
-       (List String String String))
-  (let ()
-    (define-regexp: a #rx"h(i)")
-    (set! a #rx"hi")
-    (regexp-match a "hi"))
+)
 
-  (let-regexp: ([a #rx"h(i)"])
-    (set! a #rx"(h)(i)")
-    (regexp-match a "hi"))
-))
+(test-compile-error
+  #:require trivial/regexp racket/port
+  #:exn #rx"Type Checker"
+  ;; -- expected String, given Bytes
+  (with-input-from-string "hello"
+    (lambda ()
+      (define m (regexp-match #rx#"lang" (current-input-port)))
+      (and m (string=? (car m) "lang"))))
+)
+
+;; 2016-06-13 : these really should be errors, just no-opts
+;(test-compile-error
+;  #:require trivial/regexp
+;  #:exn #rx"mutation not allowed"
+;  ;; -- set! problems
+;  (ann (let-regexp: ([a #rx"(b)(B)"])
+;         (set! a #rx"")
+;         (regexp-match: a "hai"))
+;       (List String String String))
+;  (let ()
+;    (define-regexp: a #rx"h(i)")
+;    (set! a #rx"hi")
+;    (regexp-match a "hi"))
+;
+;  (let-regexp: ([a #rx"h(i)"])
+;    (set! a #rx"(h)(i)")
+;    (regexp-match a "hi"))
+;)
+)

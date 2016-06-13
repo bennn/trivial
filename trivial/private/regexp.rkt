@@ -34,7 +34,6 @@
     typed/racket/base
     (only-in racket/list range)
     (only-in racket/format ~a)
-    (only-in racket/unsafe/ops unsafe-string-ref)
     syntax/parse
     trivial/private/common))
 
@@ -155,7 +154,7 @@
     (define h-rev
       (for/fold ([hist (for/hasheq ([c (in-list c*)]) (values c '()))])
                 ([i (in-range L)])
-        (define char (unsafe-string-ref str i))
+        (define char (string-ref str i))
         (cond
          [(unbox escaped?)
           (when (or (not (eq? #\\ char))

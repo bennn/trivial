@@ -8,10 +8,17 @@
     trivial/regexp
     typed/rackunit)
 
-  ;; -- TODO
+  ;; -- TODO (handle regexp . format)
   ; (define re:normal-name (regexp (format "~a*<([^>]*)>~a*" blank blank)))
 
   ;; -- regexps, from the world
+
+  (let ([str 
+
+  (let () ;; -- from klocker? anyway the unicode will segfault `unsafe-string-ref`
+    (check-equal?
+      (ann (regexp-match: #rx"⇒" "yolo") (U #f (List String)))
+      #f))
 
   (let ([str "dont care"]) ;; from `tests/racket/contract/multi-file.rkt`
     (check-equal?
