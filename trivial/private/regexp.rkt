@@ -239,9 +239,9 @@
           (or (eq? pattern-sym 'String)
               (eq? pattern-sym 'Regexp))
           (or (syntax-parse arg-stx
-                ((x:str) #t)
-                ((x) #:when (bytes? (syntax-e #'x)) #f)
-                ;; TODO ;; ((x) #:when (port? (syntax-e #'x)) #f)
+                ((x:str arg* ...) #t)
+                ((x arg* ...) #:when (bytes? (syntax-e #'x)) #f)
+                ;; TODO ;; ((x arg* ...) #:when (port? (syntax-e #'x)) #f)
                 (_ #t))))
       'String
       'Bytes))
@@ -276,16 +276,18 @@
            (syntax/loc stx pat.evidence)
     #:with return-type
            (format-id stx "~a" (infer-return-type (syntax-e #'type-sym) #'(arg* ...)))
-    #:with (group-type* ...)
+    #:with (exact-group-type* ...)
            (let ([stx-never-fail (syntax/loc stx return-type)]
                  [stx-may-fail (syntax/loc stx (U #f return-type))])
              (for/list ([c-stx (in-list (syntax-e #'capture?*))])
-               (if (syntax-e c-stx)
-                 stx-never-fail
-                 stx-may-fail)))
+               (if (syntax-e c-stx) stx-never-fail stx-may-fail)))
     (syntax/loc stx
       (let ([maybe-match (regexp-match pat.expanded arg* ...)])
         (if maybe-match
-          (cast maybe-match (List return-type group-type* ...))
+          (cast ;; -- use `ann` to validate return type assumption & `cast` to remove #f
+                ;; 2016-06-13: ideally we should be typechecking `arg` instead of guessing
+            (ann maybe-match (Pairof return-type (Listof (U #f return-type))))
+            (List return-type exact-group-type* ...))
           #f)))]
    [_ #f]))))
+

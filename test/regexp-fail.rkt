@@ -48,8 +48,16 @@
   ;; -- expected String, given Bytes
   (with-input-from-string "hello"
     (lambda ()
-      (define m (regexp-match #rx#"lang" (current-input-port)))
+      (define m (regexp-match: #rx#"lang" (current-input-port)))
       (and m (string=? (car m) "lang"))))
+
+  ;; ---- is raising a type error, which is GOOD, but throwing during test
+  ;;; -- return type assumed to be String, but really is Bytes
+  ;;;    (ugly, but at least we catch it statically)
+  ;(with-input-from-file "test/regexp-fail.rkt"
+  ;  (lambda ()
+  ;    (define m (regexp-match: #rx"lang" (current-input-port)))
+  ;    (and m (bytes=? #;string=? (car m) #"lang"))))
 )
 
 ;; 2016-06-13 : these really should be errors, just no-opts
