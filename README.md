@@ -70,7 +70,7 @@ From Github:
 
 ```
 > git clone https://github.com/bennn/trivial
-> raco pkg install ./trivial
+> raco pkg install ./trivial/trivial
 ```
 
 From the Racket [package server](http://pkgs.racket-lang.org/):
