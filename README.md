@@ -4,6 +4,8 @@ trivial
 [![Coverage Status](https://coveralls.io/repos/bennn/trivial/badge.svg?branch=master&service=github)](https://coveralls.io/github/bennn/trivial?branch=master)
 [![Scribble](https://img.shields.io/badge/Docs-Scribble-blue.svg)](http://docs.racket-lang.org/trivial/index.html)
 
+__WARNING:__ things are current in a heavy development state. See the [6.4 release branch](https://github.com/bennn/trivial/tree/6.4) for a stable version.
+
 This [Typed Racket](http://docs.racket-lang.org/ts-reference/) library provides "smarter" versions of standard library functions.
 For example:
 
