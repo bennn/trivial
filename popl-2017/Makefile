@@ -10,6 +10,10 @@ ${PAPER}.pdf: pkg setup texstyle.tex
            ++extra fig-stlc-core.tex \
            ++extra fig-elab0.tex \
            ++extra fig-elab1.tex \
+           ++extra fig-elab-regexp.tex \
+           ++extra fig-elab-sigma.tex \
+           ++extra fig-regexp-lib.tex \
+           ++extra fig-stlc-dict.tex \
            ++extra mathpartir.sty \
            ++style texstyle.tex \
            --pdf $(PAPER).scrbl

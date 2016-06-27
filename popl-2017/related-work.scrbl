@@ -4,6 +4,8 @@
 
 @title[#:tag "sec:related-work"]{Experts}
 
+@section{Macros}
+
 @section{SoundX}
 SoundX is a system for modeling programming languages and defining type-sound
  extensions, e.g. defining a type derivation for @tt{let} in terms of a type
@@ -39,6 +41,12 @@ Though we fail on the third point.
 Our general approach and outlook on type soundness is informed by Cousot.
 
 @section{Compiler Plugings}
+
+@; -- HASKELL
+@; https://ghc.haskell.org/trac/ghc/wiki/Plugins/TypeChecker
+@; http://christiaanb.github.io/posts/type-checker-plugin/
+@; http://adam.gundry.co.uk/pub/typechecker-plugins/typechecker-plugins-2015-07-17.pdf
+@; https://github.com/yav/type-nat-solver (copy of paper in src/ folder here)
 
 GHC (constraint solvers)
 Rust (macros)

@@ -5,7 +5,7 @@
 
 ;; FIXME: this doesn't have all the papers from the README yet
 
-(require racket/format
+(require racket/format 
          scriblib/autobib)
 
 (provide (all-defined-out))
@@ -77,6 +77,7 @@
   (define/short sigmod "SIGMOD" (string-append ACM "SIGMOD " International Conference "on Management of Data"))
   (define/short sigplan-notices "SIGPLAN Notices" (string-append ACM "SIGPLAN Notices"))
   (define/short tacs (string-append International Symposium "Theoretical Aspects of Computer Science"))
+  (define/short tacas (string-append International Conference "on Tools and Algorithms for the Construction and Analysis of Systems"))
   (define/short tcs "Theoretical Computer Science")
   (define/short tfp "TFP" (string-append Symposium "Trends in Functional Programming"))
   (define/short tlca "TLCA" (string-append International Conference "Typed Lambda Calculi and Applications"))
@@ -1725,9 +1726,23 @@
    #:location (proceedings-location icfp #:pages '(235 246))
    #:date 2010))
 
+(define pss-tacas-1998
+  (make-bib
+   #:title "Translation Validation"
+   #:author (authors "Amir Pnueli" "Michael Siegel" "Eli Singerman")
+   #:location (proceedings-location tacas #:pages '(151 166))
+   #:date 1998))
+
 (define le-popl-2016
   (make-bib
     #:title "Sound Type-Dependent Syntactic Language Extension"
     #:author (authors "Florian Lorenzen" "Sebastian Erdweg")
     #:location (proceedings-location popl #:pages '(204 216))
     #:date 2016))
+
+(define gr-cup-2004
+  (make-bib
+    #:title "The Standard ML Base Library"
+    #:author (authors "Emden R. Gansner" "John H. Reppy")
+    #:location (book-location #:edition "1" #:publisher "Cambridge University Press")
+    #:date 2004))

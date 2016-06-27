@@ -18,13 +18,9 @@
   }
 
   \inferrule*[left=T-Unsafe]{
-    \typestoclosed{\vectorvn}{\tarray}
+    \typesto{\vectorvn}{\tarray}
     \\
-    \typestoclosed{i}{\tint}
-    \\\\
-    i \in \ints
-    \\
-    0 \leq i < n
+    \typesto{i}{\tint}
   }{
     \typesto{\unsaferef~\vectorvn~i}{\tint}
   }

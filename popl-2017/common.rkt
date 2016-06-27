@@ -21,6 +21,10 @@
          id
          todo
          proof
+         warning
+         goal
+
+         stx
          )
 
 (require "bib.rkt"
@@ -117,7 +121,7 @@
 
 (define (sf x) (elem #:style "sfstyle" x))
 
-(define (sc x) (exact "\\textsc{" x "}"))
+(define (sc x) (exact "\\textsc{\\small " x "}"))
 
 (define (parag . x) (apply elem #:style "paragraph" x))
 
@@ -173,4 +177,15 @@
           (exact "~~")
           txt
           (exact "\\hfill\\qed"))))
+
+(define (warning sym txt . arg*)
+  (printf "[WARNING] ~a: " sym)
+  (apply printf txt arg*)
+  (newline))
+
+(define (goal str)
+  (bold (emph str)))
+
+(define stx
+  (exact "\\RktRdr{\\#{\\textasciigrave}}"))
 

@@ -37,23 +37,35 @@
 \newcommand{\tvar}[1]{\mathsf{#1}}
 \newcommand{\tnat}{\tvar{Natural}}
 \newcommand{\tarray}{\tvar{Array}}
+\newcommand{\tdictgen}[1]{\llparenthesis #1 \rrparenthesis}  %% yuck man
+\newcommand{\tdictn}{\tdictgen{l_0 : \tau_0, \ldots,l_{n-1} : \tau_{n-1}}}
 \newcommand{\tint}{\tvar{Int}}
+\newcommand{\toption}[1]{\tvar{Option}\,#1}
 \newcommand{\tnum}{\tvar{Num}}
+\newcommand{\tstring}{\tvar{String}}
 \newcommand{\tlist}[1]{\tvar{List~#1}}
 \newcommand{\naturals}{\mathbb{N}}
 \newcommand{\ints}{\mathbb{Z}}
 
 %% -- terms
+\newcommand{\dictgen}[1]{\{ #1 \}}
+\newcommand{\dictvn}{\dictgen{l_0\!=\!v_0, \ldots, l_{n-1}\!=\!v_{n-1}}}
 \newcommand{\vectorgen}[1]{\langle #1 \rangle}
 \newcommand{\vectoren}{\vectorgen{e_0, \ldots, e_{n-1}}}
 \newcommand{\vectorvn}{\vectorgen{v_0, \ldots, v_{n-1}}}
 \newcommand{\vectorxn}{\vectorgen{x_0, \ldots, x_{n-1}}}
 \newcommand{\vlam}[2]{\lambda\,#1\,.\,#2}
+\newcommand{\vlet}[3]{\mathsf{let}\,#1 = #2\,\mathsf{in}\,#3}
+\newcommand{\vnone}{\mathsf{None}}
+\newcommand{\vsome}[1]{\mathsf{Some}\,#1}
 \newcommand{\aref}[2]{#1@#2}
-\newcommand{\checkedref}{\tvar{checked\mbox{-}ref}}
-\newcommand{\unsaferef}{\tvar{unsafe\mbox{-}ref}}
+
+\newcommand{\checkedref}{\RktMeta{checked-ref}}
+\newcommand{\unsaferef}{\RktMeta{unsafe-ref}}
+\newcommand{\rxm}{\RktMeta{rx-match}}
 \newcommand{\segfault}{\mathsf{segfault}}
 \newcommand{\indexerror}{\mathsf{IndexError}}
+\newcommand{\syntaxerror}{\mathsf{SyntaxError}}
 
 %% -- evaluation contexts
 \newcommand{\ectx}{E}
@@ -63,6 +75,11 @@
 \newcommand{\tenv}{\Gamma}
 \newcommand{\tenvempty}{\cdot}
 \newcommand{\tenvcons}[3]{#1:#2,#3}
+
+%% -- proof environments
+\newcommand{\penv}{\Sigma}
+\newcommand{\penvempty}{\tenvempty}
+\newcommand{\penvcons}[3]{\tenvcons{#1}{#2}{#3}}
 
 %% -- typing
 \newcommand{\typestogen}[3]{#1 \vdash #2 : #3}
@@ -77,11 +94,37 @@
 \newcommand{\elabstoclosed}[3]{\elabstogen{\tenvempty}{#1}{\elabarrow}{#2}{#3}}
 \newcommand{\elabsto}[3]{\elabstogen{\tenv}{#1}{\elabarrow}{#2}{#3}}
 
+%% -- elaboration II
+\newcommand{\provestogen}[7]{\typestogen{#1;#2}{#3 #4 #5}{#6 \dashv #7}}
+\newcommand{\provesto}[4]{\provestogen{\penv}{\tenv}{#1}{\elabarrow}{#2}{#3}{#4}}
+
+%% -- elaboration types
+\newcommand{\pmap}{\phi}
+\newcommand{\pmapcons}[3]{#1[#2 \mapsto #3]}
+\newcommand{\pdom}{\kappa}
+\newcommand{\parrow}{\mapsto}
+\newcommand{\pvec}{\mathcal{V}}
+\newcommand{\prx}{\mathcal{R}}
+\newcommand{\pint}{\mathcal{I}}
+
 %% -- evaluation
 \newcommand{\bigstep}[2]{#1 \Downarrow #2}
 \newcommand{\bigstepplus}[2]{#1 \Downarrow^+ #2}
-\newcommand{\smallstepstar}[2]{#1 \rightarrow^* #2}
-\newcommand{\smallstep}[2]{#1 \rightarrow #2}
+\newcommand{\smallsteparrow}{\rightarrow}
+\newcommand{\smallstepstar}[2]{#1 \smallsteparrow^* #2}
+\newcommand{\smallstep}[2]{#1 \smallsteparrow #2}
+
+%% -- subtyping
+\newcommand{\subt}{\le:}
+\newcommand{\subtypesto}[2]{#1 \subt #2}
+
+%% -- metafunctions
+%\newcommand{\mgroups}{\textsf{groups}}
+\newcommand{\msup}{\mathsf{sup}}
+\newcommand{\mlang}{\mathcal{L}}
+\newcommand{\msubstrings}{\mathcal{S}}
+\newcommand{\mset}[1]{\{\,#1\,\}}
+\newcommand{\mrset}[2]{\{\,#1 \mid #2\,\}}
 
 %% -- misc
 \newcommand{\esubst}[2]{[#2/#1]}

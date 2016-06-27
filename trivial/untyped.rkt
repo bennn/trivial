@@ -64,18 +64,18 @@
 
 (define-syntax define: (make-keyword-alias 'define
   (lambda (stx)
-    (or (format-define stx)
+    (or (rx-define stx)
+        (format-define stx)
         (num-define stx)
         (lst-define stx)
-        (rx-define stx)
         ;(fun-define stx)
         (vec-define stx)))))
 
 (define-syntax let: (make-keyword-alias 'let
   (lambda (stx)
-    (or (format-let stx)
+    (or (rx-let stx)
+        (format-let stx)
         ;(fun-let stx)
         (num-let stx)
         (lst-let stx)
-        (rx-let stx)
         (vec-let stx)))))

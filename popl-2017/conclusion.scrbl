@@ -13,3 +13,6 @@ and only tells eternity.
 @; type systems change slowly. That's OK
 @; syntax extensions can change much faster and YOU can control the
 @;  changes. That's YOU joe programmer or YOU jane street capital. Do you.
+
+@; just one way of doing this, can imagine other Typed Racekt
+@; in fact Stephen Chang .....

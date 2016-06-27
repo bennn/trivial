@@ -8,7 +8,6 @@
 paper.tex
 pearl.tex
 
-benchmark/
 compiled/
 *.swp
 *.swo

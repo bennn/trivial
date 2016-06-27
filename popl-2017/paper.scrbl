@@ -7,23 +7,23 @@
 
 @abstract{
 
-Many typed APIs implicitly acknowledge the @emph{diktat} that the host type
- system imposes on the creators of libraries. When a library implements a
- string-based domain-specific language, the problem is particularly obvious.
- The interpretation functions for the programs in this embedded language
- come with the uninformative type that maps a string to some other host
- type. Only dependently typed languages can improve on this scenario at the
- moment, but they impose a steep learning curve on programmers. 
+Typed APIs suffer from the @emph{diktat} of the host type system.
+ Libraries that implement string-based domain-specific languages make this
+ clash particularly obvious.  The interpretation functions for the programs
+ in embedded languages come with the rather uninformative type that maps a
+ string to some other host type. Only dependently typed languages can
+ improve on this scenario at the moment, but they impose a steep learning
+ curve on programmers.
 
-This paper proposes to tackle this problem with APIs for type
- checkers. Specifically, it observes that most typed languages already
- employ an elaboration pass to type-check programs. If this elaborator
- comes with a sufficiently rich API, the author of a library can supplement
- the default types of the library's API with typing rules that improve the
- collaboration between host programs and uses of the library. The
- evaluation uses a prototype for Typed Racket and illustrates how useful
- the idea is for widely available libraries. Also the paper sketches how
- the authors of such ``tailored'' rules can argue their soundness.
+This paper proposes to tackle this problem with a meta-API for the type
+ checker. Specifically, it observes that most typed languages already
+ employ an elaboration pass to type-check programs. If this elaborator came
+ with a sufficiently rich API, the author of a library could supplement the
+ default types of the API with typing rules that improve the collaboration
+ between host programs and uses of the library. To demonstrate the
+ feasibility and effectiveness of this idea, the paper presents a prototype
+ for Typed Racket and two case studies. It also sketches how the authors of
+ such ``tailored'' typing rules can argue their soundness.
 
 }
 
@@ -34,12 +34,14 @@ This paper proposes to tackle this problem with APIs for type
 @; See OUTLINE.md for explanation
 @include-section{intro.scrbl}
 @include-section{background.scrbl}
+@;@include-section{elaborators.scrbl}
 @include-section{segfault.scrbl}
-@;@include-section{examples.scrbl}
+@include-section{regexp.scrbl}
+@include-section{define.scrbl}
 @;@include-section{discussion.scrbl}
 @;@include-section{friends.scrbl}
-@;@include-section{related-work.scrbl}
-@;@include-section{conclusion.scrbl}
+@include-section{related-work.scrbl}
+@include-section{conclusion.scrbl}
 
 @section[#:style 'unnumbered]{Acknowledgments}
 

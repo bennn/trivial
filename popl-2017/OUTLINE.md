@@ -63,3 +63,21 @@ rust will be difficult
 5. ending
 ---
 
+0. finish sql search
+1. revise 3,4 with MODEL IMPL, EVAL
+2. do 5 better, not sure how, figure first
+
+related work
+- dep types
+- occurrence types TR optimizer (no theoretical justifications)
+- yes we did macros, yes that's been done (fisher, hermen)
+- haskell
+
+conclusion
+- jsut one way of doing this, can reimagin typed racket, TC + elab
+= stephen chang
+
+
+regexP;
+- 
+- put the (list ...) back
