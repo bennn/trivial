@@ -14,7 +14,7 @@
   (ann (regexp-match: "hi" "hi")
        (U #f (List String String String)))
   (ann (regexp-match: #rx"(h)(i)" "hi")
-       (U #f (List String)))
+       (U #f (List String String)))
   (ann (regexp-match: #px"(?<=h)(?=i)" "hi")
        (U #f (List String String String)))
   ;;bg; ill-typed in untyped Racket
@@ -39,7 +39,7 @@
        (U #f (List String String)))
   ;; --- can't handle starred groups
   (ann (regexp-match: "(a)*(b)" "b")
-       (U #f (List String String)))
+       (U #f (List String String String)))
 )
 
 (test-compile-error
@@ -52,12 +52,12 @@
       (and m (string=? (car m) "lang"))))
 
   ;; ---- is raising a type error, which is GOOD, but throwing during test
-  ;;; -- return type assumed to be String, but really is Bytes
-  ;;;    (ugly, but at least we catch it statically)
+  ;; -- return type assumed to be String, but really is Bytes
+  ;;    (ugly, but at least we catch it statically)
   ;(with-input-from-file "test/regexp-fail.rkt"
   ;  (lambda ()
   ;    (define m (regexp-match: #rx"lang" (current-input-port)))
-  ;    (and m (bytes=? #;string=? (car m) #"lang"))))
+  ;    (and m (string=? (car m) #"lang"))))
 )
 
 ;; 2016-06-13 : these really should be errors, just no-opts

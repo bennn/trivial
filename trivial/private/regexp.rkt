@@ -51,8 +51,7 @@
       str))
 
   ;; Dispatch for counting groups
-  ;; On success, return (Pairof Type (Listof Boolean))
-  ;; - type is probably the return type of matches
+  ;; On success, return (Listof Boolean)
   ;; - booleans indicating "always succeeds" (#t) and "may fail" (#f)
   (define (parse-groups v-stx)
     (define v (quoted-stx-value? v-stx))
@@ -66,12 +65,10 @@
       [else               #f]))
 
   (define (parse-groups/string str #:src stx)
-    (let ([ng (parse-groups/untyped str #:src stx)])
-      (and ng (cons 'String ng))))
+    (parse-groups/untyped str #:src stx))
 
   (define (parse-groups/bytes b #:src stx)
-    (let ([ng (parse-groups/untyped (~a b) #:src stx)])
-      (and ng (cons 'Bytes ng))))
+    (parse-groups/untyped (~a b) #:src stx))
 
   (define (parse-groups/regexp rx #:src stx)
     (parse-groups/string (~a rx) #:src stx))
@@ -124,6 +121,7 @@
                #:when (not (has-?-before ivl ?-pos*)))
       (and
         (not (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*))
+        (not (has-*-after ivl str))
         (not (has-?-after ivl ?-pos*)))))
 
   (define (has-?-before ivl ?-pos*)
@@ -135,6 +133,11 @@
     (define pos-after (+ 1 (cdr ivl)))
     (for/or ([?pos (in-list ?-pos*)])
       (= pos-after ?pos)))
+
+  (define (has-*-after ivl str)
+    (let ([i (+ 1 (cdr ivl))])
+      (and (< i (string-length str))
+           (eq? #\* (string-ref str i)))))
 
   (define (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*)
     (define other-paren-ivl*
@@ -234,17 +237,6 @@
     (and (< (car ivl) i)
          (< i (cdr ivl))))
 
-  (define (infer-return-type pattern-sym arg-stx)
-    (if (and
-          (or (eq? pattern-sym 'String)
-              (eq? pattern-sym 'Regexp))
-          (or (syntax-parse arg-stx
-                ((x:str arg* ...) #t)
-                ((x arg* ...) #:when (bytes? (syntax-e #'x)) #f)
-                ;; TODO ;; ((x arg* ...) #:when (port? (syntax-e #'x)) #f)
-                (_ #t))))
-      'String
-      'Bytes))
 )
 
 ;; -----------------------------------------------------------------------------
@@ -272,22 +264,20 @@
 (define-syntax regexp-match: (make-alias #'regexp-match
   (lambda (stx) (syntax-parse stx
    [(_ pat:pattern/groups arg* ...)
-    #:with (type-sym . capture?*)
-           (syntax/loc stx pat.evidence)
-    #:with return-type
-           (format-id stx "~a" (infer-return-type (syntax-e #'type-sym) #'(arg* ...)))
-    #:with (exact-group-type* ...)
-           (let ([stx-never-fail (syntax/loc stx return-type)]
-                 [stx-may-fail (syntax/loc stx (U #f return-type))])
-             (for/list ([c-stx (in-list (syntax-e #'capture?*))])
-               (if (syntax-e c-stx) stx-never-fail stx-may-fail)))
-    (syntax/loc stx
+    #:with capture?* (syntax/loc stx pat.evidence)
+    (quasisyntax/loc stx
       (let ([maybe-match (regexp-match pat.expanded arg* ...)])
         (if maybe-match
-          (cast ;; -- use `ann` to validate return type assumption & `cast` to remove #f
-                ;; 2016-06-13: ideally we should be typechecking `arg` instead of guessing
-            (ann maybe-match (Pairof return-type (Listof (U #f return-type))))
-            (List return-type exact-group-type* ...))
+          ;; -- Use `(or ... error)` to force guaranteed-capture groups.
+          (let ([rxm-error (lambda (i) (raise-user-error 'regexp-match: "Possible bug: expected group ~a to capture based on rx pattern '~a', but capture failed.\n  Please report to 'http://github.com/bennn/trivial/issues' and use Racket's regexp-match in the meantime." i pat.expanded))])
+            (list (car maybe-match)
+                  #,@(for/list ([capture?-stx (in-list (syntax-e #'capture?*))]
+                                [i (in-naturals 1)])
+                       (if (syntax-e capture?-stx)
+                         (quasisyntax/loc stx
+                           (or (list-ref maybe-match '#,i) (rxm-error '#,i)))
+                         (quasisyntax/loc stx
+                           (list-ref maybe-match '#,i))))))
           #f)))]
    [_ #f]))))
 

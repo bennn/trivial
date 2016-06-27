@@ -9,7 +9,7 @@
 ;; =============================================================================
 
 (: *TRIVIAL-LOG* (Parameterof Boolean))
-(define *TRIVIAL-LOG* (make-parameter #f))
+(define *TRIVIAL-LOG* (make-parameter #t))
 
 (: *STOP-LIST* (Parameterof (Listof Identifier)))
 (define *STOP-LIST* (make-parameter '()))

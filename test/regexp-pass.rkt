@@ -13,8 +13,6 @@
 
   ;; -- regexps, from the world
 
-  (let ([str 
-
   (let () ;; -- from klocker? anyway the unicode will segfault `unsafe-string-ref`
     (check-equal?
       (ann (regexp-match: #rx"⇒" "yolo") (U #f (List String)))
@@ -364,7 +362,7 @@
       '("jan 1970" "jan" #f "1970"))
   )
 
-  ;; -- (? = 0 groups
+  ;; -- (? = 0 groups  ...)
   (check-equal?
     (ann
       (regexp-match: "^(?:[a-z]*/)*([a-z]+)$" "/usr/local/bin/mzscheme")

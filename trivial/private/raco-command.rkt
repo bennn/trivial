@@ -20,6 +20,7 @@
   (only-in racket/list last)
   (only-in racket/string string-split string-prefix? string-contains?)
   (only-in racket/system process)
+  trivial/private/parameters
   racket/path
   syntax/modread
 )
@@ -76,6 +77,10 @@
             ([(k v) (in-hash H)])
     (values (cons (cons k v) acc) (max pad-to (string-length (symbol->string k))))))
 
+(define (assert-log-enabled)
+  (unless (*TRIVIAL-LOG*)
+    (raise-user-error 'trivial "Cannot collect data, need to set parameter *TRIVIAL-LOG* in module 'trivial/private/parameters'")))
+
 (define (remove-compiled ps)
   (define c-dir (build-path (or (path-only ps) (current-directory)) "compiled"))
   (define fname (path-replace-extension (file-name-from-path ps) "_rkt.zo"))
@@ -105,6 +110,7 @@
     (values H H++)))
 
 (define (collect-and-summarize fname)
+   (assert-log-enabled)
    (remove-compiled fname)
    (define cmd (format "raco make ~a" fname))
    (define-values (in out pid err check-status) (apply values (process cmd)))
