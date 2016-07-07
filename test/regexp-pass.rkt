@@ -84,6 +84,11 @@
     '("hello"))
 
   (check-equal?
+    (ann (regexp-match: "\\(a+\\)([ab]*)" "(aa)bb")
+         (U #f (List String String)))
+    '("(aa)bb" "bb"))
+
+  (check-equal?
     (ann
       (regexp-match: "hello" "world")
       (U #f (List String)))
