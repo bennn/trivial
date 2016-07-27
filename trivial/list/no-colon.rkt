@@ -14,6 +14,7 @@
   (append:                 append)
   (reverse:                reverse)
   ;(map:                    map)
+  (sort:                    sort)
 ))
 (require trivial/list)
 

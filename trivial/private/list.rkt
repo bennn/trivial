@@ -27,7 +27,7 @@
   ;remove*:
   ;remq*:
   ;remv*:
-  ;sort:
+  sort:
   ;member:
 
   ;; --- private
@@ -200,6 +200,16 @@
    [(_ f l:list/length l*:list/length ...)
     #:with l+ (syntax-property
                 (syntax/loc stx (map f l.expanded l*.expanded ...))
+                lst-length-key
+                (syntax-e #'l.evidence))
+    (syntax/loc stx l+)]
+   [_ #f]))))
+
+(define-syntax sort: (make-alias #'sort
+  (lambda (stx) (syntax-parse stx
+   [(_ l:list/length arg* ...)
+    #:with l+ (syntax-property
+                (syntax/loc stx (sort l.expanded arg* ...))
                 lst-length-key
                 (syntax-e #'l.evidence))
     (syntax/loc stx l+)]

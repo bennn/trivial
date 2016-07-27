@@ -163,4 +163,11 @@
           (check-equal? (ann (-: (length: v+) 5) Zero) 0))))
   ;)
 
+  ;(test-suite "sort:"
+    (test-case "sort"
+      (let-list: ([v (list 3 1 2)])
+        (let-list: ([v+ (sort: v <)])
+          (check-equal? (ann (-: (length: v+) 2) One) 1))))
+  ;)
+
 )
