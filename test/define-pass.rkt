@@ -13,7 +13,7 @@
 
   (check-equal?
    (let ()
-     (define: n 3) ;; TODO define is broken
+     (define: n 3)
      (let: ([m n])
        (ann (-: m n) Zero)))
    0)
@@ -53,14 +53,18 @@
           (new f%))))
     (check-false (not (new f%))))
 
-  
   ;; let*
-  (let*: ([v (list 1 2 3)]
-          [w v]
-          [k 42])
-    (ann (length: w) 3))
+  (check-equal?
+   (let*: ([v (list 1 2 3)]
+           [w v]
+           [k 42])
+     (ann (length: w) 3))
+   3)
 
   ;; let with different kinds of bindings
-  (let: ([v (list 1 2 3)]
-         [k 42])
-    (ann (length: v) 3)))
+  (check-equal?
+   (let: ([v (list 1 2 3)]
+          [k 42])
+     (ann (length: v) 3))
+   3)
+)
