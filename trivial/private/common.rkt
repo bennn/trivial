@@ -31,6 +31,7 @@
   racket/syntax
   syntax/parse
   syntax/id-table
+  (only-in racket/string string-prefix?)
   (for-template
     (prefix-in tr: typed/racket/base)
     (prefix-in r: (only-in racket/base quote))))
@@ -146,7 +147,7 @@
       #`(app-stx #,id-stx e* ...)])]))
 
 (define ((make-keyword-alias id-sym parser) stx)
-  (or (with-handlers ((exn:fail? (lambda (e) #f))) (parser stx))
+  (or (with-handlers ((rkt-exn? (lambda (e) #f))) (parser stx))
       ;; 2016-06-08: sometimes parser raises error ... i.e. "unbound local member name"
       (syntax-parse stx
         [(_ e* ...)
@@ -156,3 +157,7 @@
                         [(set!)   #'tr:set!]
                         [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
          (syntax/loc stx (id-stx e* ...))])))
+
+(define (rkt-exn? e)
+  (and (exn:fail? e)
+       (not (string-prefix? (exn-message e) "trivial"))))

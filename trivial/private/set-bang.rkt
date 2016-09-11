@@ -28,6 +28,6 @@
   (lambda (stx) (syntax-parse stx
    [(_ name val)
     #:when (has-important-syntax-property? #'name)
-    (raise-syntax-error 'trivial "mutation not allowed"); stx); #'name)
+    (raise-syntax-error 'trivial "mutation not allowed")
     #'(void)]
    [_ #f]))))
