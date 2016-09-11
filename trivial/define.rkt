@@ -1,7 +1,9 @@
 #lang typed/racket/base
 
 (provide
-  define: let:
+  define:
+  (rename-out [let:: let:])
+  let*:
   (all-from-out trivial/private/set-bang)
 )
 
@@ -47,3 +49,23 @@
         (lst-let stx)
         (rx-let stx)
         (vec-let stx)))))
+
+(define-syntax (let*: stx)
+  (syntax-case stx ()
+    [(_ ([v b]) . body)
+     #'(let: ([v b])
+         . body)]
+    [(_ ([v b] [vv bb] ...) . body)
+     #'(let: ([v b])
+         (let*: ([vv bb] ...)
+           . body))]))
+
+(define-syntax (let:: stx)
+  (syntax-case stx ()
+    [(_ ([v b]) . body)
+     #'(let: ([v b])
+         . body)]
+    [(_ ([v b] [vv bb] ...) . body)
+     #'(let: ([tmp b])
+         (let*: ([vv bb] ...)
+           (let: ([v tmp]) . body)))]))
