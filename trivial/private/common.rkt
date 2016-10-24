@@ -1,158 +1,218 @@
 #lang racket/base
 
-;; Common helper functions
+;; - Implements proposition environments
+;; - Implements 'abstract domains'
+;; - Other helpers / parameters
+
 ;; TODO make-set!-transformer
 
-(provide
-  expand-expr ;; TODO stop providing
+(provide ;; TODO doc
+  ;; --- prop. env.
 
-  quoted-stx-value?
-  ;; (-> Any (U #f Syntax))
-  ;; If the argument is a syntax object representing a quoted datum `v`,
-  ;;  return `v`.
-  ;; Otherwise, return #f.
+  φ
+  ;; (-> Syntax Phi)
+  ;; gets the proposition map associated with its first argument
+  ;; When the 2nd argument is non-#f, returns the corresponding
+  ;;  value for the domain instead of the map.
 
-  define-syntax-class/predicate
-  ;; TODO
+  ⊢
+  ;; (-> Syntax Phi Syntax)
+  ;; Attach a proposition map to a syntax object
 
-  lift-predicate
-  ;; TODO
+  φ-tbl
+  ;; Global table associating proposition environments to `define`d identifiers
+  ;; Very sad.
 
-  make-value-property
-  ;; TODO
+  φ-init
+  ;; (-> Phi)
+  ;; Create an empty proposition map
 
-  make-alias
-  make-keyword-alias
-  ;; TODO
+  φ-ref
+  ;; (-> Phi [AbstractDomain X] [Dom X])
+  ;; Functionally extend a proposition map with domain-specific data
+
+  φ-set
+  ;; (-> Phi [AbstractDomain X] [Dom X] Phi)
+  ;; Functionally extend a proposition map with domain-specific data
+
+  ;; --- abstract domains
+
+  ;; type [AbstractDomain X]
+  ;;  represents a (flat) lattice of information X
+  ;;  TODO probably needs a 'less than' and 'join' operation
+
+  ;; type [Dom X]
+  ;;  (U X ⊤ ⊥)
+  ;;  where ⊥ and ⊤ are the bottom & top elements for the abstract domain
+
+  make-abstract-domain
+  ;; #(-> Identifier [Syntax -> [Dom X]] * [AbstractDomain X])
+  ;; Create an 'abstract domain' from an identifier (symbol)
+  ;;  and a sequence of syntax-parse clauses
+  ;; The clauses describe how to parse domain information from **values**
+  ;; (To parse information from expressions, attach it using `⊢` from `phi.rkt`)
+
+  κ
+  ;; (-> AbstractDomain Symbol)
+  ;; Return the key for an abstract domain
+
+  ⊥
+  ;; (-> AbstractDomain [Dom X])
+  ;; Return the bottom element for an abstract domain
+
+  ⊤
+  ;; (-> AbstractDomain String [Dom X])
+  ;; Convert a domain + error message to a 'top' element
+
+  ⊤-msg
+  ;; (-> [Dom X] (U #f String))
+  ;; Return the error message from a ⊤ value
+
+  ⊥? ⊤?
+  ;; (-> AbstractDomain [Dom X] Boolean)
+  ;; Return #true if the argument represents the bot/top element of the given dom.
+
+  ~>
+  ;; Syntax class,
+  ;; fully expand the argument,
+  ;; store the result in the ~> property
+
+  ;; --- utils
+
+  *TRIVIAL-LOG*
+  ;; (Parameterof Boolean)
+  ;; Controls whether to print
+  ;; TODO replace with a real logger
+
+  *STOP-LIST*
+  ;; (Parameterof (Listof Identifier))
+  ;; Sets the stop-list to use during `local-expand`
+
+  ttt-log
 )
 
+;; -----------------------------------------------------------------------------
+
 (require
-  trivial/private/parameters
-  racket/syntax
-  syntax/parse
   syntax/id-table
-  (for-template
-    (prefix-in tr: typed/racket/base)
-    (prefix-in r: (only-in racket/base quote))))
+  syntax/parse
+  (for-syntax racket/base syntax/parse))
 
 ;; =============================================================================
 
-(define-syntax-rule (define-syntax-class/predicate id p?)
-  (define-syntax-class id
-   #:attributes (evidence expanded)
-   (pattern e
-    #:with e+ (expand-expr #'e)
-    #:with p+ (p? #'e+)
-    #:when (syntax-e #'p+)
-    #:attr evidence #'p+
-    #:attr expanded #'e+)))
+(define *TRIVIAL-LOG* (make-parameter #t))
+(define *STOP-LIST* (make-parameter '()))
+(define *abstract-domains* (make-parameter '()))
 
-(define-syntax-rule (log stx msg arg* ...)
-  (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
+;; =============================================================================
+
+(define φ-key
+  (gensym 'φ))
+
+(define φ-tbl
+  (make-free-id-table))
+
+(define (φ stx)
+  (or (syntax-property stx φ-key)
+      (and (identifier? stx) (free-id-table-ref φ-tbl stx #f))
+      (φ-init)))
+
+(define (⊢ stx new-φ)
+  (syntax-property stx φ-key new-φ))
+
+(define (φ? x)
+  (hash-eq? x))
+
+(define (φ-init)
+  (hasheq))
+
+(define (φ-ref φ d)
+  (hash-ref φ (κ d) (⊥ d)))
+
+(define (φ-set φ d v)
+  (hash-set φ (κ d) v))
+
+;; =============================================================================
+
+(define-syntax (make-abstract-domain stx)
+  (syntax-parse stx
+   [(_ key clause* ...)
+    #:with bot (gensym (string->symbol (format "~a-⊥" (syntax-e #'key))))
+    #:with top (gensym (string->symbol (format "~a-⊤" (syntax-e #'key))))
+    #'(let ([d (abstract-domain 'key 'bot 'top (syntax-parser clause* ... [_ 'bot]))])
+        (*abstract-domains* (cons d (*abstract-domains*)))
+        d)]))
+
+(struct abstract-domain [
+  κ
+  ;; key to distinguish this domain in a proposition map
+
+  ⊥ ⊤
+  ;; [Dom X]
+  ;; distinguished elements
+
+  ⊣
+  ;; (-> Syntax [Dom X])
+  ;; return the "datum processor" for a Dom
+  ;; parses values and returns an element in [Dom X],
+  ;;  ideally a value but maybe also an "I don't know" or an "impossible"
+])
+
+;; TODO shitty name
+(struct top/reason (
+  top ;; Symbol, the top element for a given domain
+  msg ;; String, an error message
+))
+
+(define (κ d)
+  (abstract-domain-κ d))
+
+(define (⊥ d)
+  (abstract-domain-⊥ d))
+
+(define (⊤ d message)
+  (define top (abstract-domain-⊤ d))
+  (top/reason top message))
+
+(define (⊤-msg v)
+  (if (top/reason? v)
+    (top/reason-msg v)
+    (raise-argument-error '⊤/reason "⊤ element" v)))
+
+(define (⊥? d v)
+  (and (symbol? v)
+       (eq? (abstract-domain-⊥ d) v)))
+
+(define (⊤? d v)
+  (and (top/reason? v)
+       (eq? (abstract-domain-⊤ d) (top/reason-top v))))
+
+;; =============================================================================
 
 (define (expand-expr stx)
-  (local-expand stx 'expression (*STOP-LIST*)))
+  (expand-datum (local-expand stx 'expression (*STOP-LIST*))))
 
-(define (quoted-stx-value? stx)
-  (and
-    (syntax? stx)
-    (syntax-parse stx #:literals (r:quote tr:quote) #:datum-literals (quote)
-     [((~or r:quote tr:quote quote) v)
-      (syntax-e #'v)]
-     [else #f])))
+(define (expand-datum stx)
+  (syntax-parse stx
+   [((~datum quote) v)
+    (printf "[WARN] expanding on ~a~n" (syntax->datum stx))
+    (define φ
+      (for/fold ([φ (φ-init)])
+                ([d (in-list (*abstract-domains*))])
+        (φ-set φ d ((abstract-domain-⊣ d) #'v))))
+    (⊢ stx φ)]
+   [_
+    stx]))
 
-(define (lift-predicate p?)
-  (lambda (stx)
-    (cond
-     [(p? stx) stx]
-     [(p? (syntax-e stx)) (syntax-e stx)]
-     [(p? (quoted-stx-value? stx))
-      stx]
-     [else #f])))
+(define-syntax-class ~>
+  #:attributes (~>)
+  (pattern e
+   #:attr ~> (expand-expr #'e)))
 
-;; In:
-;; - name : Symbol, like format-spec or vector-length or db-schema
-;; - parser : (Syntax -> Value)
-;;            Syntax is anything, need to filter yourself
-;;            Value is the important type++ data
-;; Out:
-;; - (Syntax -> (Option Syntax)) x3
-;;   1st is recognizer, cooperates with define & let
-;;   2nd is define form
-;;   3rd is let form
-;; - id table
-;; - syntax property key
-;; Put transformers here too? Then the id table never escapes
-(define (make-value-property sym parser)
-  (define key sym)
-  (define tbl (make-free-id-table))
-  (define f-parse
-    (lambda (stx)
-      (let ([v (syntax-property stx key)])
-        (cond
-         [v                  v]
-         [(identifier? stx)  (free-id-table-ref tbl stx #f)]
-         [else               (parser stx)]))))
-  (define f-define
-    (lambda (stx)
-      (syntax-parse stx #:literals (tr:#%plain-lambda)
-       [(_ name:id v)
-        #:with v+
-          (parameterize ([*STOP-LIST* (cons (syntax/loc stx name) (*STOP-LIST*))])
-            (expand-expr (syntax/loc stx v)))
-        #:when (syntax-e (syntax/loc stx v+))
-        #:with m (f-parse (syntax/loc stx v+))
-        #:when (syntax-e (syntax/loc stx m))
-        (free-id-table-set! tbl #'name (syntax-e #'m))
-        (when (*TRIVIAL-LOG*)
-          (log stx "define ~a" sym))
-        (syntax/loc stx
-          (tr:define name v+))]
-       [_ #f])))
-  (define f-let
-    (lambda (stx)
-      (syntax-parse stx
-       [(_ ([name*:id v*] ...) e* ...)
-        #:with (v+* ...) (map expand-expr (syntax-e (syntax/loc stx (v* ...))))
-        #:with (m* ...) (map f-parse (syntax-e (syntax/loc stx (v+* ...))))
-        #:when (andmap syntax-e (syntax-e (syntax/loc stx (m* ...))))
-        (when (*TRIVIAL-LOG*)
-          (log stx "let ~a" sym))
-        (quasisyntax/loc stx
-          (tr:let ([name* v+*] ...)
-            (tr:let-syntax ([name* (make-rename-transformer
-                                     (syntax-property #'name* '#,key 'm*))] ...)
-              e* ...)))]
-       [_ #f])))
-  (values
-    key
-    f-parse
-    f-define
-    f-let))
+(define-syntax-rule (ttt-log stx msg arg* ...)
+  (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
 
-(define ((make-alias id-stx parser) stx)
-  (cond
-   [(parser stx)
-    => (lambda (r)
-    (when (*TRIVIAL-LOG*) (log stx "HIT ~a" (syntax->datum id-stx)))
-    r)]
-   [else
-    (when (*TRIVIAL-LOG*) (log stx "MISS ~a" (syntax->datum id-stx)))
-    (syntax-parse stx
-     [_:id
-      id-stx]
-     [(_ e* ...)
-      #:with app-stx (format-id stx "#%app")
-      #`(app-stx #,id-stx e* ...)])]))
+;; =============================================================================
 
-(define ((make-keyword-alias id-sym parser) stx)
-  (or (with-handlers ((exn:fail? (lambda (e) #f))) (parser stx))
-      ;; 2016-06-08: sometimes parser raises error ... i.e. "unbound local member name"
-      (syntax-parse stx
-        [(_ e* ...)
-         #:with id-stx (case id-sym
-                        [(define) #'tr:define]
-                        [(let)    #'tr:let]
-                        [(set!)   #'tr:set!]
-                        [else     (error 'trivial "Unknown keyword '~a'" id-sym)])
-         (syntax/loc stx (id-stx e* ...))])))
+(module+ test ;; TODO
+)
