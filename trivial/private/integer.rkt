@@ -108,11 +108,6 @@
     #'(expt . n*)]
    [_:id #'expt]))
 
-;; Is `v` a small enough integer to unfold an operation using `v`?
-;; e.g., okay to convert `(expt X v)` to `(* X ...v )`
-(define-for-syntax (ok-to-unfold? v)
-  (<= 0 v 20))
-
 (define-syntax (-quotient stx)
   (syntax-parse stx
    [(_ n1:~> n2:~>)

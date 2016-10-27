@@ -89,6 +89,10 @@
   ;; Sets the stop-list to use during `local-expand`
 
   ttt-log
+
+  ;; --------------------------------------------------------------------------
+  ;; -- inlining
+  ok-to-unfold?
 )
 
 ;; -----------------------------------------------------------------------------
@@ -211,6 +215,13 @@
 
 (define-syntax-rule (ttt-log stx msg arg* ...)
   (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
+
+;; -----------------------------------------------------------------------------
+
+;; Is `v` a small enough integer to unfold an operation using `v`?
+;; e.g., okay to convert `(expt X v)` to `(* X ...v )`
+(define (ok-to-unfold? v)
+  (<= 0 v 20))
 
 ;; =============================================================================
 
