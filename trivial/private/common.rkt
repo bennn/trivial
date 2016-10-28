@@ -6,7 +6,7 @@
 
 ;; TODO make-set!-transformer
 
-(provide ;; TODO doc
+(provide
   ;; --- prop. env.
 
   φ
@@ -79,16 +79,27 @@
 
   ;; --- utils
 
-  *TRIVIAL-LOG*
-  ;; (Parameterof Boolean)
-  ;; Controls whether to print
-  ;; TODO replace with a real logger
-
   *STOP-LIST*
   ;; (Parameterof (Listof Identifier))
   ;; Sets the stop-list to use during `local-expand`
 
-  ttt-log
+  ttt-logger
+  log-ttt-fatal
+  log-ttt-error
+  log-ttt-warning
+  log-ttt-info
+  log-ttt-debug
+
+  log-ttt-infer+
+  log-ttt-infer-
+  log-ttt-check+
+  log-ttt-check-
+  ;; (-> Symbol Syntax Log)
+  ;; Helpers for logging optimization HITs and MISSes
+  ;; - infer+ : got interpolant from program
+  ;; - infer- : failed to infer interpolant
+  ;; - check+ : transformed, using interpolant
+  ;; - check- : tried to transform, but missing interpolant
 
   ;; --------------------------------------------------------------------------
   ;; -- inlining
@@ -104,9 +115,31 @@
 
 ;; =============================================================================
 
-(define *TRIVIAL-LOG* (make-parameter #t))
 (define *STOP-LIST* (make-parameter '()))
 (define *abstract-domains* (make-parameter '()))
+
+(define-logger ttt)
+
+(define-syntax-rule (log-ttt-optimization sym stx type)
+  (log-ttt-info "[~a:~a:~a] ~a '~a' in '~a'"
+                (syntax-source stx)
+                (syntax-line stx)
+                (syntax-column stx)
+                type
+                sym
+                (syntax->datum stx)))
+
+(define-syntax-rule (log-ttt-infer+ sym stx)
+  (log-ttt-optimization sym stx 'INFER+))
+
+(define-syntax-rule (log-ttt-infer- sym stx)
+  (log-ttt-optimization sym stx 'INFER-))
+
+(define-syntax-rule (log-ttt-check+ sym stx)
+  (log-ttt-optimization sym stx 'CHECK+))
+
+(define-syntax-rule (log-ttt-check- sym stx)
+  (log-ttt-optimization sym stx 'CHECK-))
 
 ;; =============================================================================
 
@@ -199,7 +232,7 @@
 (define (expand-datum stx)
   (syntax-parse stx
    [((~datum quote) v)
-    (printf "[WARN] expanding on ~a~n" (syntax->datum stx))
+    (log-ttt-warning "expanding #%datum ~a~n" (syntax->datum stx))
     (define φ
       (for/fold ([φ (φ-init)])
                 ([d (in-list (*abstract-domains*))])

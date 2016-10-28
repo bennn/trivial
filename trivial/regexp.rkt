@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 
 ;; Stronger types for regular expression matching.
 

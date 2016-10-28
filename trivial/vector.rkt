@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 (provide
   vector
   make-vector

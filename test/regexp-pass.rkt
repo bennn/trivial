@@ -13,7 +13,7 @@
   ; (define re:normal-name (regexp (format "~a*<([^>]*)>~a*" blank blank)))
 
   ;; -- regexps, from the world
-  (test-case "regexp-misc"
+  #;(test-case "regexp-misc"
 
     (let () ;; -- from klocker? anyway the unicode will segfault `unsafe-string-ref`
       (check-equal?
@@ -235,8 +235,8 @@
     (check-equal?
       (ann
         (let ([rx1 #rx"^y(o+)lo$"]
-                      [rx2 #rx"^w(e+)pa$"]
-                      [rx3 #rx"^y(e+)rrr$"])
+              [rx2 #rx"^w(e+)pa$"]
+              [rx3 #rx"^y(e+)rrr$"])
           (cond
            [(regexp-match rx1 "wepa")
             => cadr]

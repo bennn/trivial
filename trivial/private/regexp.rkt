@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 
 ;; Stronger types for regular expression matching.
 
@@ -22,12 +22,14 @@
    [-regexp-match regexp-match]))
 
 (require
+  (prefix-in tr- (only-in typed/racket/base regexp-match regexp pregexp byte-regexp byte-pregexp))
   (for-syntax
     (only-in racket/syntax format-id)
     racket/base
     (only-in racket/list range)
     (only-in racket/format ~a)
     syntax/parse
+    typed/untyped-utils
     trivial/private/common))
 
 ;; =============================================================================
@@ -245,50 +247,61 @@
 (define-syntax (define-matcher* stx)
   (syntax-parse stx
    [(_ f*:id ...)
-    #:with (f+* ...) (for/list ([f (in-list (syntax-e #'(f* ...)))])
-                       (format-id stx "-~a" (syntax-e f)))
+    #:with ((tr-f* f+*) ...) (for/list ([f (in-list (syntax-e #'(f* ...)))])
+                               (list (format-id stx "tr-~a" (syntax-e f))
+                                     (format-id stx "-~a" (syntax-e f))))
     #`(begin
         (define-syntax (f+* stx)
-          (syntax-parse stx
-           [(_ pat:~>)
-            (define g (φ-ref (φ #'pat.~>) R-dom))
-            (cond
-             [(⊥? R-dom g)
-              #'(f* pat.~>)]
-             [(⊤? R-dom g)
-              (raise-user-error 'f* (⊤-msg g))]
-             [else
-              (⊢ #'(f* pat.~>) (φ-set (φ-init) R-dom g))])]
-           [_ #'f*])) ...)]))
+          (with-syntax ([stx-f (if (syntax-local-typed-context?) (syntax/loc stx tr-f*) (syntax/loc stx f*))])
+            (syntax-parse stx
+             [(_ pat:~>)
+              (define g (φ-ref (φ #'pat.~>) R-dom))
+              (cond
+               [(⊥? R-dom g)
+                (log-ttt-infer- 'f* stx)
+                (syntax/loc stx
+                  (stx-f pat.~>))]
+               [(⊤? R-dom g)
+                (raise-user-error 'f* (⊤-msg g))]
+               [else
+                (log-ttt-infer+ 'f* stx)
+                (⊢ (syntax/loc stx (stx-f pat.~>))
+                   (φ-set (φ-init) R-dom g))])]
+             [_ (syntax/loc stx stx-f)]))) ...)]))
 
 (define-matcher* regexp pregexp byte-regexp byte-pregexp)
 
 (define-syntax (-regexp-match stx)
-  (syntax-parse stx
-   [(_ pat:~> arg* ...)
-    (define capture?* (φ-ref (φ #'pat.~>) R-dom))
-    (cond
-     [(⊥? R-dom capture?*)
-      #'(regexp-match pat.~> arg* ...)]
-     [(⊤? R-dom capture?*)
-      (raise-user-error 'regexp-match (⊤-msg capture?*))]
-     [else
-      (quasisyntax/loc stx
-        (let ([maybe-match (regexp-match pat.~> arg* ...)])
-          (if maybe-match
-            ;; -- Use `(or ... error)` to force guaranteed-capture groups.
-            (let ([rxm-error (lambda (i) (raise-user-error 'regexp-match: "Internal error: expected group ~a to capture based on rx pattern '~a', but capture failed.\n  Please report to 'http://github.com/bennn/trivial/issues' and use Racket's regexp-match in the meantime." i pat.~>))])
-              (list (car maybe-match)
-                    #,@(for/list ([capture?-stx (in-list capture?*)]
-                                  [i (in-naturals 1)])
-                         (if capture?-stx
-                           (quasisyntax/loc stx
-                             (or (list-ref maybe-match '#,i) (rxm-error '#,i)))
-                           (quasisyntax/loc stx
-                             (list-ref maybe-match '#,i))))))
-            #f)))])]
-   [(_ . e*)
-    #'(regexp-match . e*)]
-   [_:id
-    #'regexp-match]))
+  (with-syntax ([rxm (if (syntax-local-typed-context?) (syntax/loc stx tr-regexp-match) (syntax/loc stx regexp-match))])
+    (syntax-parse stx
+     [(_ pat:~> arg* ...)
+      (define capture?* (φ-ref (φ #'pat.~>) R-dom))
+      (cond
+       [(⊥? R-dom capture?*)
+        (log-ttt-check- 'regexp-match stx)
+        (syntax/loc stx
+          (rxm pat.~> arg* ...))]
+       [(⊤? R-dom capture?*)
+        (raise-user-error 'regexp-match (⊤-msg capture?*))]
+       [else
+        (log-ttt-check+ 'regexp-match stx)
+        (quasisyntax/loc stx
+          (let ([maybe-match (rxm pat.~> arg* ...)])
+            (if maybe-match
+              ;; -- Use `(or ... error)` to force guaranteed-capture groups.
+              (let ([rxm-error (lambda (i) (raise-user-error 'regexp-match: "Internal error: expected group ~a to capture based on rx pattern '~a', but capture failed.\n  Please report to 'http://github.com/bennn/trivial/issues' and use Racket's regexp-match in the meantime." i pat.~>))])
+                (list (car maybe-match)
+                      #,@(for/list ([capture?-stx (in-list capture?*)]
+                                    [i (in-naturals 1)])
+                           (if capture?-stx
+                             (quasisyntax/loc stx
+                               (or (list-ref maybe-match '#,i) (rxm-error '#,i)))
+                             (quasisyntax/loc stx
+                               (list-ref maybe-match '#,i))))))
+              #f)))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (rxm . e*))]
+     [_:id
+      (syntax/loc stx rxm)])))
 

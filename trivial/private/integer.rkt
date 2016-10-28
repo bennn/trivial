@@ -75,10 +75,14 @@
          [(_ e* (... ...))
           #:with f-id (format-id stx "~a" 'f)
           (let ([e+ (reduce/op f #'(e* (... ...)))])
-            (if (list? e+)
-              (quasisyntax/loc stx (#%app f-id #,@e+))
+            (cond
+             [(list? e+)
+              (log-ttt-check- 'f stx)
+              (quasisyntax/loc stx (#%app f-id #,@e+))]
+             [else
+              (log-ttt-check+ 'f stx)
               (⊢ (quasisyntax/loc stx #,e+)
-                 (φ-set (φ-init) I-dom e+))))]
+                 (φ-set (φ-init) I-dom e+))]))]
          [_:id #'f]))]))
 
 (make-numeric-operator +)
@@ -93,16 +97,22 @@
     (define n2-val (φ-ref (φ #'n2.~>) I-dom))
     (cond
      [(and (integer? n1-val) (integer? n2-val))
+      (log-ttt-check+ 'expt stx)
       (define n1n2 (expt n1-val n2-val))
       (⊢ (quasisyntax/loc stx '#,n1n2)
          (φ-set (φ-init) I-dom '#,n1n2))]
      [(and (integer? n2-val) (ok-to-unfold? n2-val))
-      (if (zero? n2-val)
+      (cond
+       [(zero? n2-val)
+        (log-ttt-check+ 'expt stx) ;; close enough
         (⊢ (quasisyntax/loc stx 1)
-           (φ-set (φ-init) I-dom 1))
+           (φ-set (φ-init) I-dom 1))]
+       [else
+        (log-ttt-check+ 'expt stx) ;; close enough
         (quasisyntax/loc stx
-          (* #,@(for/list ([_i (in-range n2-val)]) (quasisyntax/loc stx n1)))))]
+          (* #,@(for/list ([_i (in-range n2-val)]) (quasisyntax/loc stx n1))))])]
      [else
+      (log-ttt-check- 'expt stx)
       #'(expt n1.~> n2.~>)])]
    [(_ . n*)
     #'(expt . n*)]
@@ -115,10 +125,12 @@
     (define n2-val (φ-ref (φ #'n2.~>) I-dom))
     (cond
      [(and (integer? n1-val) (integer? n2-val))
+      (log-ttt-check+ 'quotient stx)
       (define n1/n2 (quotient n1-val n2-val))
       (⊢ (quasisyntax/loc stx '#,n1/n2)
          (φ-set (φ-init) I-dom '#,n1/n2))]
      [else
+      (log-ttt-check- 'quotient stx)
       #'(quotient n1.~> n2.~>)])]
    [(_ . n*)
     #'(quotient . n*)]
