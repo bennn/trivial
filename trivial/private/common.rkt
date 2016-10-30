@@ -232,7 +232,7 @@
 (define (expand-datum stx)
   (syntax-parse stx
    [((~datum quote) v)
-    (log-ttt-warning "expanding #%datum ~a~n" (syntax->datum stx))
+    (log-ttt-warning "expanding #%datum ~a" (syntax->datum stx))
     (define φ
       (for/fold ([φ (φ-init)])
                 ([d (in-list (*abstract-domains*))])
