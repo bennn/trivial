@@ -1,4 +1,4 @@
 #lang typed/racket/base
 
-(provide define let)
+(provide define let let*)
 (require trivial/private/define)
