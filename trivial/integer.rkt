@@ -3,5 +3,5 @@
 ;; Constant-folding math operators.
 ;; Where possible, they simplify their arguments.
 
-(provide + - * / expt quotient)
+(provide + - * / add1 sub1 expt quotient)
 (require trivial/private/integer)

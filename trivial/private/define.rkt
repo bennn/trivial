@@ -7,7 +7,8 @@
   (rename-out
     [-let let]
     [-let* let*]
-    [-define define]))
+    [-define define]
+    [-set! set!]))
 
 ;; -----------------------------------------------------------------------------
 
@@ -19,6 +20,7 @@
     racket/base
     racket/syntax
     syntax/parse
+    syntax/id-set
     syntax/id-table))
 
 ;; =============================================================================
@@ -32,7 +34,7 @@
       (quasisyntax/loc stx
         (+let ([name ann ... e.~>])
           (let-syntax ([name (make-rename-transformer (⊢ #'name '#,e-φ))])
-            . body)))]
+              . body)))]
      [(_ arg* ...)
       (syntax/loc stx (+let arg* ...))])))
 
@@ -77,7 +79,7 @@
         ;; Compiling this program gives:
         ;;     lambda: expanded syntax not in its original lexical context
         ;;     (extra bindings or scopes in the current context) in:
-        ;;     (lambda (local-accessor local-mutator f1) ....
+        ;;     (lambda (local-accessor local-mutator f1) ....)
         ;; Local expanding `(lambda (name) e)` instead "works", but doesn't
         ;;  attach datum properties for `e`.
         (parameterize ([*STOP-LIST* (list* (format-id stx "class")
@@ -94,3 +96,12 @@
       (syntax/loc stx
         (+define . e*))])))
 
+(define-syntax (-set! stx)
+  (syntax-parse stx
+   [(_ name:id e:~>)
+    (define e-φ (φ #'e.~>))
+    (free-id-set-add! φ-mutated #'name)
+    (syntax/loc stx (set! name e.~>))]
+   [(_ . e*)
+    (syntax/loc stx (set! . e*))]
+   [_:id (syntax/loc stx set!)]))

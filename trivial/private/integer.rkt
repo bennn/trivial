@@ -9,6 +9,8 @@
    [-- -]
    [-* *]
    [-/ /]
+   [-add1 add1]
+   [-sub1 sub1]
    [-expt expt]
    [-quotient quotient])
 )
@@ -89,6 +91,41 @@
 (make-numeric-operator -)
 (make-numeric-operator *)
 (make-numeric-operator /)
+
+(define-syntax (-add1 stx)
+  ;(make-lifted-function add1 I-dom)
+    (syntax-parse stx
+     [(_ e:~>)
+      (define φ-e (φ #'e.~>))
+      (define v (φ-ref φ-e I-dom))
+      (cond
+       [(⊤? I-dom v)
+        (raise-user-error 'add1 (⊤-msg v))]
+       [else
+        (define φ+ (if (⊥? I-dom v) φ-e (φ-set φ-e I-dom (add1 v))))
+        (⊢ (syntax/loc stx (add1 e.~>))
+           φ+)])]
+     [(_ . e*)
+      (syntax/loc stx (add1 . e*))]
+     [_:id
+      (syntax/loc stx add1)]))
+
+(define-syntax (-sub1 stx)
+  ;(make-lifted-function sub1 I-dom)
+    (syntax-parse stx
+     [(_ e:~>)
+      (define φ-e (φ #'e.~>))
+      (define v (φ-ref φ-e I-dom))
+      (cond
+       [(⊤? I-dom v)
+        (raise-user-error 'sub1 (⊤-msg v))]
+       [else
+        (⊢ (syntax/loc stx (sub1 e.~>))
+           (if (⊥? I-dom v) φ-e (φ-set φ-e I-dom (sub1 v))))])]
+     [(_ . e*)
+      (syntax/loc stx (sub1 . e*))]
+     [_:id
+      (syntax/loc stx sub1)]))
 
 (define-syntax (-expt stx)
   (syntax-parse stx

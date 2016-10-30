@@ -15,7 +15,7 @@
   (only-in racket/file delete-directory/files)
   (only-in racket/format ~a ~r)
   (only-in racket/list last)
-  (only-in racket/logging with-logging-to-port)
+  (only-in racket/logging with-intercepted-logging)
   (only-in racket/string string-split string-prefix? string-contains?)
   (only-in racket/system process)
   (only-in trivial trivial-logger)
@@ -46,17 +46,15 @@
   (summarize-sexp fname H M))
 
 (define (summarize-sexp fname H M)
-  (printf "(~a" fname)
   (define-values (kv* pad-to) (hash->kv+pad H))
-  (for ([kv (in-list (sort kv* > #:key cdr))])
-    (define k (car kv))
-    (define num-hits (cdr kv))
-    (define num-miss (hash-ref M k 0))
-    (define total (+ num-hits num-miss))
-    (define pct (rnd (* 100 (/ num-hits total))))
-    (newline)
-    (printf "  (~a\t~a\t~a\t~a)" (~a k #:min-width pad-to) num-hits num-miss pct))
-  (printf ")\n"))
+  (cons fname
+    (for/list ([kv (in-list (sort kv* > #:key cdr))])
+      (define k (car kv))
+      (define num-hits (cdr kv))
+      (define num-miss (hash-ref M k 0))
+      (define total (+ num-hits num-miss))
+      (define pct (rnd (* 100 (/ num-hits total))))
+      (list (~a k #:min-width pad-to) num-hits num-miss pct))))
 
 (define (summarize-ascii H)
   (define msg "Summary of trivial CHECK+S:")
@@ -91,46 +89,46 @@
                   (hash-set! H k 1)))])
     (values H H++)))
 
-(define (compile-and-log fname)
-  ;; TODO bug maybe here
-  (with-logging-to-port (current-output-port)
-    (lambda ()
-      (parameterize ([current-namespace (make-base-namespace)])
-        (with-module-reading-parameterization (lambda ()
-          (expand (with-input-from-file fname read-syntax))
-          (void)))))
-    #:logger trivial-logger 'info))
+(define ((compile-file path+fname))
+  (define-values (path fname)
+    (let ([po (path-only path+fname)])
+      (if po
+        (values po (file-name-from-path path+fname))
+        (values (current-directory) (if (path? path+fname)
+                                      path+fname
+                                      (string->path path+fname))))))
+  (parameterize ([current-namespace (make-base-namespace)]
+                 [current-directory path])
+    (with-module-reading-parameterization
+      (λ ()
+        (expand
+          (with-input-from-file fname
+            ;; TODO 2016-10-30 : gives bad error messages because no srcloc
+            (λ () (read-syntax fname (current-input-port)))))
+        (void)))))
 
 (define (collect-and-summarize fname)
-   (define-values (_in _out) (make-pipe))
-   (unless (with-handlers ([exn:fail? (lambda (exn) #f)])
-             (parameterize ([current-output-port _out])
-               (compile-and-log fname)
-               #t))
-     (printf "RETRY ~a~n" fname)
-     #;(with-output-to-file "retries.txt" #:exists 'append
-       (lambda () (displayln fname))))
    (define-values (H H++) (make-counter))
    (define-values (M M++) (make-counter))
    (define num-lines (box 0))
-   (define (subprocess-read _in)
-     (for ([line (in-lines _in)])
-       (set-box! num-lines (+ 1 (unbox num-lines)))
-       (cond
-        [(regexp-match? #rx"CHECK" line)
+   (with-intercepted-logging
+     (λ (le)
+       (when (eq? 'info (vector-ref le 0))
+         (define line (vector-ref le 1))
+         (set-box! num-lines (+ 1 (unbox num-lines)))
          (cond
-          [(miss? line)
-           (M++ (log->data line))]
+          [(regexp-match? #rx"CHECK" line)
+           (cond
+            [(miss? line)
+             (M++ (log->data line))]
+            [else
+             (H++ (log->data line))]
+            #;[else
+             (printf "WARNING: failed to parse log message ~a\n" line)])]
           [else
-           (H++ (log->data line))]
-          #;[else
-           (printf "WARNING: error parsing log message ~a\n" line)])]
-        [else
-         (void)])))
-   (close-output-port _out)
-   (subprocess-read _in)
-   ;; -- close pipe ports
-   (close-input-port _in)
+           (void)])))
+     (compile-file fname)
+     #:logger trivial-logger 'info)
    ;; --
    (summarize fname H M))
 
@@ -143,5 +141,5 @@
    [("--clean" "--all") "Make clean before running" (*ANNIHILATE* #t)]
    #:args (fname)
    (define v (collect-and-summarize fname))
-   (pretty-print v)
+   (pretty-display v)
    (void)))

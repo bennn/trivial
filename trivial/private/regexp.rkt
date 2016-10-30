@@ -38,7 +38,7 @@
 
   (define (format-group-error stx str reason)
     (format
-      "(~a:~a) Invalid regexp pattern (unmatched ~a) in ~a"
+      "[~a:~a] Invalid regexp pattern (unmatched ~a) in ~a"
       (syntax-line stx)
       (syntax-column stx)
       reason

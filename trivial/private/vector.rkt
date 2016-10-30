@@ -61,7 +61,11 @@
      (length (syntax-e #'(e* ...)))]))
 
 (define-for-syntax (bounds-error sym v i)
-  (raise-user-error sym "Index '~a' out of range for vector '~a'" i v))
+  (raise-user-error sym "[~a:~a] Index '~a' out of range for vector '~a'"
+    (syntax-line v)
+    (syntax-column v)
+    i
+    (syntax->datum v)))
 
 ;; -----------------------------------------------------------------------------
 

@@ -4,8 +4,6 @@
 ;; - Implements 'abstract domains'
 ;; - Other helpers / parameters
 
-;; TODO make-set!-transformer
-
 (provide
   ;; --- prop. env.
 
@@ -22,6 +20,10 @@
   φ-tbl
   ;; Global table associating proposition environments to `define`d identifiers
   ;; Very sad.
+
+  φ-mutated
+  ;; Global set of set!'d variables.
+  ;; Also sad.
 
   φ-init
   ;; (-> Phi)
@@ -77,6 +79,15 @@
   ;; fully expand the argument,
   ;; store the result in the ~> property
 
+  make-lifted-function
+  ;; #(-> (-> [Dom X] [Dom X]) [AbstractDomain X] (-> Syntax Syntax))
+  ;; Input:
+  ;; - F : name of a function (arity 1 only)
+  ;; - D : domain of interest
+  ;; Returns a 'lifted' version of F
+  ;;  that propagates values in D (statically)
+  ;;  by applying F at phase 1
+
   ;; --- utils
 
   *STOP-LIST*
@@ -110,6 +121,7 @@
 
 (require
   syntax/id-table
+  syntax/id-set
   syntax/parse
   (for-syntax racket/base syntax/parse))
 
@@ -149,9 +161,15 @@
 (define φ-tbl
   (make-free-id-table))
 
+(define φ-mutated
+  (mutable-free-id-set))
+
 (define (φ stx)
-  (or (syntax-property stx φ-key)
-      (and (identifier? stx) (free-id-table-ref φ-tbl stx #f))
+  (or (if (identifier? stx)
+        (and (not (free-id-set-member? φ-mutated stx))
+             (or (free-id-table-ref φ-tbl stx #f)
+                 (syntax-property stx φ-key)))
+        (syntax-property stx φ-key))
       (φ-init)))
 
 (define (⊢ stx new-φ)
@@ -238,6 +256,7 @@
                 ([d (in-list (*abstract-domains*))])
         (φ-set φ d ((abstract-domain-⊣ d) #'v))))
     (⊢ stx φ)]
+   ;; TODO 2016-10-30 : replace variables with their exact value
    [_
     stx]))
 
@@ -246,10 +265,28 @@
   (pattern e
    #:attr ~> (expand-expr #'e)))
 
-(define-syntax-rule (ttt-log stx msg arg* ...)
-  (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
+;; TODO should really declare this as a type, using [Dom X]
+(define-syntax-rule (make-lifted-function fn dom)
+  (λ (stx)
+    (syntax-parse stx
+     [(_ e:~>)
+      (define φ-e (φ #'e.~>))
+      (define v (φ-ref φ-e dom))
+      (cond
+       [(⊤? dom v)
+        (raise-user-error 'fn (⊤-msg v))]
+       [else
+        (⊢ (syntax/loc stx (fn e.~>))
+           (if (⊥? dom v) φ-e (φ-set φ-e dom (fn v))))])]
+     [(_ . e*)
+      (syntax/loc stx (fn . e*))]
+     [_:id
+      (syntax/loc stx fn)])))
 
 ;; -----------------------------------------------------------------------------
+
+(define-syntax-rule (ttt-log stx msg arg* ...)
+  (begin (printf "[LOG:~a:~a] " (syntax-line stx) (syntax-column stx)) (printf msg arg* ...) (newline)))
 
 ;; Is `v` a small enough integer to unfold an operation using `v`?
 ;; e.g., okay to convert `(expt X v)` to `(* X ...v )`
