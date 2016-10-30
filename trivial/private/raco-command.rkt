@@ -92,6 +92,7 @@
     (values H H++)))
 
 (define (compile-and-log fname)
+  ;; TODO bug maybe here
   (with-logging-to-port (current-output-port)
     (lambda ()
       (parameterize ([current-namespace (make-base-namespace)])
@@ -106,7 +107,8 @@
              (parameterize ([current-output-port _out])
                (compile-and-log fname)
                #t))
-     (with-output-to-file "retries.txt" #:exists 'append
+     (printf "RETRY ~a~n" fname)
+     #;(with-output-to-file "retries.txt" #:exists 'append
        (lambda () (displayln fname))))
    (define-values (H H++) (make-counter))
    (define-values (M M++) (make-counter))
@@ -135,9 +137,11 @@
 ;; -----------------------------------------------------------------------------
 
 (module+ main
-  (require racket/cmdline)
+  (require racket/cmdline racket/pretty)
   (command-line
    #:once-each
    [("--clean" "--all") "Make clean before running" (*ANNIHILATE* #t)]
    #:args (fname)
-   (collect-and-summarize fname)))
+   (define v (collect-and-summarize fname))
+   (pretty-print v)
+   (void)))
