@@ -64,7 +64,7 @@
                 (loop (op prev v) acc (cdr e*)))
               (loop v acc (cdr e*)))
             ;; else: save value in acc
-            (let ([acc+ (cons (car e*) (if prev (cons prev acc) acc))])
+            (let ([acc+ (cons #'e+.~> (if prev (cons prev acc) acc))])
               (loop #f acc+ (cdr e*))))])))]
    [else  #f]))
 
