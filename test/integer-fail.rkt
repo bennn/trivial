@@ -32,6 +32,15 @@
   (ann (let ([/ (lambda (x y) "hello")]) (/ 1 1)) Integer)
   (ann (let ([* (lambda (x y) "hello")]) (* 1 1)) Integer)
   (ann (let ([expt (lambda (x y) "hello")]) (expt 1 1)) Integer)
-  ;; -- can't do rational arithmetic. It's integers only
-  (ann (* 5 1/5 1) One)
+  (ann (* 5 1/5 1) One) ;; -- can't do rational arithmetic. It's integers only
+  (let ([h 1])
+    ;; -- variables don't currently expand to their value
+    (set! h (sub1 h))
+    (ann h One))
+  (let ([h -1])
+    (set! h (add1 h))
+    (ann (+ h 1) One))
+  (let ([h 1])
+    (set! h (sub1 h))
+    (ann (+ h 1) One))
 ))

@@ -130,6 +130,13 @@
     (check-equal? (ann (let ([n 5]) (* 3 n (+ -1 2))) Natural) 15)
     (check-equal? (ann (let ([n 4]) (/ n n)) Positive-Exact-Rational) 1))
 
+  (test-case "add1/sub1"
+    (let ([h -1])
+      (check-equal? (ann (+ (add1 h) 1) One) 1))
+
+    (let ([h 1])
+      (check-equal? (ann (+ (sub1 h) 1) One) 1)))
+
   (test-case "expt"
     (check-equal?
       (ann (expt 5 3) Index)
@@ -168,4 +175,5 @@
     (check-equal?
       (ann (quotient (+ 99 99) (+ 32 1)) Index)
       6))
+
 )
