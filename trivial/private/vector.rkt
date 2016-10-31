@@ -266,10 +266,10 @@
      [_:id (syntax/loc stx +vector-append)])))
 
 (define-syntax (-vector->list stx)
-  (with-syntax ([(+vector->list +λ)
+  (with-syntax ([(+vector->list +λ +unsafe-vector-ref)
                  (if (syntax-local-typed-context?)
-                   (syntax/loc stx (tr-vector->list λ:))
-                   (syntax/loc stx (vector->list λ)))])
+                   (syntax/loc stx (tr-vector->list λ: tr-unsafe-vector-ref))
+                   (syntax/loc stx (vector->list λ unsafe-vector-ref)))])
     (syntax-parse stx
      [(_ v:~>)
       (define n (φ-ref (φ #'v.~>) V-dom))
@@ -279,7 +279,7 @@
         (⊢ (if (ok-to-unfold? n)
              (with-syntax ([(i* ...) (range n)])
                (syntax/loc stx (+let ([v+ v.~>])
-                   (list (-vector-ref v+ i*) ...))))
+                   (list (+unsafe-vector-ref v+ i*) ...))))
              (quasisyntax/loc stx
                (+let ([v+ v.~>])
                  (build-list '#,n
