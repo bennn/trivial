@@ -71,19 +71,14 @@
     (syntax-parse stx
      [(_ name:id ann* ... e)
       #:with e~
-        ;; TODO 2016-10-30 : `class` and `class*` should not be an issue
-        ;; Here is a small program using `class`:
-        ;;     #lang racket/base
-        ;;     (require trivial racket/class)
-        ;;     (define yo (class object% (super-new) (define/public (f x) this)))
-        ;; Compiling this program gives:
-        ;;     lambda: expanded syntax not in its original lexical context
-        ;;     (extra bindings or scopes in the current context) in:
-        ;;     (lambda (local-accessor local-mutator f1) ....)
-        ;; Local expanding `(lambda (name) e)` instead "works", but doesn't
-        ;;  attach datum properties for `e`.
+        ;; TODO 2016-10-30:
+        ;; - debug/fix 'class misuse of method (not in application)
+        ;;   - plot-area.rkt
+        ;;   - mines.rkt
+        ;; (both these are 'benchmark/' programs
         (parameterize ([*STOP-LIST* (list* (format-id stx "class")
                                            (format-id stx "class*")
+                                           (format-id stx "#%app")
                                            (syntax/loc stx name)
                                            (*STOP-LIST*))])
           (syntax-parse #'e [e:~> #'e.~>]))
@@ -99,6 +94,7 @@
 (define-syntax (-set! stx)
   (syntax-parse stx
    [(_ name:id e:~>)
+    (log-ttt-warning "the library is unsound for set!, check that ~a has not been used for unsafe optimization, in: ~a" (syntax-e #'name) (syntax->datum stx))
     (define e-φ (φ #'e.~>))
     (free-id-set-add! φ-mutated #'name)
     (syntax/loc stx (set! name e.~>))]
