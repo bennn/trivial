@@ -2,5 +2,10 @@
 
 ;; Stronger types for regular expression matching.
 
-(provide (all-from-out trivial/private/regexp))
+(provide
+  regexp
+  pregexp
+  byte-regexp
+  byte-pregexp
+  regexp-match)
 (require trivial/private/regexp)
