@@ -1,6 +1,6 @@
 #lang racket/base
 
-;; Implement GENERIC elaboration rules,
+;; Implement generic elaboration rules,
 ;;  propagating prop. environments φ
 
 (provide
@@ -75,7 +75,7 @@
         ;; - debug/fix 'class misuse of method (not in application)
         ;;   - plot-area.rkt
         ;;   - mines.rkt
-        ;; (both these are 'benchmark/' programs
+        ;; (both these are 'benchmark/' programs)
         (parameterize ([*STOP-LIST* (list* (format-id stx "class")
                                            (format-id stx "class*")
                                            (format-id stx "#%app")
