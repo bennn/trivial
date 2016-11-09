@@ -4,8 +4,9 @@
 
 (provide
   (for-syntax F-dom)
-  format
-  printf)
+  (rename-out
+   [-format format]
+   [-printf printf]))
 
 (require
   (prefix-in tr- (only-in typed/racket/base ann format printf Char Exact-Number))
@@ -82,8 +83,9 @@
 (define-syntax (define-formatter stx)
   (syntax-parse stx
    [(_ fmt:id)
+    #:with -fmt (format-id stx "-~a" (syntax-e #'fmt))
     #:with tr-fmt (format-id stx "tr-~a" (syntax-e #'fmt))
-    #'(define-syntax (fmt stx)
+    #'(define-syntax (-fmt stx)
         (let ([typed-context? (syntax-local-typed-context?)])
           (with-syntax ([fmt (if typed-context? (syntax/loc stx tr-fmt) (syntax/loc stx fmt))])
             (syntax-parse stx

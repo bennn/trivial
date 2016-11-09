@@ -1,8 +1,8 @@
-#lang typed/racket/base
+#lang racket/base
 
 (provide
-  curry:
-  map:
+  curry
+  lambda
+  λ
 )
-
 (require trivial/private/function)

@@ -3,6 +3,27 @@
 (module+ test
   (require rackunit trivial trivial/private/test-common)
 
+  (test-case "format"
+    (check-trivial-log-sequence
+      (begin (format "yo ~a lo ~a~n" 1 'two)
+             (printf "wepa")
+             ((lambda (x) (format x "hi")) "~s bye"))
+      '((CHECK+ format)
+        (CHECK+ printf)
+        (INFER+ lambda)
+        (CHECK- format))))
+
+  (test-case "function"
+    (check-trivial-log-sequence
+      (begin (lambda (x) x)
+             (curry (lambda (x y) x))
+             (((curry (lambda (x y) x)) 'A) 'B))
+      '((INFER+ lambda)
+        (INFER+ lambda)
+        (CHECK+ curry)
+        (INFER+ lambda)
+        (CHECK+ curry))))
+
   (test-case "integer"
     (check-trivial-log-sequence
       (begin (+ 9 9)
@@ -58,6 +79,7 @@
              (build-vector 0 (λ (x) x))
              (make-vector 0))
       '((INFER+ vector)
+        (INFER+ lambda)
         (INFER+ build-vector)
         (INFER+ make-vector)))
 
@@ -113,8 +135,6 @@
       (begin (vector->list #(0 0))
              (vector->list (current-command-line-arguments)))
       '((CHECK+ vector->list)
-          (CHECK+ vector-ref)
-          (CHECK+ vector-ref)
         (CHECK- vector->list)))
 
     (check-trivial-log-sequence
@@ -160,4 +180,5 @@
           (CHECK- +)
           (INFER+ build-vector)
         (CHECK- vector-drop-right))))
+
 )
