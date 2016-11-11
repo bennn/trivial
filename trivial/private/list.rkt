@@ -91,6 +91,7 @@
 
 (define-for-syntax L-dom
   (make-abstract-domain L
+    #:order <=
     [(~or '(e* ...)
            (e* ...))
      (length (syntax-e #'(e* ...)))]))
@@ -410,7 +411,7 @@
                      (raise-user-error 'map (⊤-msg n))
                      n)))
       (define num-lists (length n*))
-      (define min-length (⊓ L-dom n*))
+      (define min-length (⊓* L-dom n*))
       (cond
        [(and (integer? arr) (not (= arr num-lists)))
         (raise-user-error 'map (format-arity-error stx num-lists))]

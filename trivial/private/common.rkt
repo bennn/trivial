@@ -41,18 +41,21 @@
 
   ;; type [AbstractDomain X]
   ;;  represents a (flat) lattice of information X
-  ;;  TODO probably needs a 'less than' and 'join' operation
 
   ;; type [Dom X]
   ;;  (U X ⊤ ⊥)
   ;;  where ⊥ and ⊤ are the bottom & top elements for the abstract domain
 
   make-abstract-domain
-  ;; #(-> Identifier [Syntax -> [Dom X]] * [AbstractDomain X])
-  ;; Create an 'abstract domain' from an identifier (symbol)
-  ;;  and a sequence of syntax-parse clauses
-  ;; The clauses describe how to parse domain information from **values**
-  ;; (To parse information from expressions, attach it using `⊢` from `phi.rkt`)
+  ;; #(-> Identifier #:order (-> X X Boolean) [Syntax -> [Dom X]] * [AbstractDomain X])
+  ;; Create an 'abstract domain' from:
+  ;; - an identifier (symbol)
+  ;; - (optional) an order relation
+  ;;   Compares pairs of "domain information", lifted to handle ⊥/⊤
+  ;;   The default relation returns #false for every pair
+  ;; - a sequence of syntax-parse clauses
+  ;;   Describe how to parse "domain information" from **values**
+  ;;   (Use __TODO__ to parse & propagate information from expressions)
 
   κ
   ;; (-> AbstractDomain Symbol)
@@ -76,7 +79,17 @@
 
   ⊓
   ;; (-> AbstractDomain [Dom X] ... [Dom X])
-  ;; TODO hack for now, need to put an order on domains
+  ;; Greatest lower-bound for a domain
+
+  ⊓*
+  ;; (-> AbstractDomain [Listof [Dom X]] [Dom X])
+
+  ⊔
+  ;; (-> AbstractDomain [Dom X] ... [Dom X])
+  ;; Least upper-bound for a domain
+
+  ⊔*
+  ;; (-> AbstractDomain [Listof [Dom X]] [Dom X])
 
   ~>
   ;; Syntax class,
@@ -195,12 +208,23 @@
 
 (define-syntax (make-abstract-domain stx)
   (syntax-parse stx
-   [(_ key clause* ...)
-    #:with bot (gensym (string->symbol (format "~a-⊥" (syntax-e #'key))))
-    #:with top (gensym (string->symbol (format "~a-⊤" (syntax-e #'key))))
-    #'(let ([d (abstract-domain 'key 'bot 'top (syntax-parser clause* ... [_ 'bot]))])
-        (*abstract-domains* (cons d (*abstract-domains*)))
-        d)]))
+   [(_ key
+       (~optional (~seq #:order maybe-leq) #:defaults ([maybe-leq #'#f]))
+       clause* ...)
+    (quasisyntax/loc stx
+      (let* ([bot '#,(gensym (string->symbol (format "~a-⊥" (syntax-e #'key))))]
+             [top '#,(gensym (string->symbol (format "~a-⊤" (syntax-e #'key))))]
+             [α (syntax-parser clause* ... [_ bot])]
+             [leq (or maybe-leq (λ (v1 v2) #f))]
+             [⊑ (λ (v1 v2)
+                  (or (eq? v1 bot)
+                      (eq? v2 top)
+                      (if (or (eq? v1 top) (eq? v2 bot))
+                        #false
+                        (leq v1 v2))))]
+             [D (abstract-domain 'key bot top α ⊑)])
+        (*abstract-domains* (cons D (*abstract-domains*)))
+        D))]))
 
 (struct abstract-domain [
   κ
@@ -210,11 +234,14 @@
   ;; [Dom X]
   ;; distinguished elements
 
-  ⊣
+  α
   ;; (-> Syntax [Dom X])
   ;; return the "datum processor" for a Dom
   ;; parses values and returns an element in [Dom X],
   ;;  ideally a value but maybe also an "I don't know" or an "impossible"
+
+  ⊑
+  ;; (-> [Dom X] Dom
 ])
 
 ;; TODO shitty name
@@ -246,21 +273,33 @@
   (and (top/reason? v)
        (eq? (abstract-domain-⊤ d) (top/reason-top v))))
 
-(define (⊓ d v*)
-  (define ⊥/d (⊥ d))
-  (define ⊤/d (⊤ d "glb"))
-  (define (</d v1 v2) ;; TODO this should be part of d
-    (cond
-     [(⊤? d v1)                v2]
-     [(⊤? d v2)                v1]
-     [(or (⊥? d v1) (⊥? d v2)) ⊥/d]
-     [(< v1 v2)                v1]
-     [else                     v2]))
-  (for/fold ([glb ⊤/d])
-            ([v (in-list v*)])
-    (</d glb v)))
+(define (⊓ d . v*)
+  (⊓ d v*))
 
-;; TODO ⊔
+(define (⊓* d v*)
+  (define ⊥/d (abstract-domain-⊥ d))
+  (define ⊤/d (abstract-domain-⊤ d))
+  (define ⊑/d (abstract-domain-⊑ d))
+  (for/fold ([v1 ⊤/d])
+            ([v2 (in-list v*)])
+    (cond
+     [(⊑/d v1 v2) v1]
+     [(⊑/d v2 v1) v2]
+     [else ⊥/d])))
+
+(define (⊔ d . v*)
+  (⊔* d v*))
+
+(define (⊔* d v*)
+  (define ⊥/d (abstract-domain-⊥ d))
+  (define ⊤/d (abstract-domain-⊤ d))
+  (define ⊑/d (abstract-domain-⊑ d))
+  (for/fold ([v1 ⊥/d])
+            ([v2 (in-list v*)])
+    (cond
+     [(⊑/d v1 v2) v2]
+     [(⊑/d v2 v1) v1]
+     [else ⊤/d])))
 
 ;; =============================================================================
 
@@ -274,7 +313,7 @@
     (define φ
       (for/fold ([φ (φ-init)])
                 ([d (in-list (*abstract-domains*))])
-        (φ-set φ d ((abstract-domain-⊣ d) #'v))))
+        (φ-set φ d ((abstract-domain-α d) #'v))))
     (⊢ stx φ)]
    ;; TODO 2016-10-30 : replace variables with their exact value
    [_
