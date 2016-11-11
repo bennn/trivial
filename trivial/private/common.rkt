@@ -91,6 +91,9 @@
   ⊔*
   ;; (-> AbstractDomain [Listof [Dom X]] [Dom X])
 
+  reduce
+  ;; (-> AbstractDomain [X X -> X] X [Listof [Dom X]] [Dom X])
+
   ~>
   ;; Syntax class,
   ;; fully expand the argument,
@@ -209,7 +212,7 @@
 (define-syntax (make-abstract-domain stx)
   (syntax-parse stx
    [(_ key
-       (~optional (~seq #:order maybe-leq) #:defaults ([maybe-leq #'#f]))
+       (~optional (~seq #:leq maybe-leq) #:defaults ([maybe-leq #'#f]))
        clause* ...)
     (quasisyntax/loc stx
       (let* ([bot '#,(gensym (string->symbol (format "~a-⊥" (syntax-e #'key))))]
@@ -300,6 +303,19 @@
      [(⊑/d v1 v2) v2]
      [(⊑/d v2 v1) v1]
      [else ⊤/d])))
+
+(define (reduce D f init v*)
+  (let loop ([acc init]
+             [v* v*])
+    (cond
+     [(null? v*)
+      acc]
+     [else
+      (let ([v (car v*)]
+            [v* (cdr v*)])
+        (if (or (⊥? D v) (⊤? D v))
+          v
+          (loop (f acc v) v*)))])))
 
 ;; =============================================================================
 

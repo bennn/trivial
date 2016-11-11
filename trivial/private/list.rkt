@@ -90,8 +90,7 @@
 ;; =============================================================================
 
 (define-for-syntax L-dom
-  (make-abstract-domain L
-    #:order <=
+  (make-abstract-domain L #:leq <=
     [(~or '(e* ...)
            (e* ...))
      (length (syntax-e #'(e* ...)))]))
@@ -355,17 +354,15 @@
     (syntax-parse stx
      [(_ e*:~> ...)
       (define n* (for/list ([e~ (in-list (syntax-e #'(e*.~> ...)))])
-                   (define n (φ-ref (φ e~) L-dom))
-                   (if (⊤? L-dom n)
-                     (raise-user-error 'append (⊤-msg n))
-                     n)))
+                   (φ-ref (φ e~) L-dom)))
+      (define sum-n (reduce L-dom + 0 n*))
       (cond
-       [(for/or ([n (in-list n*)]) (⊥? L-dom n))
-        (log-ttt-check- 'append stx)
-        (syntax/loc stx
-          (+append e*.~> ...))]
+       [(⊤? L-dom sum-n)
+        (raise-user-error 'append (⊤-msg sum-n))]
        [else
-        (log-ttt-check+ 'append stx)
+        (if (⊥? L-dom sum-n)
+          (log-ttt-check- 'append stx)
+          (log-ttt-check+ 'append stx))
         (⊢ (syntax/loc stx
              (+append e*.~> ...))
            (φ-set (φ-init) L-dom (for/sum ([n (in-list n*)]) n)))])]

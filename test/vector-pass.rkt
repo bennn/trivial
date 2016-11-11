@@ -78,8 +78,9 @@
     (check-equal? (vector-map add1 (vector 1)) (vector 2))
 
     (check-equal?
-      (let ([v (vector (vector 1) (vector 2 2)
-                               (vector 3 3 3) (vector 4 4 4 4))])
+      (let ([v : (Vectorof (Vectorof Integer))
+               (vector (vector 1) (vector 2 2)
+                       (vector 3 3 3) (vector 4 4 4 4))])
         (vector-map vector-length v))
       (vector 1 2 3 4))
 

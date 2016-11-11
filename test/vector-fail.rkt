@@ -3,7 +3,7 @@
   trivial/private/test-common)
 
 (module+ test (test-compile-error
-  #:require trivial/vector trivial/math trivial/define
+  #:require trivial
   #:exn #rx"out of range for vector|Type Checker"
 
   (vector-ref (vector 1) 3)

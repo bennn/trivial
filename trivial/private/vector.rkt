@@ -36,14 +36,68 @@
     vector->immutable-vector vector-fill! vector-take vector-take-right
     vector-drop vector-drop-right unsafe-vector-set! unsafe-vector-ref))
 
+;(module optimized-vector racket
+;  ;; VECTOR-MAP
+;  (with-syntax ([(i* ...) (range n)])
+;    (syntax/loc stx (+let ([f+ f.~>] [v+ v.~>])
+;        (-vector (f+ (-vector-ref v+ 'i*)) ...))))
+;  (quasisyntax/loc stx
+;    (+let ([f+ f.~>] [v+ v.~>])
+;      (+build-vector '#,n (+λ (#,(if (syntax-local-typed-context?)
+;                                   (syntax/loc stx [i : Integer])
+;                                   (syntax/loc stx i)))
+;                            (f+ (+unsafe-vector-ref v+ i)))))))
+;       ;; VECTOR-APPEND
+;        (if (and (ok-to-unfold? (quotient n1 2)) (ok-to-unfold? (quotient n2 2)))
+;             (with-syntax ([(i1* ...) (range n1)]
+;                           [(i2* ...) (range n2)])
+;               (syntax/loc stx
+;                 (+let ([v1+ v1.~>] [v2+ v2.~>])
+;                   (-vector (-vector-ref v1+ i1*) ... (-vector-ref v2+ i2*) ...))))
+;             (quasisyntax/loc stx
+;               (+let ([v1+ v1.~>] [v2+ v2.~>])
+;                 (+build-vector '#,n1+n2
+;                                (+λ (#,(if (syntax-local-typed-context?)
+;                                         (syntax/loc stx [i : Integer])
+;                                         (syntax/loc stx i)))
+;                                  (if (< i '#,n1)
+;                                    ;; TODO should use -vector-ref (but we're under a λ)
+;                                    (+unsafe-vector-ref v1+ i)
+;                                    (+unsafe-vector-ref v2+ i)))))))
+;   VECTOR->LIST
+;             (with-syntax ([(i* ...) (range n)])
+;               (syntax/loc stx (+let ([v+ v.~>])
+;                   (list (+unsafe-vector-ref v+ i*) ...))))
+;             (quasisyntax/loc stx
+;               (+let ([v+ v.~>])
+;                 (build-list '#,n
+;                             (+λ (#,(if (syntax-local-typed-context?)
+;                                      (syntax/loc stx [i : Integer])
+;                                      (syntax/loc stx i)))
+;                               (+unsafe-vector-ref v+ i))))))
+; VECTOR-FILL!
+;          #`(+let ([v+ v.~>] [e+ e.~>])
+;               (for ([i (in-range '#,n)])
+;                 (+unsafe-vector-set! v+ i e+)))
+; SLICE
+;                (with-syntax ([hi-lo (- hi lo)])
+;                     (quasisyntax/loc stx
+;                       (+let ([v+ e1.~>])
+;                         (-build-vector 'hi-lo
+;                                        (+λ (#,(if (syntax-local-typed-context?)
+;                                                (syntax/loc stx [i : Integer])
+;                                                (syntax/loc stx i)))
+;                                          (+unsafe-vector-ref v+ (+ i '#,lo)))))))
+;)
+
 (require
-  (rename-in  trivial/private/define [let +let])
   (only-in racket/unsafe/ops
     unsafe-vector-set!
     unsafe-vector-ref)
   (prefix-in tr- 'typed-vector)
   (only-in typed/racket λ: : Integer)
   racket/vector
+  trivial/private/function
   trivial/private/integer
   (for-syntax
     typed/untyped-utils
@@ -55,8 +109,9 @@
 
 ;; =============================================================================
 
+;; TODO maybe combine with L-dom? Because they are the same
 (define-for-syntax V-dom
-  (make-abstract-domain V
+  (make-abstract-domain V #:leq <=
     [(~or #(e* ...) '#(e* ...))
      (length (syntax-e #'(e* ...)))]))
 
@@ -103,7 +158,14 @@
     (syntax-parse stx
      [(_ e:~> f:~>)
       (define i (φ-ref (φ #'e.~>) I-dom))
+      (define arr
+        (let ([arr (φ-ref (φ #'f.~>) A-dom)])
+          (if (⊤? A-dom arr)
+            (raise-user-error 'build-vector (⊤-msg arr))
+            arr)))
       (cond
+       [(and (integer? arr) (not (= arr 1)))
+        (raise-user-error 'build-vector (format-arity-error (syntax/loc stx f.~>) 1))]
        [(integer? i)
         (log-ttt-infer+ 'build-vector stx)
         (⊢ (syntax/loc stx (+build-vector e.~> f.~>))
@@ -182,25 +244,29 @@
                    (syntax/loc stx (tr-vector-map tr-unsafe-vector-ref λ: tr-build-vector))
                    (syntax/loc stx (vector-map unsafe-vector-ref λ build-vector)))])
     (syntax-parse stx
-     [(_ f:~> v:~>)
-      (define n (φ-ref (φ #'v.~>) V-dom))
+     [(_ f:~> v*:~> ...)
+      (define arr
+        (let ([arr (φ-ref (φ #'f.~>) A-dom)])
+          (if (⊤? A-dom arr)
+            (raise-user-error 'vector-map (⊤-msg arr))
+            arr)))
+      (define n* (for/list ([v (in-list (syntax-e #'(v*.~> ...)))])
+                   (define n (φ-ref (φ v) V-dom))
+                   (if (⊤? V-dom n)
+                     (raise-user-error 'vector-map (⊤-msg n))
+                     n)))
+      (define num-vec (length n*))
+      (define min-n (⊓* V-dom n*))
       (cond
-       [(integer? n)
-        (log-ttt-check+ 'vector-map stx)
-        (⊢ (if (ok-to-unfold? n)
-             (with-syntax ([(i* ...) (range n)])
-               (syntax/loc stx (+let ([f+ f.~>] [v+ v.~>])
-                   (-vector (f+ (-vector-ref v+ 'i*)) ...))))
-             (quasisyntax/loc stx
-               (+let ([f+ f.~>] [v+ v.~>])
-                 (+build-vector '#,n (+λ (#,(if (syntax-local-typed-context?)
-                                              (syntax/loc stx [i : Integer])
-                                              (syntax/loc stx i)))
-                                       (f+ (+unsafe-vector-ref v+ i)))))))
-           (φ-set (φ-init) V-dom n))]
+       [(and (integer? arr) (not (= arr num-vec)))
+        (raise-user-error 'vector-map (format-arity-error (syntax/loc stx f.~>) num-vec))]
        [else
-        (log-ttt-check- 'vector-map stx)
-        (syntax/loc stx (+vector-map f.~> v.~>))])]
+        (if (⊥? V-dom min-n)
+          (log-ttt-check- 'vector-map stx)
+          (log-ttt-check+ 'vector-map stx))
+        (⊢ (syntax/loc stx
+             (+vector-map f.~> v*.~> ...))
+           (φ-set (φ-init) V-dom min-n))])]
      [(_ . e*)
       (syntax/loc stx (+vector-map . e*))]
      [_:id (syntax/loc stx +vector-map)])))
@@ -211,19 +277,29 @@
                    (syntax/loc stx (tr-vector-map! tr-unsafe-vector-ref tr-unsafe-vector-set!))
                    (syntax/loc stx (vector-map! unsafe-vector-ref unsafe-vector-set!)))])
     (syntax-parse stx
-     [(_ f:~> v:~>)
-      (define n (φ-ref (φ #'v.~>) V-dom))
+     [(_ f:~> v*:~> ...)
+      (define arr
+        (let ([arr (φ-ref (φ #'f.~>) A-dom)])
+          (if (⊤? A-dom arr)
+            (raise-user-error 'vector-map! (⊤-msg arr))
+            arr)))
+      (define n* (for/list ([v (in-list (syntax-e #'(v*.~> ...)))])
+                   (define n (φ-ref (φ v) V-dom))
+                   (if (⊤? V-dom n)
+                     (raise-user-error 'vector-map! (⊤-msg n))
+                     n)))
+      (define num-vec (length n*))
+      (define min-n (⊓* V-dom n*))
       (cond
-       [(integer? n)
-        (log-ttt-check+ 'vector-map! stx)
-        (⊢ #`(+let ([f+ f.~>] [v+ v.~>])
-               (for ([i (in-range '#,n)])
-                 (+unsafe-vector-set! v+ i (f+ (+unsafe-vector-ref v+ i))))
-               v+)
-           (φ-set (φ-init) V-dom n))]
+       [(and (integer? arr) (not (= arr num-vec)))
+        (raise-user-error 'vector-map! (format-arity-error (syntax/loc stx f.~>) num-vec))]
        [else
-        (log-ttt-check- 'vector-map! stx)
-        (syntax/loc stx (+vector-map! f.~> v.~>))])]
+        (if (⊥? V-dom min-n)
+          (log-ttt-check- 'vector-map! stx)
+          (log-ttt-check+ 'vector-map! stx))
+        (⊢ (syntax/loc stx
+             (+vector-map! f.~> v*.~> ...))
+           (φ-set (φ-init) V-dom min-n))])]
      [(_ . e*)
       (syntax/loc stx (+vector-map! . e*))]
      [_:id (syntax/loc stx +vector-map!)])))
@@ -234,33 +310,20 @@
                    (syntax/loc stx (tr-vector-append tr-build-vector λ:))
                    (syntax/loc stx (tr-vector-append tr-build-vector λ)))])
     (syntax-parse stx
-     [(_ v1:~> v2:~>)
-      (define n1 (φ-ref (φ #'v1.~>) V-dom))
-      (define n2 (φ-ref (φ #'v2.~>) V-dom))
+     [(_ v*:~> ...)
+      (define n* (for/list ([v (in-list (syntax-e #'(v*.~> ...)))])
+                   (φ-ref (φ v) V-dom)))
+      (define sum-n (reduce V-dom + 0 n*))
       (cond
-       [(and (integer? n1) (integer? n2))
-        (log-ttt-check+ 'vector-append stx)
-        (define n1+n2 (+ n1 n2))
-        (⊢ (if (and (ok-to-unfold? (quotient n1 2)) (ok-to-unfold? (quotient n2 2)))
-             (with-syntax ([(i1* ...) (range n1)]
-                           [(i2* ...) (range n2)])
-               (syntax/loc stx
-                 (+let ([v1+ v1.~>] [v2+ v2.~>])
-                   (-vector (-vector-ref v1+ i1*) ... (-vector-ref v2+ i2*) ...))))
-             (quasisyntax/loc stx
-               (+let ([v1+ v1.~>] [v2+ v2.~>])
-                 (+build-vector '#,n1+n2
-                                (+λ (#,(if (syntax-local-typed-context?)
-                                         (syntax/loc stx [i : Integer])
-                                         (syntax/loc stx i)))
-                                  (if (< i '#,n1)
-                                    ;; TODO should use -vector-ref (but we're under a λ)
-                                    (+unsafe-vector-ref v1+ i)
-                                    (+unsafe-vector-ref v2+ i)))))))
-           (φ-set (φ-init) V-dom n1+n2))]
+       [(⊤? V-dom sum-n)
+        (raise-user-error 'vector-map! (⊤-msg sum-n))]
        [else
-        (log-ttt-check- 'vector-append stx)
-        (syntax/loc stx (+vector-append v1.~> v2.~>))])]
+        (if (⊥? V-dom sum-n)
+          (log-ttt-check- 'vector-append stx)
+          (log-ttt-check+ 'vector-append stx))
+        (⊢ (syntax/loc stx
+             (+vector-append v*.~> ...))
+           (φ-set (φ-init) V-dom sum-n))])]
      [(_ . e*)
       (syntax/loc stx (+vector-append e*))]
      [_:id (syntax/loc stx +vector-append)])))
@@ -276,17 +339,8 @@
       (cond
        [(integer? n)
         (log-ttt-check+ 'vector->list stx)
-        (⊢ (if (ok-to-unfold? n)
-             (with-syntax ([(i* ...) (range n)])
-               (syntax/loc stx (+let ([v+ v.~>])
-                   (list (+unsafe-vector-ref v+ i*) ...))))
-             (quasisyntax/loc stx
-               (+let ([v+ v.~>])
-                 (build-list '#,n
-                             (+λ (#,(if (syntax-local-typed-context?)
-                                      (syntax/loc stx [i : Integer])
-                                      (syntax/loc stx i)))
-                               (+unsafe-vector-ref v+ i))))))
+        (⊢ (syntax/loc stx
+             (+vector->list v.~>))
            (φ-set (φ-init) V-dom n))]
        [else
         (log-ttt-check- 'vector->list stx)
@@ -303,7 +357,8 @@
       (cond
        [(integer? n)
         (log-ttt-check+ 'vector->immutable-vector stx)
-        (⊢ (syntax/loc stx (+vector->immutable-vector e.~>))
+        (⊢ (syntax/loc stx
+             (+vector->immutable-vector e.~>))
            (φ-set (φ-init) V-dom n))]
        [else
         (log-ttt-check- 'vector->immutable-vector stx)
@@ -323,9 +378,8 @@
       (cond
        [(integer? n)
         (log-ttt-check+ 'vector-fill! stx)
-        (⊢ #`(+let ([v+ v.~>] [e+ e.~>])
-               (for ([i (in-range '#,n)])
-                 (+unsafe-vector-set! v+ i e+)))
+        (⊢ (syntax/loc stx
+             (+vector-fill! v.~> e.~>))
            (φ-set (φ-init) V-dom n))]
        [else
         (log-ttt-check- 'vector-fill! stx)
@@ -365,14 +419,8 @@
                              (if 'left? lo hi)))]
                [else
                 (log-ttt-check+ (syntax-e #'op-name) stx)
-                (⊢ (with-syntax ([hi-lo (- hi lo)])
-                     (quasisyntax/loc stx
-                       (+let ([v+ e1.~>])
-                         (-build-vector 'hi-lo
-                                        (+λ (#,(if (syntax-local-typed-context?)
-                                                (syntax/loc stx [i : Integer])
-                                                (syntax/loc stx i)))
-                                          (+unsafe-vector-ref v+ (+ i '#,lo)))))))
+                (⊢ (syntax/loc stx
+                     (+op e1.~> e2.~>))
                    (φ-set (φ-init) V-dom (- hi lo)))])]
              [else
               (log-ttt-check- (syntax-e #'op-name) stx)
