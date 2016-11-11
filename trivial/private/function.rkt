@@ -10,7 +10,7 @@
 ;; -----------------------------------------------------------------------------
 
 (provide
-  (for-syntax A-dom)
+  (for-syntax A-dom format-arity-error)
   (rename-out
    [-curry curry]
    [-lambda lambda]
@@ -50,6 +50,13 @@
       msg
       (syntax->datum stx)))
 
+  (define (format-arity-error stx [arity #f])
+    (format "[~a:~a] expected a function~a in ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      (if arity (format " with arity ~a" arity) "")
+      (syntax->datum stx)))
+
 )
 
 ;; -----------------------------------------------------------------------------
@@ -81,7 +88,7 @@
         (curry-error stx "unknown arity")]
        [(⊤? A-dom arr)
         (log-ttt-check- 'curry stx)
-        (curry-error stx "argument is not a function")]
+        (raise-user-error 'curry (format-arity-error stx))]
        [else
         (log-ttt-check+ 'curry stx)
         (with-syntax ([id+* (parse-identifiers arr)])

@@ -74,6 +74,10 @@
   ;; (-> AbstractDomain [Dom X] Boolean)
   ;; Return #true if the argument represents the bot/top element of the given dom.
 
+  ⊓
+  ;; (-> AbstractDomain [Dom X] ... [Dom X])
+  ;; TODO hack for now, need to put an order on domains
+
   ~>
   ;; Syntax class,
   ;; fully expand the argument,
@@ -241,6 +245,22 @@
 (define (⊤? d v)
   (and (top/reason? v)
        (eq? (abstract-domain-⊤ d) (top/reason-top v))))
+
+(define (⊓ d v*)
+  (define ⊥/d (⊥ d))
+  (define ⊤/d (⊤ d "glb"))
+  (define (</d v1 v2) ;; TODO this should be part of d
+    (cond
+     [(⊤? d v1)                v2]
+     [(⊤? d v2)                v1]
+     [(or (⊥? d v1) (⊥? d v2)) ⊥/d]
+     [(< v1 v2)                v1]
+     [else                     v2]))
+  (for/fold ([glb ⊤/d])
+            ([v (in-list v*)])
+    (</d glb v)))
+
+;; TODO ⊔
 
 ;; =============================================================================
 

@@ -1,45 +1,35 @@
-#lang typed/racket/base
+#lang racket/base
 
 (provide
-  set!
-  (all-from-out racket/list)
-
-  define-list:
-  let-list:
-  pair?:
-  null?:
-  cons:
-  car:
-  cdr:
-  list?:
-  length:
-  list-ref:
-  list-tail:
-  append:
-  reverse:
-  ;map:
-  sort:
+  cons
+  make-list
+  build-list
+  car
+  cdr
+  length
+  list
+  list-ref
+  list-tail
+  append
+  reverse
+  map
+  sort
+  #;andmap
+  #;ormap
+  #;for-each
+  #;foldl
+  #;foldr
+  #;filter
+  #;remove
+  #;remq
+  #;remv
+  #;remove*
+  #;remq*
+  #;remv*
+  #;member
 )
 
 ;; -----------------------------------------------------------------------------
 
 (require
-  racket/list
-  trivial/private/set-bang
-  (only-in trivial/private/list
-    define-list:
-    let-list:
-    pair?:
-    null?:
-    cons:
-    car:
-    cdr:
-    list?:
-    length:
-    list-ref:
-    list-tail:
-    append:
-    reverse:
-    ;map:
-    sort:
-))
+  trivial/private/list)

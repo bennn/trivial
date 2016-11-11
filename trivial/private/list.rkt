@@ -1,217 +1,453 @@
 #lang typed/racket/base
 
 (provide
-  define-list:
-  let-list:
-  pair?:
-  null?:
-  cons:
-  car:
-  cdr:
-  list?:
-  length:
-  list-ref:
-  list-tail:
-  append:
-  reverse:
-  ;map:
-  ;andmap:
-  ;ormap:
-  ;for-each:
-  ;foldl:
-  ;foldr:
-  ;filter:
-  ;remove:
-  ;remq:
-  ;remv:
-  ;remove*:
-  ;remq*:
-  ;remv*:
-  sort:
-  ;member:
+  (for-syntax L-dom)
+  (rename-out
+    [-make-list make-list]
+    [-build-list build-list]
+    [-cons cons]
+    [-car car]
+    [-cdr cdr]
+    [-list list]
+    [-length length]
+    [-list-ref list-ref]
+    [-list-tail list-tail]
+    [-append append]
+    [-reverse reverse]
+    [-map map]
+    [-sort sort]
+    #;[-andmap andmap]
+    #;[-ormap ormap]
+    #;[-for-each for-each]
+    #;[-foldl foldl]
+    #;[-foldr foldr]
+    #;[-filter filter]
+    #;[-remove remove]
+    #;[-remq remq]
+    #;[-remv remv]
+    #;[-remove* remove*]
+    #;[-remq* remq*]
+    #;[-remv* remv*]
+    #;[-member member])
+)
 
-  ;; --- private
-  (for-syntax
-    lst-define
-    lst-let
-    parse-list-length
-    lst-length-key ;; TODO generic "data structure length" key?
-  )
+;; -----------------------------------------------------------------------------
+
+(module typed-list typed/racket
+  (require
+    typed/racket/unsafe
+    (only-in racket/unsafe/ops
+      unsafe-car
+      unsafe-cdr))
+
+  ;; Thank you based Asumu
+  (unsafe-require/typed racket/unsafe/ops
+    (unsafe-cons-list (All (A B)
+     (-> A B (Pairof A B))))
+    (unsafe-list-ref (All (A B)
+     (-> (Listof A) B A)))
+    (unsafe-list-tail (All (A B C)
+     (-> (Pairof A B) C B))))
+
+  (unsafe-provide
+    unsafe-cons-list unsafe-list-ref unsafe-list-tail)
+
+  (provide
+    unsafe-car unsafe-cdr null
+    make-list build-list
+    cons
+    car
+    cdr
+    length
+    list
+    list-ref
+    list-tail
+    append
+    reverse
+    map
+    sort)
 )
 
 ;; -----------------------------------------------------------------------------
 
 (require
-  trivial/private/math
-  typed/racket/unsafe
+  (rename-in trivial/private/define [let +let])
+  (only-in racket/unsafe/ops
+    unsafe-vector-set!
+    unsafe-vector-ref)
+  (prefix-in tr- 'typed-list)
+  ;(only-in typed/racket λ: : Integer)
   racket/list
+  trivial/private/function
+  trivial/private/integer
   (for-syntax
-    trivial/private/common
-    trivial/private/sequence
-    typed/racket/base
-    syntax/parse))
-
-;; Thank you based Asumu
-(unsafe-require/typed racket/unsafe/ops
-  (unsafe-car (All (A B)
-   (case->
-     (-> (Listof A) A)
-     (-> (Pairof A B) A))))
-  (unsafe-cdr (All (A B)
-   (-> (Pairof A B) B)))
-  (unsafe-cons-list (All (A B)
-   (-> A B (Pairof A B))))
-  (unsafe-list-ref (All (A B)
-   (-> (Listof A) B A)))
-  (unsafe-list-tail (All (A B C)
-   (-> (Pairof A B) C B)))
-)
+    typed/untyped-utils
+    syntax/parse
+    racket/base
+    racket/syntax
+    trivial/private/common))
 
 ;; =============================================================================
 
-(begin-for-syntax
-  (define (parse-list-length stx)
-    (syntax-parse stx #:literals (#%plain-app cons list list* make-list build-list null)
-     [(~or '(e* ...)
-            (list e* ...)
-            (#%plain-app list e* ...))
-      (length (syntax-e #'(e* ...)))]
-     [(~or (make-list n e* ...)
-           (#%plain-app make-list n e* ...)
-           (build-list n e* ...)
-           (#%plain-app build-list n e* ...))
-      #:with n-stx (stx->num #'n)
-      #:when (syntax-e #'n-stx)
-      (syntax-e #'n-stx)]
-     [(~or (cons e es)
-           (#%plain-app cons e es))
-      #:with n+ (parse-list-length #'es)
-      #:when (syntax-e #'n+)
-      (+ 1 (syntax-e #'n+))]
-     [(~or (list* e* ... es)
-           (#%plain-app list* e* ... es))
-      #:with n+ (parse-list-length #'es)
-      #:when (syntax-e #'n+)
-      (+ (length (syntax-e #'(e* ...))) (syntax-e #'n+))]
-     [(~or (null)
-           (#%plain-app null))
-      0]
-     [_ #f]))
+(define-for-syntax L-dom
+  (make-abstract-domain L
+    [(~or '(e* ...)
+           (e* ...))
+     (length (syntax-e #'(e* ...)))]))
 
-  (define-values (lst-length-key lst? lst-define lst-let)
-    (make-value-property 'list:length parse-list-length))
-  (define-syntax-class/predicate list/length lst?)
-)
+(define-for-syntax (bounds-error sym v i)
+  (raise-user-error sym "[~a:~a] Index '~a' out of range for list '~a'"
+    (syntax-line v)
+    (syntax-column v)
+    i
+    (syntax->datum v)))
 
 ;; -----------------------------------------------------------------------------
 
-(define-syntax define-list: (make-keyword-alias 'define lst-define))
-(define-syntax let-list: (make-keyword-alias 'let lst-let))
+(define-syntax (-make-list stx)
+  (with-syntax ([+make-list (if (syntax-local-typed-context?) (syntax/loc stx tr-make-list) (syntax/loc stx  make-list))])
+    (syntax-parse stx
+     [(_ e:~> . e*)
+      (define n (φ-ref (φ #'e.~>) I-dom))
+      (cond
+       [(integer? n)
+        (log-ttt-infer+ 'make-list stx)
+        (⊢ (syntax/loc stx
+             (+make-list e.~> . e*))
+           (φ-set (φ-init) L-dom n))]
+       [else
+        (log-ttt-infer- 'make-list stx)
+        (syntax/loc stx
+          (+make-list . e*))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+make-list . e*))]
+     [_:id
+      (syntax/loc stx
+        +make-list)])))
 
-(define-syntax pair?: (make-alias #'pair?
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (quasisyntax/loc stx '#,(not (zero? (syntax-e #'l.evidence))))]
-   [_ #f]))))
+(define-syntax (-build-list stx)
+  (with-syntax ([+build-list (if (syntax-local-typed-context?) (syntax/loc stx tr-build-list) (syntax/loc stx  build-list))])
+    (syntax-parse stx
+     [(_ e:~> f:~>)
+      (define n (φ-ref (φ #'e.~>) I-dom))
+      (define arr
+        (let ([arr (φ-ref (φ #'f.~>) A-dom)])
+          (if (⊤? A-dom arr)
+            (raise-user-error 'build-list (⊤-msg arr))
+            arr)))
+      (cond
+       [(and (integer? arr) (not (= 1 arr)))
+        (raise-user-error 'build-list (format-arity-error stx 1))]
+       [(integer? n)
+        (log-ttt-infer+ 'build-list stx)
+        (⊢ (syntax/loc stx
+             (+build-list e.~> f.~>))
+           (φ-set (φ-init) L-dom n))]
+       [else
+        (log-ttt-infer- 'build-list stx)
+        (syntax/loc stx
+          (+build-list e.~> f.~>))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+build-list . e*))]
+     [_:id
+      (syntax/loc stx
+        +build-list)])))
 
-(define-syntax null?: (make-alias #'null?
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (quasisyntax/loc stx '#,(zero? (syntax-e #'l.evidence)))]
-   [_ #f]))))
+(define-syntax (-cons stx)
+  (with-syntax ([(+unsafe-cons-list +cons)
+                 (if (syntax-local-typed-context?)
+                   (syntax/loc stx (tr-unsafe-cons-list tr-cons))
+                   (syntax/loc stx (tr-unsafe-cons-list tr-cons)))])
+    (syntax-parse stx
+     [(_ e1 e2:~>)
+      (define n (φ-ref (φ #'e2.~>) L-dom))
+      (cond
+       [(integer? n)
+        (log-ttt-infer+ 'cons stx)
+        (⊢ (syntax/loc stx
+             (+unsafe-cons-list e1 e2.~>))
+           (φ-set (φ-init) L-dom (+ n 1)))]
+       [else
+        (log-ttt-infer- 'cons stx)
+        (syntax/loc stx
+          (+cons e1 e2.~>))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+cons . e*))]
+     [_:id
+      (syntax/loc stx
+        +cons)])))
 
-(define-syntax cons: (make-alias #'cons
-  (lambda (stx) (syntax-parse stx
-   [(_ x l:list/length)
-    #:with l+ (syntax-property
-                (syntax/loc stx (unsafe-cons-list x l.expanded))
-                lst-length-key (+ 1 (syntax-e #'l.evidence)))
-    (syntax/loc stx l+)]
-   [_ #f]))))
+(define-syntax (-list stx)
+  (with-syntax ([+list (if (syntax-local-typed-context?) (syntax/loc stx tr-list) (syntax/loc stx list))])
+    (syntax-parse stx
+     [(_ . e*)
+      (log-ttt-infer+ 'list stx)
+      (⊢ (syntax/loc stx
+           (+list . e*))
+         (φ-set (φ-init) L-dom (length (syntax-e #'e*))))]
+     [_:id
+      (syntax/loc stx +list)])))
 
-(define-syntax car: (make-alias #'car
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (when (zero? (syntax-e #'l.evidence))
-      (bounds-error 'car: #'l 0))
-    (syntax/loc stx (unsafe-car l.expanded))]
-   [_ #f]))))
+(define-syntax (-null stx)
+  (with-syntax ([+null (if (syntax-local-typed-context?) (syntax/loc stx tr-null) (syntax/loc stx null))])
+    (syntax-parse stx
+     [_:id
+      (log-ttt-infer+ 'null stx)
+      (⊢ (syntax/loc stx +null)
+         (φ-set (φ-init) L-dom 0))])))
 
-(define-syntax cdr: (make-alias #'cdr
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (when (zero? (syntax-e #'l.evidence))
-      (bounds-error 'cdr: #'l 0))
-    (syntax/loc stx (unsafe-cdr l.expanded))]
-   [_ #f]))))
+(define-syntax (-car stx)
+  (with-syntax ([(+car +unsafe-car)
+                 (if (syntax-local-typed-context?)
+                   (syntax/loc stx
+                     (tr-car tr-unsafe-car))
+                   (syntax/loc stx
+                     (car unsafe-car)))])
+    (syntax-parse stx
+     [(_ e:~>)
+      (define n (φ-ref (φ #'e.~>) L-dom))
+      (cond
+       [(⊥? L-dom n)
+        (log-ttt-check- 'car stx)
+        (syntax/loc stx
+          (+car e.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'car (⊤-msg n))]
+       [(positive? n)
+        (log-ttt-check+ 'car stx)
+        (syntax/loc stx
+          (+unsafe-car e.~>))]
+       [else
+        (bounds-error 'car (syntax/loc stx e.~>) n)])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+car . e*))]
+     [_:id
+      (syntax/loc stx
+        +car)])))
 
-(define-syntax list?: (make-alias #'list?
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (syntax/loc stx '#t)]
-   [_ #f]))))
+(define-syntax (-cdr stx)
+  (with-syntax ([(+cdr +unsafe-cdr)
+                 (if (syntax-local-typed-context?)
+                   (syntax/loc stx
+                     (tr-cdr tr-unsafe-cdr))
+                   (syntax/loc stx
+                     (cdr unsafe-cdr)))])
+    (syntax-parse stx
+     [(_ e:~>)
+      (define n (φ-ref (φ #'e.~>) L-dom))
+      (cond
+       [(⊥? L-dom n)
+        (log-ttt-check- 'cdr stx)
+        (syntax/loc stx
+          (+cdr e.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'cdr (⊤-msg n))]
+       [(positive? n)
+        (log-ttt-check+ 'cdr stx)
+        (syntax/loc stx
+          (+unsafe-cdr e.~>))]
+       [else
+        (bounds-error 'cdr (syntax/loc stx e.~>) n)])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+cdr . e*))]
+     [_:id
+      (syntax/loc stx
+        +cdr)])))
 
-(define-syntax length: (make-alias #'length
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    (syntax/loc stx 'l.evidence)]
-   [_ #f]))))
+(define-syntax (-length stx)
+  (with-syntax ([+length (if (syntax-local-typed-context?) (syntax/loc stx tr-length) (syntax/loc stx length))])
+    (syntax-parse stx
+     [(_ e:~>)
+      (define n (φ-ref (φ #'e.~>) L-dom))
+      (cond
+       [(⊥? L-dom n)
+        (log-ttt-check- 'length stx)
+        (syntax/loc stx
+          (+length e.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'length (⊤-msg n))]
+       [else
+        (log-ttt-check+ 'length stx)
+        (⊢ (quasisyntax/loc stx
+             '#,n)
+           (φ-set (φ-init) I-dom n))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+length . e*))]
+     [_:id
+      (syntax/loc stx
+        +length)])))
 
-(define-syntax list-ref: (make-alias #'list-ref
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length e)
-    #:with i-stx (stx->num #'e)
-    #:when (syntax-e #'i-stx)
-    (let ([i (syntax-e #'i-stx)])
-      (unless (< -1 i (syntax-e #'l.evidence))
-        (bounds-error 'list-ref: #'l i))
-      (syntax/loc stx (unsafe-list-ref l.expanded 'i-stx)))]
-   [_ #f]))))
+(define-syntax (-list-ref stx)
+  (with-syntax ([(+list-ref +unsafe-list-ref)
+                 (if (syntax-local-typed-context?)
+                   (syntax/loc stx
+                     (tr-list-ref tr-unsafe-list-ref))
+                   (syntax/loc stx
+                     (list-ref unsafe-list-ref)))])
+    (syntax-parse stx
+     [(_ e1:~> e2:~>)
+      (define n (φ-ref (φ #'e1.~>) L-dom))
+      (define i (φ-ref (φ #'e2.~>) I-dom))
+      (cond
+       [(or (⊥? L-dom n) (⊥? I-dom i))
+        (log-ttt-check- 'list-ref stx)
+        (syntax/loc stx
+          (+list-ref e1.~> e2.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'list-ref (⊤-msg n))]
+       [(⊤? L-dom i)
+        (raise-user-error 'list-ref (⊤-msg i))]
+       [(and (<= 0 i) (< i n))
+        (log-ttt-check+ 'list-ref stx)
+        (syntax/loc stx
+          (+unsafe-list-ref e1.~> e2.~>))]
+       [else
+        (bounds-error 'list-ref (syntax/loc stx e1.~>) i)])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+list-ref . e*))]
+     [_:id
+      (syntax/loc stx
+        +list-ref)])))
 
-(define-syntax list-tail: (make-alias #'list-tail
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length e)
-    #:with i-stx (stx->num #'e)
-    #:when (syntax-e #'i-stx)
-    (let ([i (syntax-e #'i-stx)])
-      (unless (< i (syntax-e #'l.evidence))
-        (bounds-error 'list-tail: #'l i))
-      (syntax/loc stx (unsafe-list-tail l.expanded 'i-stx)))]
-   [_ #f]))))
+(define-syntax (-list-tail stx)
+  (with-syntax ([(+list-tail +unsafe-list-tail)
+                 (if (syntax-local-typed-context?)
+                   (syntax/loc stx
+                     (tr-list-tail tr-unsafe-list-tail))
+                   (syntax/loc stx
+                     (list-tail unsafe-list-tail)))])
+    (syntax-parse stx
+     [(_ e1 e2)
+      (define n (φ-ref (φ #'e1.~>) L-dom))
+      (define i (φ-ref (φ #'e2.~>) I-dom))
+      (cond
+       [(or (⊥? L-dom n) (⊥? I-dom i))
+        (log-ttt-check- 'list-tail stx)
+        (syntax/loc stx
+          (+list-tail e1.~> e2.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'list-tail (⊤-msg n))]
+       [(⊤? I-dom i)
+        (raise-user-error 'list-tail (⊤-msg i))]
+       [(and (<= 0 i) (< i n))
+        (log-ttt-check+ 'list-tail stx)
+        (syntax/loc stx
+          (+unsafe-list-tail e1.~> e2.~>))]
+       [else
+        (bounds-error 'list-tail stx)])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+list-tail . e*))]
+     [_:id
+      (syntax/loc stx
+        +list-tail)])))
 
-(define-syntax append: (make-alias #'append
-  (lambda (stx) (syntax-parse stx
-   [(_ l1:list/length l2:list/length)
-    #:with l+ (syntax-property (syntax/loc stx (append l1.expanded l2.expanded))
-                lst-length-key (+ (syntax-e #'l1.evidence) (syntax-e #'l2.evidence)))
-    (quasisyntax/loc stx l+)]
-   [_ #f]))))
+(define-syntax (-append stx)
+  (with-syntax ([+append (if (syntax-local-typed-context?) (syntax/loc stx tr-append) (syntax/loc stx append))])
+    (syntax-parse stx
+     [(_ e*:~> ...)
+      (define n* (for/list ([e~ (in-list (syntax-e #'(e*.~> ...)))])
+                   (define n (φ-ref (φ e~) L-dom))
+                   (if (⊤? L-dom n)
+                     (raise-user-error 'append (⊤-msg n))
+                     n)))
+      (cond
+       [(for/or ([n (in-list n*)]) (⊥? L-dom n))
+        (log-ttt-check- 'append stx)
+        (syntax/loc stx
+          (+append e*.~> ...))]
+       [else
+        (log-ttt-check+ 'append stx)
+        (⊢ (syntax/loc stx
+             (+append e*.~> ...))
+           (φ-set (φ-init) L-dom (for/sum ([n (in-list n*)]) n)))])]
+     [_:id
+      (syntax/loc stx
+        +append)])))
 
-(define-syntax reverse: (make-alias #'reverse
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length)
-    #:with l+ (syntax-property (syntax/loc stx (reverse l.expanded))
-                lst-length-key (syntax-e #'l.evidence))
-    (quasisyntax/loc stx l+)]
-   [_ #f]))))
+(define-syntax (-reverse stx)
+  (with-syntax ([+reverse (if (syntax-local-typed-context?) (syntax/loc stx tr-reverse) (syntax/loc stx reverse))])
+    (syntax-parse stx
+     [(_ e:~>)
+      (define n (φ-ref (φ #'e.~>) L-dom))
+      (cond
+       [(⊥? L-dom n)
+        (log-ttt-infer- 'reverse stx)
+        (syntax/loc stx
+          (+reverse e.~>))]
+       [(⊤? L-dom n)
+        (raise-user-error 'reverse (⊤-msg n))]
+       [else
+        (⊢ (syntax/loc stx
+             (+reverse e.~>))
+           (φ-set (φ-init) L-dom n))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+reverse . e*))]
+     [_:id
+      (syntax/loc stx
+        +reverse)])))
 
-(define-syntax map: (make-alias #'map
-  (lambda (stx) (syntax-parse stx
-   [(_ f l:list/length l*:list/length ...)
-    #:with l+ (syntax-property
-                (syntax/loc stx (map f l.expanded l*.expanded ...))
-                lst-length-key
-                (syntax-e #'l.evidence))
-    (syntax/loc stx l+)]
-   [_ #f]))))
+(define-syntax (-map stx)
+  (with-syntax ([+map (if (syntax-local-typed-context?) (syntax/loc stx tr-map) (syntax/loc stx map))])
+    (syntax-parse stx
+     [(_ f:~> e*:~> ...)
+      (define arr
+        (let ([arr (φ-ref (φ #'f.~>) A-dom)])
+          (if (⊤? A-dom arr)
+            (raise-user-error 'map (⊤-msg arr))
+            arr)))
+      (define n* (for/list ([e (in-list (syntax-e #'(e*.~> ...)))])
+                   (define n (φ-ref (φ e) L-dom))
+                   (if (⊤? L-dom n)
+                     (raise-user-error 'map (⊤-msg n))
+                     n)))
+      (define num-lists (length n*))
+      (define min-length (⊓ L-dom n*))
+      (cond
+       [(and (integer? arr) (not (= arr num-lists)))
+        (raise-user-error 'map (format-arity-error stx num-lists))]
+       [else
+        (if (⊥? L-dom min-length)
+          (log-ttt-check- 'map stx)
+          (log-ttt-check+ 'map stx))
+        (⊢ (syntax/loc stx
+             (+map f.~> e*.~> ...))
+           (φ-set (φ-init) L-dom min-length))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+map . e*))]
+     [_:id
+      (syntax/loc stx
+        +map)])))
 
-(define-syntax sort: (make-alias #'sort
-  (lambda (stx) (syntax-parse stx
-   [(_ l:list/length arg* ...)
-    #:with l+ (syntax-property
-                (syntax/loc stx (sort l.expanded arg* ...))
-                lst-length-key
-                (syntax-e #'l.evidence))
-    (syntax/loc stx l+)]
-   [_ #f]))))
+(define-syntax (-sort stx)
+  (with-syntax ([+sort (if (syntax-local-typed-context?) (syntax/loc stx tr-sort) (syntax/loc stx sort))])
+    (syntax-parse stx
+     [(_ e:~> . e*)
+      (define n (φ-ref (φ #'e.~>) L-dom))
+      (cond
+       [(⊥? L-dom n)
+        (log-ttt-infer- 'sort stx)
+        (syntax/loc stx
+          (+sort e.~> . e*))]
+       [(⊤? L-dom n)
+        (raise-user-error 'sort (⊤-msg n))]
+       [else
+        (⊢ (syntax/loc stx
+             (+sort e.~> . e*))
+           (φ-set (φ-init) L-dom n))])]
+     [(_ . e*)
+      (syntax/loc stx
+        (+sort . e*))]
+     [_:id
+      (syntax/loc stx
+        +sort)])))
 
