@@ -4,7 +4,7 @@
 
 (module+ test (test-compile-error
   #:require trivial
-  #:exn #rx"out of range for vector|Type Checker"
+  #:exn #rx"out of range|Type Checker"
 
   (vector-ref (vector 1) 3)
 

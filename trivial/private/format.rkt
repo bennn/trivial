@@ -9,7 +9,9 @@
    [-printf printf]))
 
 (require
-  (prefix-in tr- (only-in typed/racket/base ann format printf Char Exact-Number))
+  (prefix-in τ- (only-in typed/racket/base ann format printf Char Exact-Number))
+  (prefix-in λ- (only-in racket/base format printf))
+  trivial/private/tailoring
   (for-syntax
     syntax/parse
     racket/syntax
@@ -33,6 +35,14 @@
       (syntax-column stx)
       i
       str))
+
+  (define (format-format-arity-error stx expect)
+    (format
+      "[~a:~a] format string expected ~a arguments, given ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      expect
+      (syntax->datum stx)))
 
   ;; Count the number of format escapes in a string.
   ;; Returns a list of optional types (to be spliced into the source code).
@@ -65,10 +75,10 @@
               (loop (+ i 3) acc))]
            [(#\c #\C)
             ;; Need 1 `char?`
-            (loop (+ i 2) (cons (syntax/loc stx tr-Char) acc))]
+            (loop (+ i 2) (cons (syntax/loc stx τ-Char) acc))]
            [(#\b #\B #\o #\O #\x #\X)
             ;; Need 1 `exact?`
-            (loop (+ i 2) (cons (syntax/loc stx tr-Exact-Number) acc))]
+            (loop (+ i 2) (cons (syntax/loc stx τ-Exact-Number) acc))]
            [else
             ;; Invalid format sequence
             (⊤ F-dom (format-format-error stx str i))])]
@@ -82,40 +92,26 @@
 
 (define-syntax (define-formatter stx)
   (syntax-parse stx
-   [(_ fmt:id)
-    #:with -fmt (format-id stx "-~a" (syntax-e #'fmt))
-    #:with tr-fmt (format-id stx "tr-~a" (syntax-e #'fmt))
-    #'(define-syntax (-fmt stx)
-        (let ([typed-context? (syntax-local-typed-context?)])
-          (with-syntax ([fmt (if typed-context? (syntax/loc stx tr-fmt) (syntax/loc stx fmt))])
-            (syntax-parse stx
-             [(_ s:~> . e*)
-              (define fmt? (φ-ref (φ #'s.~>) F-dom))
-              (cond
-               [(⊥? F-dom fmt?)
-                (log-ttt-check- 'fmt stx)
-                (syntax/loc stx
-                  (fmt s.~> . e*))]
-               [(⊤? F-dom fmt?)
-                (raise-user-error 'fmt (⊤-msg fmt?))]
-               [else
-                (log-ttt-check+ 'fmt stx)
-                (define num-given (length (syntax-e #'e*)))
-                (define num-expected (length fmt?))
-                (unless (= num-expected num-given)
-                  (apply raise-arity-error 'fmt num-expected (map syntax->datum (syntax-e #'e*))))
-                (with-syntax ([arg+*
-                               (for/list ([a (in-list (syntax-e #'e*))]
-                                          [t (in-list fmt?)])
-                                 (if (and t (syntax-e t) typed-context?)
-                                   (quasisyntax/loc stx (tr-ann #,a #,t))
-                                   a))])
-                  (syntax/loc stx
-                    (fmt s.~> . arg+*)))])]
-             [(_ . e*)
-              (syntax/loc stx (fmt . e*))]
-             [_:id
-              (syntax/loc stx fmt)]))))]))
+   [(_ -fmt:id)
+    #:with λ-fmt (format-id stx "λ~a" (syntax-e #'-fmt))
+    #:with τ-fmt (format-id stx "τ~a" (syntax-e #'-fmt))
+    (syntax/loc stx
+      (define-tailoring (-fmt [e1 ~> e1+ (φ1 [F-dom ↦ fmt?])]
+                              [e* ~> e+* (φ*)] (... ...))
+        #:with +f (τλ #'τ-fmt #'λ-fmt)
+        (define num-given (length φ*))
+        (define typed-context? (syntax-local-typed-context?))
+        #:= (⊥? F-dom fmt?)
+            (+f e1+ e+* (... ...))
+        #:+ (= num-given (length fmt?))
+            (+f e1+ #,@(for/list ([a (in-list (syntax-e #'(e* (... ...))))]
+                                  [t (in-list fmt?)])
+                         (if (and t (syntax-e t) typed-context?)
+                           #`(τ-ann #,a #,t)
+                           a)))
+        #:- #t
+            (format-format-arity-error #'(e+* (... ...)) (length fmt?))
+        #:φ (φ-init)))]))
 
-(define-formatter format)
-(define-formatter printf)
+(define-formatter -format)
+(define-formatter -printf)

@@ -92,6 +92,9 @@
   ;; (-> AbstractDomain [Listof [Dom X]] [Dom X])
 
   reduce
+  ;; (-> AbstractDomain [X X -> X] X [Dom X] ... [Dom X])
+
+  reduce*
   ;; (-> AbstractDomain [X X -> X] X [Listof [Dom X]] [Dom X])
 
   ~>
@@ -304,18 +307,23 @@
      [(⊑/d v2 v1) v1]
      [else ⊤/d])))
 
-(define (reduce D f init v*)
-  (let loop ([acc init]
-             [v* v*])
-    (cond
-     [(null? v*)
-      acc]
-     [else
-      (let ([v (car v*)]
-            [v* (cdr v*)])
-        (if (or (⊥? D v) (⊤? D v))
-          v
-          (loop (f acc v) v*)))])))
+(define (reduce D f init . v*)
+  (reduce* D f init v*))
+
+(define (reduce* D f init v*)
+  (if (⊥? D init)
+    init
+    (let loop ([acc init]
+               [v* v*])
+      (cond
+       [(null? v*)
+        acc]
+       [else
+        (let ([v (car v*)]
+              [v* (cdr v*)])
+          (if (or (⊥? D v) (⊤? D v))
+            v
+            (loop (f acc v) v*)))]))))
 
 ;; =============================================================================
 

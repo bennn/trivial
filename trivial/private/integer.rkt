@@ -19,6 +19,9 @@
 
 (require
   syntax/parse
+  trivial/private/tailoring
+  (prefix-in τ- (only-in typed/racket/base * add1 sub1 expt quotient))
+  (prefix-in λ- (only-in racket/base * add1 sub1 expt quotient))
   (for-syntax
     syntax/parse
     racket/syntax
@@ -92,83 +95,55 @@
 (make-numeric-operator *)
 (make-numeric-operator /)
 
-(define-syntax (-add1 stx)
-  ;(make-lifted-function add1 I-dom)
-    (syntax-parse stx
-     [(_ e:~>)
-      (define φ-e (φ #'e.~>))
-      (define v (φ-ref φ-e I-dom))
-      (cond
-       [(⊤? I-dom v)
-        (raise-user-error 'add1 (⊤-msg v))]
-       [else
-        (define φ+ (if (⊥? I-dom v) φ-e (φ-set φ-e I-dom (add1 v))))
-        (⊢ (syntax/loc stx (add1 e.~>))
-           φ+)])]
-     [(_ . e*)
-      (syntax/loc stx (add1 . e*))]
-     [_:id
-      (syntax/loc stx add1)]))
+(define-tailoring (-add1 [e ~> e+ (φ [I-dom ↦ i])])
+  #:with +add1 (τλ #'τ-add1 #'λ-add1)
+  #:= (⊥? I-dom i)
+      (+add1 e+)
+  #:+ #t
+      '#,(+ i 1)
+  #:φ (φ-set (φ-init) I-dom (reduce I-dom + i 1)))
 
-(define-syntax (-sub1 stx)
-  ;(make-lifted-function sub1 I-dom)
-    (syntax-parse stx
-     [(_ e:~>)
-      (define φ-e (φ #'e.~>))
-      (define v (φ-ref φ-e I-dom))
-      (cond
-       [(⊤? I-dom v)
-        (raise-user-error 'sub1 (⊤-msg v))]
-       [else
-        (⊢ (syntax/loc stx (sub1 e.~>))
-           (if (⊥? I-dom v) φ-e (φ-set φ-e I-dom (sub1 v))))])]
-     [(_ . e*)
-      (syntax/loc stx (sub1 . e*))]
-     [_:id
-      (syntax/loc stx sub1)]))
+(define-tailoring (-sub1 [e ~> e+ (φ [I-dom ↦ i])])
+  #:with +sub1 (τλ #'τ-sub1 #'λ-sub1)
+  #:= (⊥? I-dom i)
+      (+sub1 e+)
+  #:+ #t
+      '#,(- i 1)
+  #:φ (φ-set (φ-init) I-dom (reduce I-dom - i 1)))
 
-(define-syntax (-expt stx)
-  (syntax-parse stx
-   [(_ n1:~> n2:~>)
-    (define n1-val (φ-ref (φ #'n1.~>) I-dom))
-    (define n2-val (φ-ref (φ #'n2.~>) I-dom))
-    (cond
-     [(and (integer? n1-val) (integer? n2-val))
-      (log-ttt-check+ 'expt stx)
-      (define n1n2 (expt n1-val n2-val))
-      (⊢ (quasisyntax/loc stx '#,n1n2)
-         (φ-set (φ-init) I-dom '#,n1n2))]
-     [(and (integer? n2-val) (ok-to-unfold? n2-val))
+(define-tailoring (-expt [e1 ~> e1+ (φ1 [I-dom ↦ i1])]
+                         [e2 ~> e2+ (φ2 [I-dom ↦ i2])])
+  #:with +expt (τλ #'τ-expt #'λ-expt)
+  #:with +* (τλ #'τ-* #'λ-*)
+  (define new-i
+    (let ([i1-⊥? (⊥? I-dom i1)]
+          [i2-⊥? (⊥? I-dom i2)])
       (cond
-       [(zero? n2-val)
-        (log-ttt-check+ 'expt stx) ;; close enough
-        (⊢ (quasisyntax/loc stx 1)
-           (φ-set (φ-init) I-dom 1))]
+       [(and (not i1-⊥?) (zero? i1))
+        0]
+       [(and (not i2-⊥?) (zero? i2))
+        1]
+       [(and (not i1-⊥?) (not i2-⊥?))
+        (expt i1 i2)]
        [else
-        (log-ttt-check+ 'expt stx) ;; close enough
-        (quasisyntax/loc stx
-          (* #,@(for/list ([_i (in-range n2-val)]) (quasisyntax/loc stx n1))))])]
-     [else
-      (log-ttt-check- 'expt stx)
-      #'(expt n1.~> n2.~>)])]
-   [(_ . n*)
-    #'(expt . n*)]
-   [_:id #'expt]))
+        (⊥ I-dom)])))
+  (define success?
+    (or (not (⊥? I-dom new-i))
+        (and (not (⊥? I-dom i2)) (ok-to-unfold? i2))))
+  #:= (not success?)
+      (+expt e1+ e2+)
+  #:+ #t
+      #,(if (⊥? I-dom new-i)
+          #`(+* #,@(for/list ([_i (in-range i2)]) #'e1+))
+          new-i)
+  #:φ (φ-set (φ-init) I-dom new-i))
 
-(define-syntax (-quotient stx)
-  (syntax-parse stx
-   [(_ n1:~> n2:~>)
-    (define n1-val (φ-ref (φ #'n1.~>) I-dom))
-    (define n2-val (φ-ref (φ #'n2.~>) I-dom))
-    (cond
-     [(and (integer? n1-val) (integer? n2-val))
-      (log-ttt-check+ 'quotient stx)
-      (define n1/n2 (quotient n1-val n2-val))
-      (⊢ (quasisyntax/loc stx '#,n1/n2)
-         (φ-set (φ-init) I-dom '#,n1/n2))]
-     [else
-      (log-ttt-check- 'quotient stx)
-      #'(quotient n1.~> n2.~>)])]
-   [(_ . n*)
-    #'(quotient . n*)]
-   [_:id #'quotient]))
+(define-tailoring (-quotient [e1 ~> e1+ (φ1 [I-dom i1])]
+                             [e2 ~> e2+ (φ2 [I-dom i2])])
+  #:with +quotient (τλ #'τ-quotient #'λ-quotient)
+  #:= (or (⊥? I-dom i1) (⊥? I-dom i2))
+      (+quotient e1+ e2+)
+  #:+ #t
+      '#,(quotient i1 i2)
+  #:φ (φ-set (φ-init) I-dom (reduce I-dom quotient i1 i2)))
+
