@@ -277,7 +277,7 @@
        (eq? (abstract-domain-⊤ d) (top/reason-top v))))
 
 (define (⊓ d . v*)
-  (⊓ d v*))
+  (⊓* d v*))
 
 (define (⊓* d v*)
   (define ⊥/d (abstract-domain-⊥ d))
