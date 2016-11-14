@@ -37,6 +37,11 @@
   ;; (-> Phi [AbstractDomain X] [Dom X] Phi)
   ;; Functionally extend a proposition map with domain-specific data
 
+  φ<=?
+  ;; (-> Phi Phi Boolean)
+  ;; Precision ordering on φ
+  ;; returns #true if first argument is less precise than 2nd on all non-⊥ entries
+
   ;; --- abstract domains
 
   ;; type [AbstractDomain X]
@@ -96,6 +101,10 @@
 
   reduce*
   ;; (-> AbstractDomain [X X -> X] X [Listof [Dom X]] [Dom X])
+
+  make-dmap
+  ;; (-> AbstractDomain [X -> Y] AbstractDomain (-> [Dom X] [Dom Y]))
+  ;; Lift a function to a ⊥/⊤-preserving map between domains
 
   ~>
   ;; Syntax class,
@@ -199,7 +208,8 @@
   (syntax-property stx φ-key new-φ))
 
 (define (φ? x)
-  (hash-eq? x))
+  (and (hash? x)
+       (hash-eq? x)))
 
 (define (φ-init)
   (hasheq))
@@ -209,6 +219,13 @@
 
 (define (φ-set φ d v)
   (hash-set φ (κ d) v))
+
+(define (φ<=? φ1 φ2)
+  (for/and ([(k v) (in-hash φ1)])
+    (define D (κ->abstract-domain k))
+    (define ⊑/D (abstract-domain-⊑ D))
+    (define ⊥/D (abstract-domain-⊥ D))
+    (⊑/D v (hash-ref φ2 k ⊥/D))))
 
 ;; =============================================================================
 
@@ -224,8 +241,9 @@
              [leq (or maybe-leq (λ (v1 v2) #f))]
              [⊑ (λ (v1 v2)
                   (or (eq? v1 bot)
-                      (eq? v2 top)
-                      (if (or (eq? v1 top) (eq? v2 bot))
+                      (and (top/reason? v2) (eq? (top/reason-top v2) top))
+                      (if (or (and (top/reason? v1) (eq? (top/reason-top v1) top))
+                              (eq? v2 bot))
                         #false
                         (leq v1 v2))))]
              [D (abstract-domain 'key bot top α ⊑)])
@@ -250,7 +268,7 @@
   ;; (-> [Dom X] Dom
 ])
 
-;; TODO shitty name
+;; TODO better name
 (struct top/reason (
   top ;; Symbol, the top element for a given domain
   msg ;; String, an error message
@@ -258,6 +276,13 @@
 
 (define (κ d)
   (abstract-domain-κ d))
+
+(define (κ->abstract-domain k)
+  (define D
+    (for/first ([d (in-list (*abstract-domains*))]
+                #:when (eq? k (abstract-domain-κ d)))
+      d))
+  (if D D (error 'κ->abstract-domain "invalid key ~a" k)))
 
 (define (⊥ d)
   (abstract-domain-⊥ d))
@@ -284,7 +309,7 @@
 
 (define (⊓* d v*)
   (define ⊥/d (abstract-domain-⊥ d))
-  (define ⊤/d (abstract-domain-⊤ d))
+  (define ⊤/d (⊤ d "glb"))
   (define ⊑/d (abstract-domain-⊑ d))
   (for/fold ([v1 ⊤/d])
             ([v2 (in-list v*)])
@@ -298,7 +323,7 @@
 
 (define (⊔* d v*)
   (define ⊥/d (abstract-domain-⊥ d))
-  (define ⊤/d (abstract-domain-⊤ d))
+  (define ⊤/d (⊤ d "lub"))
   (define ⊑/d (abstract-domain-⊑ d))
   (for/fold ([v1 ⊥/d])
             ([v2 (in-list v*)])
@@ -324,6 +349,16 @@
           (if (or (⊥? D v) (⊤? D v))
             v
             (loop (f acc v) v*)))]))))
+
+(define (make-dmap d1 f d2)
+  (λ (d1-elem)
+    (cond
+     [(⊥? d1 d1-elem)
+      (⊥ d2)]
+     [(⊤? d1 d1-elem)
+      (⊤ d2 (⊤-msg d1-elem))]
+     [else
+      (f d1-elem)])))
 
 ;; =============================================================================
 
@@ -378,5 +413,152 @@
 
 ;; =============================================================================
 
-(module+ test ;; TODO
+(module+ test
+  (require rackunit)
+
+  (define (gen-abstract-domain)
+    (let ([k (gensym)]
+          [bot (gensym)]
+          [top (gensym)])
+      (abstract-domain k bot top (λ (stx) bot) (λ (v1 v2) #f))))
+
+  (define flat-N
+    (make-abstract-domain flat-N #:leq =
+     [i:nat (syntax-e #'i)]))
+
+  (define vert-N
+    (make-abstract-domain vert-N #:leq <=
+     [i:nat (syntax-e #'i)]))
+
+
+  (test-case "φ"
+    (check-equal? (φ #'#f) (φ-init))
+    (check-equal? (φ #'map) (φ-init))
+    (check-equal? (φ (syntax-property #'#f φ-key 'val)) 'val))
+
+  (test-case "⊢"
+    (let ([stx #'#t]
+          [val 'val])
+      (check-equal? (φ (syntax-property stx φ-key val)) (φ (⊢ stx val)))))
+
+  (test-case "φ?"
+    (check-true (φ? (φ-init)))
+    (check-true (φ? (φ-set (φ-init) (gen-abstract-domain) 'v)))
+
+    (check-false (φ? #f))
+    (check-false (φ? #'#f))
+    (check-false (φ? '())))
+
+  (test-case "φ-ref"
+    (let* ([k (gensym)]
+           [v (gensym)]
+           [d (abstract-domain k 'bot 'top (λ (stx) 'bot) =)])
+      (check-equal? (φ-ref (φ-set (φ-init) d v) d) v)))
+
+  (test-case "φ<=?"
+    (let* ([φ0 (φ-init)]
+           [d1 (gen-abstract-domain)]
+           [v1 (gensym 'v)]
+           [φ1 (φ-set φ0 d1 v1)]
+           [d2 (gen-abstract-domain)]
+           [v2 (gensym 'v)]
+           [φ2 (φ-set φ1 d2 v2)]
+           [d3 (let ([k (gensym)]
+                     [bot (gensym)]
+                     [top (gensym)])
+                 (abstract-domain k bot top (λ (stx) bot) <=))]
+           [φ3 (φ-set φ0 d3 10)]
+           [φ4 (φ-set φ0 d3 44)])
+      (parameterize ([*abstract-domains* (list d1 d2 d3)])
+        (check-true (φ<=? φ0 φ0))
+        (check-true (φ<=? φ0 φ1))
+        (check-true (φ<=? φ0 φ2))
+        (check-true (φ<=? φ3 φ4))
+
+        (check-false (φ<=? φ1 φ2)) ;; because ⊑ always returns #f
+        (check-false (φ<=? φ1 φ0))
+        (check-false (φ<=? φ2 φ3)))))
+
+  (test-case "κ ⊥ ⊤"
+    (let* ([key (gensym)]
+           [d (abstract-domain key 'bot 'top (λ (stx) 'bot) =)])
+      (check-equal? (κ d) key))
+
+    (let* ([bot (gensym)]
+           [d (abstract-domain 'key bot 'top (λ (stx) 'bot) =)])
+      (check-equal? (⊥ d) bot))
+
+    (let* ([top (gensym)]
+           [msg "hello"]
+           [d (abstract-domain 'key 'bot top (λ (stx) 'bot) =)])
+      (check-equal? (⊤-msg (⊤ d msg)) msg)))
+
+  (test-case "κ->abstract-domain"
+    (define (check-failure f)
+      (check-exn #rx"invalid key" f))
+
+    (check-failure
+      (λ () (κ->abstract-domain 'xyz)))
+
+    (parameterize ([*abstract-domains* (list (gen-abstract-domain))])
+      (check-failure
+        (λ () (κ->abstract-domain 'xyz))))
+
+    (let ([d (gen-abstract-domain)])
+      (parameterize ([*abstract-domains* (list d)])
+        (check-equal? (κ->abstract-domain (abstract-domain-κ d)) d))))
+
+  (test-case "⊥? ⊤?"
+    (let ([d (gen-abstract-domain)])
+      (check-true (⊥? d (⊥ d)))
+      (check-true (⊤? d (⊤ d "hey")))
+
+      (check-false (⊥? d (⊤ d "hey")))
+      (check-false (⊤? d (⊥ d)))
+      (check-false (⊤? d (abstract-domain-⊤ d))) ;; this is intentional
+      (check-false (⊥? d #f))
+      (check-false (⊤? d #f))))
+
+  (test-case "⊓ ⊔ reduce"
+    (check-equal? (⊓ vert-N 1 2 3) 1)
+    (check-equal? (⊓ vert-N 1 1) 1)
+    (check-equal? (⊓ vert-N 9 8 (⊥ vert-N)) (⊥ vert-N))
+    (check-equal? (⊓ vert-N (⊤ vert-N "hi") 4) 4)
+
+    (check-equal? (⊓ flat-N 1 2 3) (⊥ flat-N))
+    (check-equal? (⊓ flat-N 1 1) 1)
+    (check-equal? (⊓ flat-N (⊥ flat-N) (⊥ flat-N) (⊥ flat-N)) (⊥ flat-N))
+    (check-equal? (⊓ flat-N (⊤ flat-N "hi") 4) 4)
+
+    (check-equal? (⊔ vert-N 1 2 3) 3)
+    (check-equal? (⊔ vert-N 1 1) 1)
+    (check-equal? (⊔ vert-N 9 8 (⊥ vert-N)) 9)
+    (check-true (⊤? vert-N (⊔ vert-N (⊤ vert-N "oops"))))
+
+    (check-true (⊤? flat-N (⊔ flat-N 1 2 3)))
+    (check-equal? (⊔ flat-N 1 1) 1)
+    (check-true (⊤? flat-N (⊔ flat-N (⊤ flat-N "a") 2)))
+
+    (check-equal? (reduce flat-N + 1 2 3) 6)
+    (check-equal? (reduce vert-N * 1 2 3 4) 24))
+
+  (test-case "dmap"
+    (let ([f (make-dmap flat-N add1 vert-N)]
+          [g (make-dmap vert-N add1 flat-N)])
+      (check-equal? (f (⊥ flat-N)) (⊥ vert-N))
+      (check-equal? (g (⊥ vert-N)) (⊥ flat-N))
+      (check-equal? (f 1) 2)
+      (check-equal? (g 2) 3)))
+
+  (test-case "expand-datum"
+    (check-true (syntax-e (expand-datum #'#t)))
+    (check-equal? (syntax-e (expand-datum #'2)) 2)
+    (check-equal? (φ (expand-datum #'2)) (φ-init))
+    (parameterize ([*abstract-domains* (list flat-N)])
+      (check-equal? (φ-ref (φ (expand-datum #''2)) flat-N) 2)))
+
+  (test-case "ok-to-unfold?"
+    (check-true (ok-to-unfold? 0))
+
+    (check-false (ok-to-unfold? (expt 10 5))))
 )

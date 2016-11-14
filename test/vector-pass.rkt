@@ -259,4 +259,15 @@
     (check-equal?
       (ann (- (vector-length (build-vector 61 add1)) 61) Zero)
       0))
+
+  (test-case "nested:vector-ref"
+    (check-equal? ;; b/c vector-length is the only way to cash in
+      (ann (vector-length (vector-ref (vector (vector) (vector)) 0))
+           Zero)
+      0)
+    (check-equal? ;; b/c vector-length is the only way to cash in
+      (ann (- (vector-ref (vector-append (vector 0 1) (vector 3 4)) 3) 4)
+           Zero)
+      0))
+  ;; TODO more tests like this
 )

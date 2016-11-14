@@ -31,7 +31,7 @@
 ;; =============================================================================
 
 (define-for-syntax I-dom
-  (make-abstract-domain I
+  (make-abstract-domain I #:leq <=
    [i:integer
     (syntax-e #'i)]))
 
