@@ -107,6 +107,47 @@
             (λ () (read-syntax fname (current-input-port)))))
         (void)))))
 
+;; -----------------------------------------------------------------------------
+;; 2016-12-07 : copied from racket/logging v6.7.0.1
+(define (receiver-thread receiver stop-chan intercept)
+  (thread
+   (lambda ()
+     (define (clear-events)
+       (let ([l (sync/timeout 0 receiver)])
+         (when l ; still something to read
+           (intercept l) ; interceptor gets the whole vector
+           (clear-events))))
+     (let loop ()
+       (let ([l (sync receiver stop-chan)])
+         (cond [(eq? l 'stop)
+                ;; we received all the events we were supposed
+                ;; to get, read them all (w/o waiting), then
+                ;; stop
+                (clear-events)]
+               [else ; keep going
+                (intercept l)
+                (loop)]))))))
+
+(define (with-intercepted-logging interceptor proc #:logger [logger #f]
+                                  . log-spec)
+  (let* ([orig-logger (current-logger)]
+         ;; Unless we're provided with an explicit logger to monitor we
+         ;; use a local logger to avoid getting messages that didn't
+         ;; originate from proc. Since it's a child of the original logger,
+         ;; the rest of the program still sees the log entries.
+         [logger      (or logger (make-logger #f orig-logger))]
+         [receiver    (apply make-log-receiver logger log-spec)]
+         [stop-chan   (make-channel)]
+         [t           (receiver-thread receiver stop-chan interceptor)])
+    (begin0
+        (parameterize ([current-logger logger])
+          (proc))
+      (channel-put stop-chan 'stop) ; stop the receiver thread
+      (thread-wait t))))
+
+;; end copy
+;; -----------------------------------------------------------------------------
+
 (define (collect-and-summarize fname)
    (define-values (H H++) (make-counter))
    (define-values (M M++) (make-counter))
