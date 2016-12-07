@@ -156,7 +156,7 @@
   #:with +cdr (τλ #'τ-cdr #'λ-cdr)
   #:with +unsafe-cdr (τλ #'τ-unsafe-cdr #'λ-unsafe-cdr)
   #:= (⊥? L-dom l)
-      (+car e+)
+      (+cdr e+)
   #:+ (not (φ*-null? l))
       (+unsafe-cdr e+)
   #:- #t

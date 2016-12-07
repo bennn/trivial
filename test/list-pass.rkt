@@ -14,14 +14,15 @@
       0))
 
   (test-case "car"
-    (check-equal?
-      (car '(a b))
-      'a))
+    (define (id-list (x : (Listof Symbol))) : (Listof Symbol) x)
+    (check-equal? (car '(a b)) 'a)
+    (check-equal? (car (id-list '(a b))) 'a))
 
   (test-case "cdr"
-    (check-equal?
-      (cdr '(1 2))
-      '(2)))
+    (define (id-list (x : (Listof Symbol))) : (Listof Symbol) x)
+    (check-equal? (cdr '(1 2)) '(2))
+    (check-equal? (cdr (id-list '(a b))) '(b))
+  )
 
   (test-case "length"
     (check-equal?
