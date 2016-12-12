@@ -154,7 +154,7 @@
    (define num-lines (box 0))
    (with-intercepted-logging
      (λ (le)
-       (when (eq? 'info (vector-ref le 0))
+       (when (and (eq? 'info (vector-ref le 0)) (string-prefix? (vector-ref le 1) "ttt:"))
          (define line (vector-ref le 1))
          (set-box! num-lines (+ 1 (unbox num-lines)))
          (cond
