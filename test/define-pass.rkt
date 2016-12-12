@@ -10,7 +10,7 @@
 
   (check-equal?
     (let ()
-      (define n 3) ;; TODO define is broken
+      (define n 3)
       (let ([m n])
         (ann (- m n) Zero)))
     0)

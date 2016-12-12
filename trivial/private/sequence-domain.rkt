@@ -142,7 +142,9 @@
   list-set)
 
 (define (I->φ* n [φ #f])
-  (make-list n (or φ (φ-init))))
+  (if (⊥? I-dom n)
+    (⊥ list-domain)
+    (make-list n (or φ (φ-init)))))
 
 (define list-domain->I-dom
   (make-dmap list-domain φ*->N I-dom))
@@ -290,7 +292,9 @@
       (check-equal? φ* (make-list n x)))
 
     (check-make-φ* 5 'a)
-    (check-make-φ* 0 'b))
+    (check-make-φ* 0 'b)
+
+    (check-equal? (I->φ* (⊥ I-dom) #f) (⊥ list-domain)))
 
   (test-case "L->N"
     (let ([L->N list-domain->I-dom])

@@ -1,4 +1,3 @@
-#lang typed/racket/base
+#lang reprovide
 
-(provide define let let* set!)
-(require trivial/private/define)
+trivial/private/define

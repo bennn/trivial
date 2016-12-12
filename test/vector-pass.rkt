@@ -269,5 +269,4 @@
       (ann (- (vector-ref (vector-append (vector 0 1) (vector 3 4)) 3) 4)
            Zero)
       0))
-  ;; TODO more tests like this
 )

@@ -1,21 +1,21 @@
 #lang info
-(define collection 'use-pkg-name)
+(define collection "trivial")
 (define deps '("base"
-               "typed-racket-lib"
-               "typed-racket-more"
                "db-lib"
                "math-lib"
                "plot-lib"
                "rackunit-lib"
-               "scribble-lib"))
-(define build-deps '("scribble-lib"
-                     "at-exp-lib"
+               "reprovide-lang"
+               "scribble-lib"
+               "typed-racket-lib"
+               "typed-racket-more"))
+(define build-deps '("at-exp-lib"
                      "racket-doc"
                      "rackunit-abbrevs"
-                     "rackunit-lib"))
-(define compile-omit-paths '("icfp-2016"))
-(define pkg-desc "Strongly-typed macros")
-(define version "1")
+                     "rackunit-lib"
+                     "scribble-lib"))
+(define pkg-desc "Macros for lightweight program analysis")
+(define version "2")
 (define pkg-authors '(ben))
 (define scribblings '(("scribblings/trivial.scrbl" () ("typed-racket"))))
 (define raco-commands '(("trivial" (submod trivial/private/raco-command main) "Compile and log optimizations" #f)))

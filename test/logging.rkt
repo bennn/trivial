@@ -61,15 +61,16 @@
              (pregexp "()")
              (byte-regexp "()")
              (byte-pregexp "()"))
-      '((INFER+ regexp)
-        (INFER+ pregexp)
-        (INFER+ byte-regexp)
-        (INFER+ byte-pregexp)))
+      '((CHECK+ regexp)
+        (CHECK+ pregexp)
+        (CHECK+ byte-regexp)
+        (CHECK+ byte-pregexp)))
 
     (check-trivial-log-sequence
       (begin (regexp-match "()" "yo")
              (regexp-match (symbol->string 'abc) "yo"))
       '((CHECK+ regexp-match)
+        (CHECK+ list)
         (CHECK- regexp-match))))
 
   (test-case "vector"
@@ -78,47 +79,43 @@
       (begin (vector 0)
              (build-vector 0 (λ (x) x))
              (make-vector 0))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (INFER+ lambda)
-        (INFER+ build-vector)
-        (INFER+ make-vector)))
+        (CHECK+ build-vector)
+        (CHECK+ make-vector1)))
 
     (check-trivial-log-sequence
       (begin (vector-length (vector 1 2 3))
                (vector-length (current-command-line-arguments)))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (CHECK+ vector-length)
         (CHECK- vector-length)))
 
     (check-trivial-log-sequence
       (begin (vector-ref (vector 1 2 3) 0)
              (vector-ref (current-command-line-arguments) 0))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (CHECK+ vector-ref)
         (CHECK- vector-ref)))
 
     (check-trivial-log-sequence
       (begin (vector-set! (vector 0) 0 1)
              (vector-set! (current-command-line-arguments) 0 0))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (CHECK+ vector-set!)
         (CHECK- vector-set!)))
 
     (check-trivial-log-sequence
       (begin (vector-map values (vector 1 2 3))
              (vector-map values (current-command-line-arguments)))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (CHECK+ vector-map)
-          (INFER+ vector)
-          (CHECK+ vector-ref)
-          (CHECK+ vector-ref)
-          (CHECK+ vector-ref)
         (CHECK- vector-map)))
 
     (check-trivial-log-sequence
       (begin (vector-map! values (vector 1 2 3))
              (vector-map! values (current-command-line-arguments)))
-      '((INFER+ vector)
+      '((CHECK+ vector)
         (CHECK+ vector-map!)
         (CHECK- vector-map!)))
 
@@ -126,9 +123,6 @@
       (begin (vector-append #(0) #(1))
              (vector-append (current-command-line-arguments) #(1)))
       '((CHECK+ vector-append)
-         (INFER+ vector)
-         (CHECK+ vector-ref)
-         (CHECK+ vector-ref)
         (CHECK- vector-append)))
 
     (check-trivial-log-sequence
@@ -153,32 +147,24 @@
       (begin (vector-take #(3) 1)
              (vector-take (current-command-line-arguments) 0))
       '((CHECK+ vector-take)
-          (CHECK- +)
-          (INFER+ build-vector)
         (CHECK- vector-take)))
 
     (check-trivial-log-sequence
       (begin (vector-take-right #(9 3) 1)
              (vector-take-right (current-command-line-arguments) 0))
       '((CHECK+ vector-take-right)
-          (CHECK- +)
-          (INFER+ build-vector)
         (CHECK- vector-take-right)))
 
     (check-trivial-log-sequence
       (begin (vector-drop #(3) 1)
              (vector-drop (current-command-line-arguments) 0))
       '((CHECK+ vector-drop)
-          (CHECK- +)
-          (INFER+ build-vector)
         (CHECK- vector-drop)))
 
     (check-trivial-log-sequence
       (begin (vector-drop-right #(3) 1)
              (vector-drop-right (current-command-line-arguments) 0))
       '((CHECK+ vector-drop-right)
-          (CHECK- +)
-          (INFER+ build-vector)
         (CHECK- vector-drop-right))))
 
 )

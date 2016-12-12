@@ -83,6 +83,7 @@
        (~optional (~seq #:- g- e-)
                   #:defaults ([g- #'#t] [e- #'(error 'tailored-id "cond failure")]))
        #:φ prop-expr)
+    #:with error-id (string->symbol (substring (symbol->string (syntax-e #'tailored-id)) 1))
     #:with τ-tailored-id (format-id stx "τ~a" (syntax-e #'tailored-id))
     #:with λ-tailored-id (format-id stx "λ~a" (syntax-e #'tailored-id))
     #:with τλ-tailored-id (format-id stx "τλ~a" (syntax-e #'tailored-id))
@@ -95,9 +96,9 @@
           pat*.φ ... ...
           dfn*.d ...
           (⊢ (cond
-              [g= (log-ttt-check- 'tailored-id new-stx) (quasisyntax/loc new-stx e=)]
-              [g+ (log-ttt-check+ 'tailored-id new-stx) (quasisyntax/loc new-stx e+)]
-              [g- (raise-user-error 'tailored-id e-)])
+              [g= (log-ttt-check- 'error-id new-stx) (quasisyntax/loc new-stx e=)]
+              [g+ (log-ttt-check+ 'error-id new-stx) (quasisyntax/loc new-stx e+)]
+              [g- (raise-user-error 'error-id e-)])
              prop-expr)]
          [(_ . e*)
           #:with τλ-tailored-id (if (syntax-local-typed-context?)
@@ -121,6 +122,7 @@
        (~optional (~seq #:- g- e-)
                   #:defaults ([g- #'#t] [e- #'(error 'tailored-id "cond failure")]))
        #:φ prop-expr)
+    #:with error-id (string->symbol (substring (symbol->string (syntax-e #'tailored-id)) 1))
     (syntax/loc stx
       (define-syntax (tailored-id new-stx)
         (syntax-parse new-stx
@@ -128,9 +130,9 @@
           grd*.g ... ...
           dfn*.d ...
           (⊢ (cond
-              [g= (log-ttt-check- 'tailored-id new-stx) (quasisyntax/loc new-stx e=)]
-              [g+ (log-ttt-check+ 'tailored-id new-stx) (quasisyntax/loc new-stx e+)]
-              [g- (raise-user-error 'tailored-id e-)])
+              [g= (log-ttt-check- 'error-id new-stx) (quasisyntax/loc new-stx e=)]
+              [g+ (log-ttt-check+ 'error-id new-stx) (quasisyntax/loc new-stx e+)]
+              [g- (raise-user-error 'error-id e-)])
              prop-expr)])))]))
 
 ;(define-syntax tailored-out

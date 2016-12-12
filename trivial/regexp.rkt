@@ -1,11 +1,4 @@
-#lang racket/base
+#lang reprovide
 
-;; Stronger types for regular expression matching.
-
-(provide
-  regexp
-  pregexp
-  byte-regexp
-  byte-pregexp
-  regexp-match)
-(require trivial/private/regexp)
+(except-in trivial/private/regexp
+  R-dom)

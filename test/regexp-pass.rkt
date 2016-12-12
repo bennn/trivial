@@ -13,7 +13,7 @@
   ; (define re:normal-name (regexp (format "~a*<([^>]*)>~a*" blank blank)))
 
   ;; -- regexps, from the world
-  #;(test-case "regexp-misc"
+  (test-case "regexp-misc"
 
     (let () ;; -- from klocker? anyway the unicode will segfault `unsafe-string-ref`
       (check-equal?

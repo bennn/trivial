@@ -1,17 +1,13 @@
 #lang racket/base
 (require trivial/private/test-common)
 
-;; TODO
-;; - fix test (list-ref (list-ref ...) ...)
-
 (module+ test (test-compile-error
   #:require trivial
   #:exn #rx"out of range|Type Checker"
 
-  ;; TODO
-  ;(let ([v1  (list 1)])
-  ;  (let ([v2 (list v1)])
-  ;    (list-ref (list-ref v2 0) 1)))
+  (let ([v1  (list 1)])
+    (let ([v2 (list v1)])
+      (list-ref (list-ref v2 0) 1)))
 
   (car '())
   (cdr '())

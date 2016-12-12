@@ -1,8 +1,4 @@
-#lang racket/base
+#lang reprovide
 
-(provide
-  curry
-  lambda
-  λ
-)
-(require trivial/private/function)
+(except-in trivial/private/function
+  A-dom format-arity-error)
