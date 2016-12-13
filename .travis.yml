@@ -21,7 +21,7 @@ script:
  - raco test $TRAVIS_BUILD_DIR/trivial
  - raco test $TRAVIS_BUILD_DIR/test
 
-after_success:
- - raco pkg install --deps search-auto cover
- - raco pkg install --deps search-auto cover-coveralls
- - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -b .
+#after_success:
+# - raco pkg install --deps search-auto cover
+# - raco pkg install --deps search-auto cover-coveralls
+# - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -b .
