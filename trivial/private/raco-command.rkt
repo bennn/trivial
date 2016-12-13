@@ -2,13 +2,10 @@
 
 ;; Usage:
 ;;   raco trivial FILE.rkt
-;; If file has the *TRIVIAL-LOG* parameter set at phase 1,
-;;  this file will report all the optimizations that took place in it.
+;; Will report all the optimizations that took place in it.
 
 ;; TODO
-;; - automatically set LOG parameter
 ;; - automatically (require trivial)
-;; - work for typed OR untyped files
 
 (provide
   collect-and-summarize
@@ -18,18 +15,18 @@
   (only-in racket/file delete-directory/files)
   (only-in racket/format ~a ~r)
   (only-in racket/list last)
+  (only-in racket/logging with-intercepted-logging)
   (only-in racket/string string-split string-prefix? string-contains?)
   (only-in racket/system process)
-  trivial/private/parameters
+  (only-in trivial trivial-logger)
   racket/path
   syntax/modread
 )
 
 ;; =============================================================================
 
-(define TRIVIAL-LOG-PREFIX "[LOG")
-
 (define *ANNIHILATE* (make-parameter #f))
+(define TRIVIAL-LOG-PREFIX "ttt:")
 
 (define-syntax-rule (debug msg arg* ...)
   (begin
@@ -38,7 +35,9 @@
     (newline)))
 
 (define (log->data ln)
-  (string->symbol (last (string-split ln))))
+  ;(printf "parsing ~a~n" ln)
+  (string->symbol
+    (cadr (regexp-match #rx"CHECK. '(.+?)'" ln))))
 
 (define (rnd n)
   (~r n #:precision '(= 2)))
@@ -47,20 +46,18 @@
   (summarize-sexp fname H M))
 
 (define (summarize-sexp fname H M)
-  (printf "(~a" fname)
   (define-values (kv* pad-to) (hash->kv+pad H))
-  (for ([kv (in-list (sort kv* > #:key cdr))])
-    (define k (car kv))
-    (define num-hits (cdr kv))
-    (define num-miss (hash-ref M k 0))
-    (define total (+ num-hits num-miss))
-    (define pct (rnd (* 100 (/ num-hits total))))
-    (newline)
-    (printf "  (~a\t~a\t~a\t~a)" (~a k #:min-width pad-to) num-hits num-miss pct))
-  (printf ")\n"))
+  (cons fname
+    (for/list ([kv (in-list (sort kv* > #:key cdr))])
+      (define k (car kv))
+      (define num-hits (cdr kv))
+      (define num-miss (hash-ref M k 0))
+      (define total (+ num-hits num-miss))
+      (define pct (rnd (* 100 (/ num-hits total))))
+      (list (~a k #:min-width pad-to) num-hits num-miss pct))))
 
 (define (summarize-ascii H)
-  (define msg "Summary of trivial HITS:")
+  (define msg "Summary of trivial CHECK+S:")
   (displayln msg)
   (displayln (make-string (string-length msg) #\=))
   (define-values (kv* pad-to) (hash->kv+pad H))
@@ -77,28 +74,11 @@
             ([(k v) (in-hash H)])
     (values (cons (cons k v) acc) (max pad-to (string-length (symbol->string k))))))
 
-(define (assert-log-enabled)
-  (unless (*TRIVIAL-LOG*)
-    (raise-user-error 'trivial "Cannot collect data, need to set parameter *TRIVIAL-LOG* in module 'trivial/private/parameters'")))
-
-(define (remove-compiled ps)
-  (define c-dir (build-path (or (path-only ps) (current-directory)) "compiled"))
-  (define fname (path-replace-extension (file-name-from-path ps) "_rkt.zo"))
-  (define c-file (build-path c-dir fname))
-  (cond
-   [(*ANNIHILATE*)
-    (delete-directory/files c-dir #:must-exist? #f)]
-   [(and (directory-exists? c-dir)
-         (file-exists? c-file))
-    (delete-file c-file)]
-   [else
-    (void)]))
-
 (define (hit? line)
-  (string-contains? line "HIT"))
+  (string-contains? line "CHECK+"))
 
 (define (miss? line)
-  (string-contains? line "MISS"))
+  (string-contains? line "CHECK-"))
 
 (define (make-counter)
   (let* ([H (make-hasheq)]
@@ -109,72 +89,98 @@
                   (hash-set! H k 1)))])
     (values H H++)))
 
+(define ((compile-file path+fname))
+  (define-values (path fname)
+    (let ([po (path-only path+fname)])
+      (if po
+        (values po (file-name-from-path path+fname))
+        (values (current-directory) (if (path? path+fname)
+                                      path+fname
+                                      (string->path path+fname))))))
+  (parameterize ([current-namespace (make-base-namespace)]
+                 [current-directory path])
+    (with-module-reading-parameterization
+      (λ ()
+        (expand
+          (with-input-from-file fname
+            ;; TODO 2016-10-30 : gives bad error messages because no srcloc
+            (λ () (read-syntax fname (current-input-port)))))
+        (void)))))
+
+;; -----------------------------------------------------------------------------
+;; 2016-12-07 : copied from racket/logging v6.7.0.1
+(define (receiver-thread receiver stop-chan intercept)
+  (thread
+   (lambda ()
+     (define (clear-events)
+       (let ([l (sync/timeout 0 receiver)])
+         (when l ; still something to read
+           (intercept l) ; interceptor gets the whole vector
+           (clear-events))))
+     (let loop ()
+       (let ([l (sync receiver stop-chan)])
+         (cond [(eq? l 'stop)
+                ;; we received all the events we were supposed
+                ;; to get, read them all (w/o waiting), then
+                ;; stop
+                (clear-events)]
+               [else ; keep going
+                (intercept l)
+                (loop)]))))))
+
+(define (with-intercepted-logging interceptor proc #:logger [logger #f]
+                                  . log-spec)
+  (let* ([orig-logger (current-logger)]
+         ;; Unless we're provided with an explicit logger to monitor we
+         ;; use a local logger to avoid getting messages that didn't
+         ;; originate from proc. Since it's a child of the original logger,
+         ;; the rest of the program still sees the log entries.
+         [logger      (or logger (make-logger #f orig-logger))]
+         [receiver    (apply make-log-receiver logger log-spec)]
+         [stop-chan   (make-channel)]
+         [t           (receiver-thread receiver stop-chan interceptor)])
+    (begin0
+        (parameterize ([current-logger logger])
+          (proc))
+      (channel-put stop-chan 'stop) ; stop the receiver thread
+      (thread-wait t))))
+
+;; end copy
+;; -----------------------------------------------------------------------------
+
 (define (collect-and-summarize fname)
-   (assert-log-enabled)
-   (remove-compiled fname)
-   (define cmd (format "raco make ~a" fname))
-   (define-values (in out pid err check-status) (apply values (process cmd)))
    (define-values (H H++) (make-counter))
    (define-values (M M++) (make-counter))
    (define num-lines (box 0))
-   (define (subprocess-read)
-     (for ([line (in-lines in)])
-       (set-box! num-lines (+ 1 (unbox num-lines)))
-       (cond
-        [(string-prefix? line TRIVIAL-LOG-PREFIX)
+   (with-intercepted-logging
+     (λ (le)
+       (when (and (eq? 'info (vector-ref le 0)) (string-prefix? (vector-ref le 1) "ttt:"))
+         (define line (vector-ref le 1))
+         (set-box! num-lines (+ 1 (unbox num-lines)))
          (cond
-          [(miss? line)
-           (M++ (log->data line))]
+          [(regexp-match? #rx"CHECK" line)
+           (cond
+            [(miss? line)
+             (M++ (log->data line))]
+            [else
+             (H++ (log->data line))]
+            #;[else
+             (printf "WARNING: failed to parse log message ~a\n" line)])]
           [else
-           (H++ (log->data line))]
-          #;[else
-           (printf "WARNING: error parsing log message ~a\n" line)])]
-        [else
-         (void)])))
-   (let loop ()
-     (case (check-status 'status)
-      [(running)
-       #;(debug "Subprocess running, reading output so far")
-       (subprocess-read)
-       (loop)]
-      [(done-ok)
-       (subprocess-read)
-       #;(debug "Subprocess finished cleanly. Produced ~a lines of output." (unbox num-lines))]
-      [(done-error)
-       (parameterize ([current-output-port (current-error-port)])
-         (for ([line (in-lines err)]) (displayln line)))
-       (raise-user-error 'trace "Subprocess '~a' exited with an error" cmd)]))
-   ;; -- close pipe ports
-   (close-input-port in)
-   (close-output-port out)
-   (close-input-port err)
+           (void)])))
+     (compile-file fname)
+     #:logger trivial-logger 'info)
    ;; --
    (summarize fname H M))
 
 ;; -----------------------------------------------------------------------------
 
 (module+ main
-  (require racket/cmdline)
+  (require racket/cmdline racket/pretty)
   (command-line
    #:once-each
    [("--clean" "--all") "Make clean before running" (*ANNIHILATE* #t)]
    #:args (fname)
-   (collect-and-summarize fname)))
-
-;; -----------------------------------------------------------------------------
-;; -- trash
-
-;(require
-;  (for-syntax racket/base (only-in trivial/parameters *TRIVIAL-LOG*)))
-;(begin-for-syntax (*TRIVIAL-LOG* #t))
-;
-;(define-namespace-anchor nsa)
-;(define ns (namespace-anchor->namespace nsa))
-
-
-   ;(with-module-reading-parameterization
-   ;  (lambda ()
-   ;    (call-with-input-file fname
-   ;      (lambda (port)
-   ;        (parameterize ([current-namespace ns])
-   ;          (void (compile (read-syntax fname port))))))))
+   (define v (collect-and-summarize fname))
+   (pretty-display v)
+   (void)))

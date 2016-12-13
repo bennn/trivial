@@ -1,94 +1,102 @@
-#lang typed/racket/base
+#lang racket/base
+
+;; Track procedure arity
 
 ;; TODO
-;;  map passing, but cury failig; can't make a lambda like I'd like to
+;; - vectorized operations
+;; - improve apply?
+;; - get types
 
 ;; -----------------------------------------------------------------------------
 
-;; Track procedure arity
-;; Applications:
-;; - vectorized ops
-;; - (TODO) improve apply/map? ask Leif
-;; - TODO get types, not arity
-
 (provide
-  curry:
-  map:
-
-  ;; --
-  (for-syntax
-    fun-define
-    fun-let)
-)
+  (for-syntax A-dom format-arity-error)
+  (rename-out
+   [-curry curry]
+   [-lambda lambda]
+   [-lambda λ]))
 
 ;; -----------------------------------------------------------------------------
 
 (require
+  (prefix-in tr- (only-in typed/racket/base lambda :))
   (for-syntax
-    typed/racket/base
     syntax/parse
     racket/syntax
-    trivial/private/common
-))
+    racket/base
+    typed/untyped-utils
+    trivial/private/common))
 
 ;; =============================================================================
 
 (begin-for-syntax
-  (define TYPE-KEY 'type-label)
+  (define A-dom
+    (make-abstract-domain A
+     [x (⊥ A-dom)]))
 
-  (define (formal->type x)
-    (or (syntax-property x TYPE-KEY)
-        (format-id x "Any"))) ;; Could just use TR's Any from here
+  (define (parse-identifiers arr)
+    (map parse-identifier arr))
 
-  (define (parse-procedure-arity stx)
-    (syntax-parse stx #:literals (: #%plain-lambda lambda)
-     [(#%plain-lambda (x*:id ...) e* ...)
-      (map formal->type (syntax-e #'(x* ...)))]
-     ;; TODO polydots, keywords, optional args
-     ;; TODO standard library functions
-     [_ #f]))
+  (define (parse-identifier stx)
+    (syntax-parse stx #:literals (tr-:)
+     [_:id stx]
+     [(x tr-: _) #'x]))
 
-  (define-values (arity-key fun? fun-define fun-let)
-    (make-value-property 'procedure:arity parse-procedure-arity))
+  (define (curry-error stx msg)
+    (raise-user-error 'curry
+      "[~a:~a] ~a in ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      msg
+      (syntax->datum stx)))
 
-  (define-syntax-class/predicate procedure/arity fun?)
+  (define (format-arity-error stx [arity #f])
+    (format "[~a:~a] expected a function~a in ~a"
+      (syntax-line stx)
+      (syntax-column stx)
+      (if arity (format " with arity ~a" arity) "")
+      (syntax->datum stx)))
+
 )
 
 ;; -----------------------------------------------------------------------------
 
-(define-syntax (curry: stx)
-  (syntax-parse stx
-   [(_ p:procedure/arity)
-    #:with x* (for/list ([_t (in-list (syntax-e #'p.evidence))]) (gensym))
-    #:with p+ (for/fold ([e (quasisyntax/loc stx (p.expanded #,@#'x*))])
-                        ([x (in-list (reverse (syntax-e #'x*)))]
-                         [t (in-list (syntax-e #'p.evidence))])
-                (quasisyntax/loc stx
-                  (lambda ([#,x : #,t]) #,e)))
-    (syntax/loc stx p+)]
-   [_
-    (raise-user-error 'curry "Fail at: ~a" (syntax->datum stx))]))
+(define-syntax (-lambda stx)
+  (with-syntax ([lam (if (syntax-local-typed-context?) (syntax/loc stx tr-lambda) (syntax/loc stx lambda))])
+    (syntax-parse stx
+     [(_ arg* . e*)
+      (log-ttt-infer+ 'lambda stx)
+      (⊢ (syntax/loc stx
+           (lam arg* . e*))
+         (φ-set (φ-init) A-dom (syntax-e #'arg*)))]
+     [(_ . e*)
+      (log-ttt-infer- 'lambda stx)
+      (syntax/loc stx
+        (lam . e*))]
+     [_:id
+      (syntax/loc stx
+        lam)])))
 
-;; TODO try the other direction, inferring type from arguments.
-;;   (may not be practical here, may need to be inside TR)
-(define-syntax map: (make-alias #'map
-  (lambda (stx) (syntax-parse stx
-   [(_ p:procedure/arity e* ...)
-    ;; --
-    #:when
-      (let ([num-expected (length (syntax-e #'p.evidence))]
-            [num-actual (length (syntax-e #'(e* ...)))])
-        (unless (= num-expected num-actual)
-          (apply raise-arity-error
-            'map:
-            num-expected
-            (map syntax->datum (syntax-e #'(e* ...))))))
-    ;; --
-    #:with Listof-stx (format-id stx "Listof")
-    #:with (e+* ...)
-      (for/list ([t (in-list (syntax-e #'p.evidence))]
-                 [e (in-list (syntax-e #'(e* ...)))])
-        (quasisyntax/loc stx (ann #,e (Listof-stx #,(datum->syntax stx (syntax-e t))))))
-    (syntax/loc stx (map p.expanded e+* ...))]
-   [_ #f]))))
+(define-syntax (-curry stx)
+  (with-syntax ([lam (if (syntax-local-typed-context?) (syntax/loc stx tr-lambda) (syntax/loc stx lambda))])
+    (syntax-parse stx
+     [(_ p:~>)
+      (define arr (φ-ref (φ #'p.~>) A-dom))
+      (cond
+       [(⊥? A-dom arr)
+        (log-ttt-check- 'curry stx)
+        (curry-error stx "unknown arity")]
+       [(⊤? A-dom arr)
+        (log-ttt-check- 'curry stx)
+        (raise-user-error 'curry (format-arity-error stx))]
+       [else
+        (log-ttt-check+ 'curry stx)
+        (with-syntax ([id+* (parse-identifiers arr)])
+          (for/fold ([expr (syntax/loc stx (p.~> . id+*))])
+                    ([a (in-list (reverse arr))])
+            (quasisyntax/loc stx
+              (lam (#,a) #,expr)))) ])]
+     [_
+      (log-ttt-check- 'curry stx)
+      (curry-error stx "bad syntax")])))
 

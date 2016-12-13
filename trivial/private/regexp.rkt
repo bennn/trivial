@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang racket/base
 
 ;; Stronger types for regular expression matching.
 
@@ -13,38 +13,37 @@
 ;;   https://github.com/racket/racket/blob/master/racket/src/racket/src/regexp.c
 
 (provide
-  regexp:
-  pregexp:
-  byte-regexp:
-  byte-pregexp:
-  define-regexp:
-  let-regexp:
-
-  regexp-match:
-
-  (for-syntax
-    rx-key
-    rx-define
-    rx-let)
-)
+  (for-syntax R-dom)
+  (rename-out
+   [-regexp regexp]
+   [-pregexp pregexp]
+   [-byte-regexp byte-regexp]
+   [-byte-pregexp byte-pregexp]
+   [-regexp-match regexp-match]))
 
 (require
+  (prefix-in τ- (only-in typed/racket/base
+    car and or list-ref let regexp-match regexp pregexp byte-regexp byte-pregexp))
+  (prefix-in λ- (only-in racket/base
+    car and or list-ref let regexp-match regexp pregexp byte-regexp byte-pregexp))
+  (prefix-in ttt- (only-in trivial/private/list list))
+  trivial/private/tailoring
   (for-syntax
     (only-in racket/syntax format-id)
-    typed/racket/base
+    racket/base
     (only-in racket/list range)
     (only-in racket/format ~a)
     syntax/parse
+    typed/untyped-utils
     trivial/private/common))
 
 ;; =============================================================================
 
 (begin-for-syntax
-  (define errloc-key     'regexp-match:)
 
-  (define (group-error stx str reason)
-    (raise-user-error errloc-key
-      "(~a:~a) Invalid regexp pattern (unmatched ~a) in ~a"
+  (define (format-group-error stx str reason)
+    (format
+      "[~a:~a] Invalid regexp pattern (unmatched ~a) in ~s"
       (syntax-line stx)
       (syntax-column stx)
       reason
@@ -54,7 +53,7 @@
   ;; On success, return (Listof Boolean)
   ;; - booleans indicating "always succeeds" (#t) and "may fail" (#f)
   (define (parse-groups v-stx)
-    (define v (quoted-stx-value? v-stx))
+    (define v (syntax-e v-stx))
     (cond
       [(string? v)        (parse-groups/string v #:src v-stx)]
       [(regexp? v)        (parse-groups/regexp v #:src v-stx)]
@@ -62,7 +61,7 @@
       [(bytes? v)         (parse-groups/bytes v #:src v-stx)]
       [(byte-regexp? v)   (parse-groups/byte-regexp v #:src v-stx)]
       [(byte-pregexp? v)  (parse-groups/byte-pregexp v #:src v-stx)]
-      [else               #f]))
+      [else               (⊥ R-dom)]))
 
   (define (parse-groups/string str #:src stx)
     (parse-groups/untyped str #:src stx))
@@ -82,10 +81,6 @@
   (define parse-groups/byte-pregexp
     parse-groups/byte-regexp)
 
-  (define-values (rx-key rx? rx-define rx-let)
-    (make-value-property 'rx:groups parse-groups))
-  (define-syntax-class/predicate pattern/groups rx?)
-
   ;; (-> String #:src Syntax (Listof Boolean))
   (define (parse-groups/untyped str #:src stx)
     (define char->pos*
@@ -101,28 +96,36 @@
         (if (list? r)
           r
           (let ([brack-char (if (memv r l-brack-pos*) "[" "]")])
-            (group-error stx str (format "'~a' at index ~a" brack-char r))))))
-    ;; -- ignore characters between a pair of brackets
-    (define-values (l-paren-pos* r-paren-pos* pipe-pos* ?-pos*)
-      (apply values
-        (for/list ([c (in-list '(#\( #\) #\| #\?))])
-          (ivl-remove* brack-ivl* (char->pos* c)))))
-    ;; -- check that () are matched
-    (define paren-ivl*
-      (let ([r (pair-up l-paren-pos* r-paren-pos*)])
-        (if (list? r)
-          r
-          (let ([paren-char (if (memv r l-paren-pos*) "(" ")")])
-            (group-error stx str (format "'~a' at index ~a" paren-char r))))))
-    ;; -- groups = #parens.
-    ;;    may fail to capture if has | outside (that are not nested in other parens)
-    ;;    or ? after close
-    (for/list ([ivl (in-list paren-ivl*)]
-               #:when (not (has-?-before ivl ?-pos*)))
-      (and
-        (not (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*))
-        (not (has-*-after ivl str))
-        (not (has-?-after ivl ?-pos*)))))
+            (⊤ R-dom (format-group-error stx str (format "'~a' at index ~a" brack-char r)))))))
+    (cond
+     [(⊤? R-dom brack-ivl*)
+      brack-ivl*]
+     [else
+      ;; -- ignore characters between a pair of brackets
+      (define-values (l-paren-pos* r-paren-pos* pipe-pos* ?-pos*)
+        (apply values
+          (for/list ([c (in-list '(#\( #\) #\| #\?))])
+            (ivl-remove* brack-ivl* (char->pos* c)))))
+      ;; -- check that () are matched
+      (define paren-ivl*
+        (let ([r (pair-up l-paren-pos* r-paren-pos*)])
+          (if (list? r)
+            r
+            (let ([paren-char (if (memv r l-paren-pos*) "(" ")")])
+              (⊤ R-dom (format-group-error stx str (format "'~a' at index ~a" paren-char r)))))))
+      (cond
+       [(⊤? R-dom paren-ivl*) ;; jeez we need a monad
+        paren-ivl*]
+       [else
+        ;; -- groups = #parens.
+        ;;    may fail to capture if has | outside (that are not nested in other parens)
+        ;;    or ? after close
+        (for/list ([ivl (in-list paren-ivl*)]
+                   #:when (not (has-?-before ivl ?-pos*)))
+          (and
+            (not (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*))
+            (not (has-*-after ivl str))
+            (not (has-?-after ivl ?-pos*))))])]))
 
   (define (has-?-before ivl ?-pos*)
     (define pos-before (+ 1 (car ivl))) ;; Well, just inside the paren.
@@ -237,47 +240,56 @@
     (and (< (car ivl) i)
          (< i (cdr ivl))))
 
+  (define R-dom
+    (make-abstract-domain R
+     [x
+      (parse-groups #'x)]))
+
 )
 
 ;; -----------------------------------------------------------------------------
 
-(define-syntax (define-matcher* stx)
+(define-syntax (define-matcher stx)
   (syntax-parse stx
-   [(_ f*:id ...)
-    #:with (f+* ...) (for/list ([f (in-list (syntax-e #'(f* ...)))])
-                       (format-id stx "~a:" (syntax-e f)))
-    #`(begin
-        (define-syntax f+* (make-alias #'f*
-          (lambda (stx) (syntax-parse stx
-           [(_ pat:pattern/groups)
-            (syntax-property
-              (syntax/loc stx (f* pat.expanded))
-              rx-key
-              #'pat.evidence)]
-           [_ #f])))) ...)]))
+   [(_ tid:id)
+    #:with -tid (format-id stx "-~a" (syntax-e #'tid))
+    #:with τ-tid (format-id stx "τ~a" (syntax-e #'-tid))
+    #:with λ-tid (format-id stx "λ~a" (syntax-e #'-tid))
+    (syntax/loc stx
+      (define-tailoring (-tid [e ~> e+ (φ [R-dom ↦ g])])
+        #:with +tid (τλ (syntax τ-tid) (syntax λ-tid))
+        #:= (⊥? R-dom g)
+            (+tid e+)
+        #:+ #t
+            (+tid e+)
+        #:φ φ))]))
 
-(define-matcher* regexp pregexp byte-regexp byte-pregexp)
+(define-matcher regexp)
+(define-matcher pregexp)
+(define-matcher byte-regexp)
+(define-matcher byte-pregexp)
 
-(define-syntax define-regexp: (make-keyword-alias 'define rx-define))
-(define-syntax let-regexp: (make-keyword-alias 'let rx-let))
-
-(define-syntax regexp-match: (make-alias #'regexp-match
-  (lambda (stx) (syntax-parse stx
-   [(_ pat:pattern/groups arg* ...)
-    #:with capture?* (syntax/loc stx pat.evidence)
-    (quasisyntax/loc stx
-      (let ([maybe-match (regexp-match pat.expanded arg* ...)])
-        (if maybe-match
-          ;; -- Use `(or ... error)` to force guaranteed-capture groups.
-          (let ([rxm-error (lambda (i) (raise-user-error 'regexp-match: "Possible bug: expected group ~a to capture based on rx pattern '~a', but capture failed.\n  Please report to 'http://github.com/bennn/trivial/issues' and use Racket's regexp-match in the meantime." i pat.expanded))])
-            (list (car maybe-match)
-                  #,@(for/list ([capture?-stx (in-list (syntax-e #'capture?*))]
+(define-tailoring (-regexp-match [pat ~> pat+ (φ [R-dom ↦ capture?*])]
+                                 [e* ~> e+* (φ*)] ...)
+  #:with +list-ref (τλ #'τ-list-ref #'λ-list-ref)
+  #:with +rxm (τλ #'τ-regexp-match #'λ-regexp-match)
+  #:with +let (τλ #'τ-let #'λ-let)
+  #:with +car (τλ #'τ-car #'λ-car)
+  #:with +and (τλ #'τ-and #'λ-and)
+  #:with +or  (τλ #'τ-or  #'λ-or)
+  #:= (⊥? R-dom capture?*)
+      (+rxm pat+ e+* ...)
+  #:+ #t
+      (+let ([maybe-match (+rxm pat+ e+* ...)])
+        (+and maybe-match
+              (+let ([rxm-error (lambda (i) (error 'regexp-match: "Internal error: expected group ~a to capture based on rx pattern '~a', but capture failed.\n  Please report to 'http://github.com/bennn/trivial/issues' and use Racket's regexp-match in the meantime." i 'pat+))])
+                (ttt-list
+                  (+car maybe-match)
+                  #,@(for/list ([capture?-stx (in-list capture?*)]
                                 [i (in-naturals 1)])
-                       (if (syntax-e capture?-stx)
-                         (quasisyntax/loc stx
-                           (or (list-ref maybe-match '#,i) (rxm-error '#,i)))
-                         (quasisyntax/loc stx
-                           (list-ref maybe-match '#,i))))))
-          #f)))]
-   [_ #f]))))
+                       (if capture?-stx
+                         #`(+or (+list-ref maybe-match '#,i)
+                                (rxm-error '#,i))
+                         #`(+list-ref maybe-match '#,i)))))))
+  #:φ (φ-init))
 

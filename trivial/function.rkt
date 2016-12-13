@@ -1,8 +1,4 @@
-#lang typed/racket/base
+#lang reprovide
 
-(provide
-  curry:
-  map:
-)
-
-(require trivial/private/function)
+(except-in trivial/private/function
+  A-dom format-arity-error)
