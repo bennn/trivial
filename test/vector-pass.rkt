@@ -88,8 +88,8 @@
       (vector-map add1 (vector-map add1 (vector-map add1 (vector 0 0 0))))
       (vector 3 3 3))
 
-    (check-equal?
-      ((lambda ([v : (Vectorof (Vectorof Any))])
+    #;(check-equal?
+      ((lambda ([v : (Vectorof (Vectorof Integer))])
         (vector-map vector-length v))
        (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
       (vector 1 2 3 4))
@@ -123,8 +123,8 @@
        (vector-map! add1 (vector-map! add1 (vector-map! add1 (vector 0 0 0))))
        (vector 3 3 3))
 
-     (check-equal?
-       ((lambda ([v : (Vectorof (Vectorof Any))])
+     #;(check-equal?
+       ((lambda ([v : (Vectorof (Vectorof Integer))])
          (vector-map! (lambda ([x : (Vectorof Any)]) (vector (vector-ref x 0)))  v))
         (vector (vector 1) (vector 2 2) (vector 3 3 3) (vector 4 4 4 4)))
        '#(#(1) #(2) #(3) #(4)))

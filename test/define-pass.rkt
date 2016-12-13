@@ -2,6 +2,7 @@
 (require
   trivial/define
   trivial/integer
+  trivial/list
   trivial/regexp
   trivial/vector)
 
@@ -52,16 +53,16 @@
 
   ;; let*
   (check-equal?
-   (let*: ([v (list 1 2 3)]
-           [w v]
-           [k 42])
-     (ann (length: w) 3))
+   (let* ([v (list 1 2 3)]
+          [w v]
+          [k 42])
+     (ann (length w) 3))
    3)
 
   ;; let with different kinds of bindings
   (check-equal?
-   (let: ([v (list 1 2 3)]
-          [k 42])
-     (ann (length: v) 3))
+   (let ([v (list 1 2 3)]
+         [k 42])
+     (ann (length v) 3))
    3)
 )
