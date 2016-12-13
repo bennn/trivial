@@ -5,6 +5,7 @@ trivial
 [![Scribble](https://img.shields.io/badge/Docs-Scribble-blue.svg)](http://docs.racket-lang.org/trivial/index.html)
 
 The `trivial` library implements _type tailoring_ for a variety of standard library operations.
+
 The tailored operations catch more errors statically and raise fewer unnecessary type errors.
 
 ```
@@ -25,8 +26,7 @@ The tailored operations catch more errors statically and raise fewer unnecessary
 ```
 
 See the documentation for more details.
-
-    [http://docs.racket-lang.org/trivial/index.html](http://docs.racket-lang.org/trivial/index.html)
+[http://docs.racket-lang.org/trivial/index.html](http://docs.racket-lang.org/trivial/index.html)
 
 
 Install
