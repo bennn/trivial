@@ -10,8 +10,6 @@
   φ
   ;; (-> Syntax Phi)
   ;; gets the proposition map associated with its first argument
-  ;; When the 2nd argument is non-#f, returns the corresponding
-  ;;  value for the domain instead of the map.
 
   ⊢
   ;; (-> Syntax Phi Syntax)
@@ -24,6 +22,9 @@
   φ-mutated
   ;; Global set of set!'d variables.
   ;; Also sad.
+
+  φ?
+  ;; (-> any/c boolean?)
 
   φ-init
   ;; (-> Phi)
@@ -61,6 +62,11 @@
   ;; - a sequence of syntax-parse clauses
   ;;   Describe how to parse "domain information" from **values**
   ;;   (Use __TODO__ to parse & propagate information from expressions)
+
+  abstract-domain?
+
+  in-domain?
+  ;; (-> abstract-domain? (-> any/c boolean?))
 
   κ
   ;; (-> AbstractDomain Symbol)
@@ -265,7 +271,7 @@
   ;;  ideally a value but maybe also an "I don't know" or an "impossible"
 
   ⊑
-  ;; (-> [Dom X] Dom
+  ;; (-> [Dom X] Dom TODO)
 ])
 
 ;; TODO better name
@@ -273,6 +279,10 @@
   top ;; Symbol, the top element for a given domain
   msg ;; String, an error message
 ))
+
+(define (in-domain? d)
+  ;; TODO implement me!
+  (λ (x) #true))
 
 (define (κ d)
   (abstract-domain-κ d))

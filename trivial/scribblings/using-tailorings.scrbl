@@ -1,9 +1,14 @@
 #lang scribble/manual
 @require[
+  scribble/example
   (for-label
     racket/base
-    racket/contract)
+    racket/contract
+    racket/function
+    (only-in typed/untyped-utils syntax-local-typed-context?))
 ]
+
+@(define (make-typed-eval) (make-base-eval #:lang 'typed/racket '(begin (require trivial))))
 
 @; =============================================================================
 @title[#:tag "ttt:tutorial"]{Using Tailorings}
@@ -51,6 +56,19 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 
   When the arity of the procedure @racket[f] is available during expansion, expands to a curried version of @racket[f].
   In other words, if @racket[f] is a function of @racket[N] arguments then @racket[(curry f)] is a chain of @math{N} one-argument functions.
+
+  For example,
+  @racketblock[
+    (curry (λ (x y z) (+ (* x y) z)))
+  ]
+
+  behaves the same as:
+  @racketblock[
+    (λ (x)
+      (λ (y)
+        (λ (z)
+          (+ (* x y) z))))
+  ]
 }
 
 @deftogether[(
@@ -86,7 +104,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
   @defproc[(add1 [n integer?]) integer?]{}
   @defproc[(sub1 [n integer?]) integer?]{}
 )]{
-  Constant-folding increment and decrement.
+  Increment and decrement functions that propagate the value of their argument.
 }
 
 @defproc[(expt [n1 integer?] [n2 integer?]) integer?]{
@@ -118,6 +136,14 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
   Operations that access lists check for bounds errors and propagate information about cells within a list.
 
   Higher-order list functions check the arity of their functional argument; in particular, @racket[map] includes a static check that the arity of its first argument includes the number of lists supplied at the call-site.
+
+  These Typed Racket examples demonstrate terms that would not typecheck without the @racketmodname[trivial] library.
+
+  @examples[#:eval (make-typed-eval)
+    (ann (- (length '(1 2 3)) 3) Zero)
+    (ann (list-ref (make-list 5 0) 2) Zero)
+    (ann (list-ref (list-ref '((A)) 0) 0) 'A)
+  ]
 }
 
 
@@ -138,6 +164,14 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
            (or/c #f (cons/c string? (listof (or/c string? #f))))
            (or/c #f (cons/c bytes?  (listof (or/c bytes?  #f)))))]{
   When possible, the type of the result list (in the case of a successful match) matches the number of groups in @racket[pattern].
+
+  @margin-note{This example is adapted from @racketmodname[scribble/html-render]}
+  @examples[#:eval (make-typed-eval)
+      (: parse-font-size : String -> (List String String (U #f String) String))
+      (define (parse-font-size str)
+        (or (regexp-match #rx"^([0-9]*\\.?([0-9]+)?)(em|ex|pt|%|)$" str)
+            (error 'malformed-input)))
+  ]
 }
 
 
@@ -167,7 +201,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 
 @section{Typed / Untyped Interaction}
 
+@margin-note{The implementation is a little ugly, but it works for now.}
 The macros provided by @racketmodname[trivial] and related submodules are all untyped, but should work @bold{with no problems} in Typed Racket modules.
-Under the hood, these macros keep two copies of every tailored identifier and use @racket[syntax-local-typed-context?] to choose the appropriate identifiers (and whether to expand to type-annotated code).
-(The implementation is a little ugly, but it should work!)
+Under the hood, these macros keep two copies of every tailored identifier and use @racket[syntax-local-typed-context?] to choose the appropriate identifiers and whether to expand to type-annotated code.
 

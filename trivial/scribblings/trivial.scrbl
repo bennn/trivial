@@ -58,8 +58,7 @@ Save the following (correct) Racket module:
     (cond
      [(regexp-match #rx"^([a-z]+) and ([a-z]+)$" str)
       => caddr]
-     [else
-      "???"]))
+     [else "???"]))
 
   (get-sidekick "batman and alfred")
 }
@@ -74,8 +73,7 @@ Now try converting it to Typed Racket:
     (cond
      [(regexp-match #rx"^([a-z]+) and ([a-z]+)$" str)
       => caddr]
-     [else
-      "???"]))
+     [else "???"]))
 
   (get-sidekick "batman and alfred")
 }
@@ -87,11 +85,11 @@ Adding @racket[(require trivial)] to the top of the file removes the error.
 @subsection{What is Tailoring, Really?}
 
 A tailored function @racket[f+] is really a macro that examines its call site and attempts to combine knowledge about the behavior of @racket[f] with @emph{static properties} of its arguments.
-If all goes well, the tailoring will identify and error or transform the call site into an equivalent, but more efficient or more Typed-Racket-friendly, call.
+If all goes well, the tailoring will either (1) identify an error or (2) transform the call site into an equivalent---but more efficient or more Typed-Racket-friendly---call.
 Otherwise, the call to @racket[f+] behaves exactly as a call to @racket[f] would.
 
 In general, the @emph{static properties} could be the result of any static analysis.
-But this library is limited to properties that other macros can establish through local analysis and attach propagate via @reftech{syntax properties}.
+But this library is limited to properties that other macros can establish through local analysis and propagate via @reftech{syntax properties}.
 See @secref{ttt:api} for more details.
 
 @include-section{using-tailorings.scrbl}

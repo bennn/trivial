@@ -66,6 +66,10 @@
         ((lambda ([f : (-> (Listof Any) Natural Any)])
           (f (list 0 1 2) 10)) list-ref)))
 
+    (check-equal?
+      (ann (list-ref (list-ref '((A)) 0) 0) 'A)
+      'A)
+
     (let ([v1  (list 'X)])
       (let ([v2 (list v1)])
         (check-equal? (list-ref (list-ref v2 0) 0) 'X))))
