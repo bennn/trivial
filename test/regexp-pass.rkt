@@ -6,6 +6,7 @@
 
   (require
     trivial/regexp
+    trivial/string
     trivial/define
     typed/rackunit)
 
@@ -421,4 +422,13 @@
         (regexp-match "((a)b)" "abc")
         (U #f (List String String String)))
       '("ab" "ab" "a")))
+
+  (test-case "regexp:string"
+    (let ([s0 "a*"]
+          [s1 "b*"])
+      (check-equal?
+        (ann
+          (regexp-match (string-append "(" s0 ")" s1) "aaab")
+          (U #f (List String String)))
+        '("aaab" "aaa"))))
 )

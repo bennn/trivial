@@ -8,6 +8,7 @@ trivial/function
 trivial/list
 trivial/integer
 trivial/regexp
+trivial/string
 trivial/vector
 (only-in trivial/private/common
   [ttt-logger trivial-logger])

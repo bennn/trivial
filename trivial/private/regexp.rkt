@@ -28,6 +28,7 @@
     car and or list-ref let regexp-match regexp pregexp byte-regexp byte-pregexp))
   (prefix-in ttt- (only-in trivial/private/list list))
   trivial/private/tailoring
+  (only-in trivial/private/string S-dom B-dom)
   (for-syntax
     (only-in racket/syntax format-id)
     racket/base
@@ -243,7 +244,11 @@
   (define R-dom
     (make-abstract-domain R
      [x
-      (parse-groups #'x)]))
+      (let* ([φ (φ #'x)]
+             [s (φ-ref φ S-dom)])
+        (if (or (string? s) (bytes? s))
+          (parse-groups (quasisyntax/loc stx #,s))
+          (parse-groups #'x)))]))
 
 )
 

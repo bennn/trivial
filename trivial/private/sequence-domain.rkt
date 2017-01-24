@@ -59,6 +59,11 @@
   ;; Make an error message that says `i` is an invalid access to the value
   ;; in the syntax object `stx`.
 
+  format-slice-error
+  ;; (-> Syntax Integer Integer String)
+  ;; (format-slice-error stx lo hi)
+  ;; Make an error message that says `[lo,hi)` is an invalid slice range.
+
 )
 
 (require
@@ -255,6 +260,13 @@
           (syntax-line stx)
           (syntax-column stx)
           i
+          (syntax->datum stx)))
+
+(define (format-slice-error stx lo hi)
+  (format "[~a:~a] Invalid slice range [~a,~a) for '~a'"
+          (syntax-line stx)
+          (syntax-column stx)
+          lo hi
           (syntax->datum stx)))
 
 ;; =============================================================================

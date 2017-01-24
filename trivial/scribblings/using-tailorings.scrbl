@@ -174,6 +174,27 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
   ]
 }
 
+@defmodule[trivial/string]
+
+@deftogether[(
+  @defproc[(string-length [str string?]) exact-nonnegative-integer?]{}
+  @defproc[(string-ref [str string?] [k exact-nonnegative-integer?]) char?]{}
+  @defproc[(substring [str string?] [start exact-nonnegative-integer?] [end exact-nonnegative-integer? (string-length str)]) string?]{}
+  @defproc[(string-append [str string?] ...) string?]{}
+)]
+@deftogether[(
+  @defproc[(bytes-length [bstr bytes?]) exact-nonnegative-integer?]{}
+  @defproc[(bytes-ref [bstr bytes?] [k exact-nonnegative-integer?]) byte?]{}
+  @defproc[(subbytes [bstr bytes?] [start exact-nonnegative-integer?] [end exact-nonnegative-integer? (bytes-length bstr)]) bytes?]{}
+  @defproc[(bytes-append [bstr bytes?] ...) bytes?]{}
+)]{
+  String and byte string operations that track the value of their arguments.
+
+  @examples[#:eval (make-typed-eval)
+    (regexp-match (string-append "(" "a*" ")") "aaa")
+  ]
+}
+
 
 @defmodule[trivial/vector]
 
