@@ -19,25 +19,29 @@ Note that these tailorings have the same name as their Racket and Typed Racket e
 The descriptions below assume familiarity with the Racket reference and describe only the new behavior of the tailored function or form.
 Click the name of any tailoring to see its definition in the Racket reference.
 
+@section{Built-in Tailorings}
+
+@subsection{Definitions}
 @defmodule[trivial/define]
 
 @bold{WARNING} the static analysis implemented by @racket[trivial/define] is unsound in the presence of @racket[set!].
 Do not @racket[set!] in a module that uses @racket[trivial/define].
 
 @deftogether[(
-  @defform[(define id expr)]{}
-  @defform[(define (head args) expr)]{}
+  @defform[#:id define (define id expr)]{}
+  @defform/none[(define (head args) expr)]{}
 )]{
   Forces local expansion of @racket[expr] and associates any inferred properties with @racket[id] for the rest of expansion.
 }
 
 @deftogether[(
-  @defform[(let ([id val-expr] ...) body ...+)]{}
-  @defform[(let* ([id val-expr] ...) body ...+)]{}
+  @defform[#:id let (let ([id val-expr] ...) body ...+)]{}
+  @defform[#:id let* (let* ([id val-expr] ...) body ...+)]{}
 )]{
   Forces local expansion of each @racket[val-expr] and associates any inferred properties with the respective @racket[id] in the context of @racket[body ...+].
 }
 
+@subsection{Format Strings}
 @defmodule[trivial/format]
 
 @deftogether[(
@@ -49,9 +53,10 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 }
 
 
+@subsection{Functions}
 @defmodule[trivial/function]
 
-@defform[(curry f)]{
+@defform[#:id curry (curry f)]{
   This form does not have a Typed Racket equivalent.
 
   When the arity of the procedure @racket[f] is available during expansion, expands to a curried version of @racket[f].
@@ -72,14 +77,15 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 }
 
 @deftogether[(
-  @defform[(lambda (id ...) body)]{}
-  @defform[(λ (id ...) body)]{}
+  @defform[#:id lambda (lambda (id ...) body)]{}
+  @defform[#:id λ (λ (id ...) body)]{}
 )]{
   Expands to an anonymous function with known arity.
   Other tailorings can access this arity.
 }
 
 
+@subsection{Integer Arithmetic}
 @defmodule[trivial/integer]
 
 @deftogether[(
@@ -114,6 +120,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 }
 
 
+@subsection{List Operations}
 @defmodule[trivial/list]
 
 @deftogether[(
@@ -147,6 +154,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 }
 
 
+@subsection{Regular Expressions}
 @defmodule[trivial/regexp]
 
 @deftogether[(
@@ -174,6 +182,8 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
   ]
 }
 
+
+@subsection{String Operations}
 @defmodule[trivial/string]
 
 @deftogether[(
@@ -196,6 +206,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 }
 
 
+@subsection{Vector Operations}
 @defmodule[trivial/vector]
 
 @deftogether[(
@@ -222,7 +233,7 @@ Do not @racket[set!] in a module that uses @racket[trivial/define].
 
 @section{Typed / Untyped Interaction}
 
-@margin-note{The implementation is a little ugly, but it works for now.}
+@; @margin-note{The implementation is a little ugly, but it works for now.}
 The macros provided by @racketmodname[trivial] and related submodules are all untyped, but should work @bold{with no problems} in Typed Racket modules.
 Under the hood, these macros keep two copies of every tailored identifier and use @racket[syntax-local-typed-context?] to choose the appropriate identifiers and whether to expand to type-annotated code.
 
