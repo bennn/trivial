@@ -247,7 +247,7 @@
       (let* ([φ (φ #'x)]
              [s (φ-ref φ S-dom)])
         (if (or (string? s) (bytes? s))
-          (parse-groups (quasisyntax/loc stx #,s))
+          (parse-groups #'#,s)
           (parse-groups #'x)))]))
 
 )
