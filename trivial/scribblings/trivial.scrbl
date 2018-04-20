@@ -31,7 +31,7 @@ A tailored function @racket[f+]:
   but can catch runtime errors during @reftech{expansion}
 }
 @item{
-  and is more likely to work in both Typed Racket and Racket contexts.
+  and may typecheck a little smoother in Typed Racket.
 }
 ]
 
@@ -82,7 +82,7 @@ The file doesn't compile anymore.
 Adding @racket[(require trivial)] to the top of the file removes the error.
 
 
-@subsection{What is Tailoring, Really?}
+@subsection{Technical Description}
 
 A tailored function @racket[f+] is really a macro that examines its call site and attempts to combine knowledge about the behavior of @racket[f] with @emph{static properties} of its arguments.
 If all goes well, the tailoring will either (1) identify an error or (2) transform the call site into an equivalent---but more efficient or more Typed-Racket-friendly---call.
