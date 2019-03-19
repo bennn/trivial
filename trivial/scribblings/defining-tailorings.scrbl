@@ -54,7 +54,7 @@ If the value of its argument is known during expansion, it expands to an integer
     #:φ (φ-set (φ-init) integer-domain (reduce integer-domain + i 1)))
 }
 
-Here how to read the un-hygienic @racket[define-tailoring] form:
+Here is how to read the un-hygienic @racket[define-tailoring] form:
 @itemlist[
 @item{
   @racket[-add1] is a macro expecting one argument, named @racket[e].
