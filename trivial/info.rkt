@@ -2,7 +2,6 @@
 (define collection "trivial")
 (define deps '("base"
                "db-lib"
-               "math-lib"
                "plot-lib"
                "rackunit-lib"
                "reprovide-lang"
