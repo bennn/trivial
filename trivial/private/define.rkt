@@ -29,7 +29,7 @@
   (with-syntax ([+let (if (syntax-local-typed-context?) (syntax/loc stx tr-let) (syntax/loc stx let))])
     (syntax-parse stx
      [(_ ([name ann ... e:~>]) . body)
-      (define e-φ (φ #'e.~>))
+      (define e-φ (φ (syntax-local-introduce #'e.~>)))
       (log-ttt-debug "(let ~a ~a)" #'name e-φ)
       (quasisyntax/loc stx
         (+let ([name ann ... e.~>])
@@ -83,7 +83,7 @@
                                            (*STOP-LIST*))])
           (syntax-parse #'e [e:~> #'e.~>]))
       (define e-φ (φ #'e~))
-      (free-id-table-set! φ-tbl #'name e-φ)
+      (free-id-table-set! φ-tbl (syntax-local-introduce #'name) e-φ)
       (log-ttt-debug "(define ~a ~a)" #'name e-φ)
       (syntax/loc stx
         (+define name ann* ... e~))]
