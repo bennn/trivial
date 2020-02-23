@@ -82,11 +82,15 @@
                                            (syntax/loc stx name)
                                            (*STOP-LIST*))])
           (syntax-parse #'e [e:~> #'e.~>]))
-      (define e-φ (φ #'e~))
-      (free-id-table-set! φ-tbl (syntax-local-introduce #'name) e-φ)
-      (log-ttt-debug "(define ~a ~a)" #'name e-φ)
+      #:with e-φ (φ #'e~)
+      (log-ttt-debug "(define ~a ~a)" #'name #'e-φ)
       (syntax/loc stx
-        (+define name ann* ... e~))]
+        (begin
+          (+define name ann* ... e~)
+          (define-syntaxes ()
+            (begin
+              (free-id-table-set! φ-tbl #'name 'e-φ)
+              (values)))))]
      [(_ . e*)
       (syntax/loc stx
         (+define . e*))])))

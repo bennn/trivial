@@ -206,9 +206,10 @@
   (or (if (identifier? stx)
         (and (not (free-id-set-member? φ-mutated stx))
              (or (free-id-table-ref φ-tbl stx #f)
-                 (for/first (((k v) (in-free-id-table φ-tbl))
+                 #;(for/first (((k v) (in-free-id-table φ-tbl))
                              #:when (free-identifier=? stx k))
-                   v)
+                     ;; brute-force lookup, see https://github.com/bennn/trivial/issues/52
+                     v)
                  (syntax-property stx φ-key)))
         (syntax-property stx φ-key))
       (φ-init)))
