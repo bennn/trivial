@@ -282,7 +282,7 @@
 (struct top/reason (
   top ;; Symbol, the top element for a given domain
   msg ;; String, an error message
-))
+) #:prefab)
 
 (define (in-domain? d)
   ;; TODO implement me!
