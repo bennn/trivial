@@ -6,6 +6,7 @@
     racket/base
     racket/contract
     syntax/parse
+    trivial/tailoring
     (only-in typed/racket/base Integer String Exact-Number Char))
 ]
 
@@ -467,6 +468,11 @@ Each map relates property domains to values in the domain (or the bottom element
 
 
 @section{Miscellaneous}
+
+@defform[(τλ typed-id untyped-id)]{
+  Chooses @racket[typed-id] or @racket[untyped-id] depending on whether the
+   currently-expanding module is from @racketmodname[typed/racket] or not.
+}
 
 @defthing[trivial-logger logger?]{
   Logs events to the @racket{ttt} topic.
