@@ -1,7 +1,7 @@
 #lang racket/base
 
 (provide
-  postgres-parameter?
+  mysql-parameter?
   ;; (-> Any (Option Natural))
   ;; If input is a Postgres parameter, return the parameter number.
   ;;  i.e $2 -> 2
@@ -39,14 +39,11 @@
   and)
 
 ;; Check for query parameters. Currently only for Postgres.
-(define (postgres-parameter? s)
+(define (mysql-parameter? s)
   (and
    (or (string? s) (symbol? s))
    (let ([str (if (string? s) s (symbol->string s))])
-     (and
-      (= 2 (string-length str))
-      (eq? #\$ (string-ref str 0))
-      (string->number (string (string-ref str 1)))))))
+     (string=? "?" str))))
 
 (module+ test
   (require rackunit rackunit-abbrevs)
@@ -104,18 +101,19 @@
     => #f]
   )
 
-  (check-apply* postgres-parameter?
+  (check-apply* mysql-parameter?
    ["$1"
-    => 1]
+    => #false]
    ['$1
-    => 1]
-   ["$125"
-    => #f]
-   ['$555
-    => #f]
+    => #false]
+   ["?"
+    => #true]
+   ['?
+    => #true]
    ['wepa
     => #f]
    [3
     => #f]
   )
 )
+

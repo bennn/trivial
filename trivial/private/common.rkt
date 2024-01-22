@@ -53,7 +53,7 @@
   ;;  where ⊥ and ⊤ are the bottom & top elements for the abstract domain
 
   make-abstract-domain
-  ;; #(-> Identifier #:order (-> X X Boolean) [Syntax -> [Dom X]] * [AbstractDomain X])
+  ;; #(-> Identifier #:leq (-> X X Boolean) [Syntax -> [Dom X]] * [AbstractDomain X])
   ;; Create an 'abstract domain' from:
   ;; - an identifier (symbol)
   ;; - (optional) an order relation
