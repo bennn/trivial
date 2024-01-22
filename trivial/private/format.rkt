@@ -38,10 +38,11 @@
 
   (define (format-format-arity-error stx expect)
     (format
-      "[~a:~a] format string expected ~a arguments, given ~a"
+      "[~a:~a] format string expected ~a argument~a, given ~a"
       (syntax-line stx)
       (syntax-column stx)
       expect
+      (if (equal? 1 expect) "" "s")
       (syntax->datum stx)))
 
   ;; Count the number of format escapes in a string.
@@ -75,10 +76,10 @@
               (loop (+ i 3) acc))]
            [(#\c #\C)
             ;; Need 1 `char?`
-            (loop (+ i 2) (cons (syntax/loc stx τ-Char) acc))]
+            (loop (+ i 2) (cons 'τ-Char acc))]
            [(#\b #\B #\o #\O #\x #\X)
             ;; Need 1 `exact?`
-            (loop (+ i 2) (cons (syntax/loc stx τ-Exact-Number) acc))]
+            (loop (+ i 2) (cons 'τ-Exact-Number acc))]
            [else
             ;; Invalid format sequence
             (⊤ F-dom (format-format-error stx str i))])]
@@ -93,8 +94,8 @@
 (define-syntax (define-formatter stx)
   (syntax-parse stx
    [(_ -fmt:id)
-    #:with λ-fmt (format-id stx "λ~a" (syntax-e #'-fmt))
-    #:with τ-fmt (format-id stx "τ~a" (syntax-e #'-fmt))
+    #:with λ-fmt (format-id stx "λ~a" #'-fmt)
+    #:with τ-fmt (format-id stx "τ~a" #'-fmt)
     (syntax/loc stx
       (define-tailoring (-fmt [e1 ~> e1+ (φ1 [F-dom ↦ fmt?])]
                               [e* ~> e+* (φ*)] (... ...))
@@ -106,7 +107,7 @@
         #:+ (= num-given (length fmt?))
             (+f e1+ #,@(for/list ([a (in-list (syntax-e #'(e* (... ...))))]
                                   [t (in-list fmt?)])
-                         (if (and t (syntax-e t) typed-context?)
+                         (if (and t typed-context?)
                            #`(τ-ann #,a #,t)
                            a)))
         #:- #t
