@@ -30,6 +30,8 @@
   trivial/private/tailoring
   (only-in trivial/private/string S-dom B-dom)
   (for-syntax
+    (rename-in trivial/private/sequence-domain
+      [list-domain L-dom])
     (only-in racket/syntax format-id)
     racket/base
     (only-in racket/list range)
@@ -126,7 +128,15 @@
           (and
             (not (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*))
             (not (has-*-after ivl str))
-            (not (has-?-after ivl ?-pos*))))])]))
+            (not (has-?-after ivl ?-pos*))
+            (unsound-choose-bracket (substring str (+ 1 (car ivl)) (cdr ivl)))))])]))
+
+  (define (unsound-choose-bracket str)
+    (define L (string-length str))
+    (if (and (eq? #\[ (string-ref str 0))
+             (eq? #\] (string-ref str (- L 1))))
+      (string (string-ref str (- L 2)))
+      str))
 
   (define (has-?-before ivl ?-pos*)
     (define pos-before (+ 1 (car ivl))) ;; Well, just inside the paren.
@@ -292,9 +302,17 @@
                   (+car maybe-match)
                   #,@(for/list ([capture?-stx (in-list capture?*)]
                                 [i (in-naturals 1)])
+                       (printf "capture ~s ~s~n" capture?-stx i)
                        (if capture?-stx
-                         #`(+or (+list-ref maybe-match '#,i)
-                                (rxm-error '#,i))
+                         (⊢
+                           (quasisyntax/loc #'pat
+                             (+or (+list-ref maybe-match '#,i)
+                                  (rxm-error '#,i)))
+                           (φ-set (φ-init) S-dom capture?-stx))
                          #`(+list-ref maybe-match '#,i)))))))
-  #:φ (φ-init))
+  #:φ (φ-set (φ-init)
+             L-dom
+             (cons (φ-init)
+                   (for/list ((cc (in-list capture?*)))
+                     (φ-set (φ-init) S-dom cc)))))
 

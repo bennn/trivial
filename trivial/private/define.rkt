@@ -7,13 +7,15 @@
   (rename-out
     [-let let]
     [-let* let*]
+    ;; [-error error]
+    ;; [-if if]
     [-define define]
     [-set! set!]))
 
 ;; -----------------------------------------------------------------------------
 
 (require
-  (prefix-in tr- (only-in typed/racket/base define let))
+  (prefix-in tr- (only-in typed/racket/base define error if let))
   (for-syntax
     trivial/private/common
     typed/untyped-utils
@@ -105,3 +107,22 @@
    [(_ . e*)
     (syntax/loc stx (set! . e*))]
    [_:id (syntax/loc stx set!)]))
+
+;; (define-syntax (-if stx)
+;;   (with-syntax ([+if (if (syntax-local-typed-context?) (syntax/loc stx tr-if) (syntax/loc stx if))])
+;;     (syntax-parse stx
+;;      [(_ tst thn:~> els:~>)
+;;       #:with thn+ #'thn.~>
+;;       #:with els+ #'els.~>
+;;       (⊢ (quasisyntax/loc stx
+;;            (+if tst thn+ els+))
+;;          (φ-join (φ #'thn+) (φ #'els+)))])))
+;; 
+;; (define-syntax (-error stx)
+;;   (with-syntax ([+error (if (syntax-local-typed-context?) (syntax/loc stx tr-error) (syntax/loc stx error))])
+;;     (syntax-parse stx
+;;      [(_ args ...)
+;;       (⊢ (quasisyntax/loc stx
+;;            (+error args ...))
+;;          (φ-init))])))
+

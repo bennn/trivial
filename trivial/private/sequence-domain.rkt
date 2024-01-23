@@ -35,6 +35,9 @@
 
   list-domain-cons
   list-domain-car
+  list-domain-first
+  list-domain-second
+  list-domain-third
   list-domain-cdr
   list-domain-reverse
 
@@ -117,6 +120,19 @@
   (if (or (⊥? list-domain φ*) (⊤? list-domain φ*))
     (φ-init)
     (car φ*)))
+
+(define (list-domain-first φ*)
+  (list-domain-car φ*))
+
+(define (list-domain-second φ*)
+  (if (or (⊥? list-domain φ*) (⊤? list-domain φ*) (< (length φ*) 2))
+    (φ-init)
+    (second φ*)))
+
+(define (list-domain-third φ*)
+  (if (or (⊥? list-domain φ*) (⊤? list-domain φ*) (< (length φ*) 3))
+    (φ-init)
+    (third φ*)))
 
 (define (list-domain-reverse φ*)
   (if (or (⊥? list-domain φ*) (⊤? list-domain φ*))

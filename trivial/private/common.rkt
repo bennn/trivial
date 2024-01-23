@@ -43,6 +43,9 @@
   ;; Precision ordering on φ
   ;; returns #true if first argument is less precise than 2nd on all non-⊥ entries
 
+  φ-join
+  ;; (-> Phi Phi Phi)
+
   ;; --- abstract domains
 
   ;; type [AbstractDomain X]
@@ -236,6 +239,14 @@
     (define ⊑/D (abstract-domain-⊑ D))
     (define ⊥/D (abstract-domain-⊥ D))
     (⊑/D v (hash-ref φ2 k ⊥/D))))
+
+(define (φ-join φ1 φ2)
+  ;; TODO do better!
+  (cond
+    [(equal? φ1 (φ-init))
+     φ2]
+    [else
+     φ1]))
 
 ;; =============================================================================
 

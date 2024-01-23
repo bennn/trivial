@@ -10,6 +10,7 @@
    #;[-string-set! string-set!]
    [-substring substring]
    [-string-append string-append]
+   [-string->number string->number]
    [-bytes-length bytes-length]
    [-bytes-ref bytes-ref]
    #;[-bytes-set! bytes-set!]
@@ -29,6 +30,7 @@
     string-set!
     substring
     string-append
+    string->number assert complex?
     ;; ---
     bytes-length
     bytes-ref
@@ -41,6 +43,7 @@
     string-set!
     substring
     string-append
+    string->number
     ;; ---
     bytes-length
     bytes-ref
@@ -48,6 +51,7 @@
     subbytes
     bytes-append))
   (for-syntax
+    typed/untyped-utils
     syntax/parse
     racket/syntax
     racket/base
@@ -66,6 +70,7 @@
 ;; -----------------------------------------------------------------------------
 
 (define-for-syntax S-dom
+  ;; TODO use sets, so regexp patterns "[0-9]" can cover many
   (make-abstract-domain S
    [s:str
     (syntax-e #'s)]))
@@ -150,6 +155,16 @@
   #:+ #t
       '#,(apply string-append s*)
   #:φ (φ-set (φ-init) S-dom (reduce* S-dom string-append "" s*)))
+
+(define-tailoring (-string->number [e ~> e+ (φ [S-dom ↦ s])])
+  #:with +string->number (τλ #'τ-string->number #'λ-string->number)
+  #:= (or (⊥? S-dom s)
+          (not (syntax-local-typed-context?))
+          (not (string->number s)))
+      (+string->number e+)
+  #:+ #t
+      (τ-assert (+string->number e+) τ-complex?)
+  #:φ (φ-init))
 
 ;; -----------------------------------------------------------------------------
 
