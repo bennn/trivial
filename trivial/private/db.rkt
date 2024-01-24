@@ -3,6 +3,7 @@
 (provide
   (for-syntax DB-dom Connection-dom)
   (rename-out
+    [-sqlite3-connect sqlite3-connect]
     [-mysql-connect mysql-connect]
     [-query-row query-row])
 
@@ -44,6 +45,7 @@
 (require/typed db
   (#:opaque Connection connection?)
   (mysql-connect (->* [#:user String #:database String] [] Connection))
+  (sqlite3-connect (->* [#:database String] [] Connection))
   (query-row (-> Connection String Any * (Vectorof Any)))
 )
 
@@ -72,6 +74,15 @@
     #:with schema (schema-parser #'s)
     (⊢
       (syntax/loc stx (mysql-connect #:user user #:database database))
+      (φ-set (φ-init) Connection-dom #'schema))]))
+
+(define-syntax (-sqlite3-connect stx)
+  (syntax-parse stx
+   [(_ #:database database:str
+       #:schema s:expr)
+    #:with schema (schema-parser #'s)
+    (⊢
+      (syntax/loc stx (sqlite3-connect #:database database))
       (φ-set (φ-init) Connection-dom #'schema))]))
 
 (define-syntax (-query-row stx)
