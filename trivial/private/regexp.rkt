@@ -129,7 +129,9 @@
             (not (has-unguarded-pipe-before-or-after ivl paren-ivl* pipe-pos*))
             (not (has-*-after ivl str))
             (not (has-?-after ivl ?-pos*))
-            (unsound-choose-bracket (substring str (+ 1 (car ivl)) (cdr ivl)))))])]))
+            (let ((ivl-str (substring str (+ 1 (car ivl)) (cdr ivl))))
+              (and (< 0 (string-length ivl-str))
+                   (unsound-choose-bracket ivl-str)))))])]))
 
   (define (unsound-choose-bracket str)
     (define L (string-length str))
@@ -302,7 +304,6 @@
                   (+car maybe-match)
                   #,@(for/list ([capture?-stx (in-list capture?*)]
                                 [i (in-naturals 1)])
-                       (printf "capture ~s ~s~n" capture?-stx i)
                        (if capture?-stx
                          (⊢
                            (quasisyntax/loc #'pat
@@ -310,9 +311,11 @@
                                   (rxm-error '#,i)))
                            (φ-set (φ-init) S-dom capture?-stx))
                          #`(+list-ref maybe-match '#,i)))))))
-  #:φ (φ-set (φ-init)
-             L-dom
-             (cons (φ-init)
-                   (for/list ((cc (in-list capture?*)))
-                     (φ-set (φ-init) S-dom cc)))))
+  #:φ (if (⊥? R-dom capture?*)
+        (φ-init)
+        (φ-set (φ-init)
+            L-dom
+            (cons (φ-init)
+                  (for/list ((cc (in-list capture?*)))
+                    (φ-set (φ-init) S-dom cc))))))
 

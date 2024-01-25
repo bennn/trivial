@@ -5,7 +5,7 @@
 trivial/define
 trivial/format
 trivial/function
-trivial/list
+(except-in trivial/list first second third make-list)
 trivial/integer
 trivial/regexp
 trivial/string

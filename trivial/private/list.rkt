@@ -171,55 +171,32 @@
       (format-bounds-error #'e+ 0)
   #:φ (φ-set (φ-init) L-dom (L-cdr l)))
 
-;; TODO use tailoring syntax!
-;; TODO optimize, unsafe
-
 (define-tailoring (-first [e ~> e+ (φ [L-dom ↦ l])])
   #:with +first (τλ #'τ-first #'λ-first)
-  #:with argh (begin (printf "xxxx ~s~n" #'e+) 0000)
   #:= (⊥? L-dom l)
-      (begin (printf "bot list ~n") (+first e+))
+      (+first e+)
   #:+ (not (φ*-null? l))
-      (begin (printf "hit list ~s ~n" (list #'~> #'φ)) (+first e+)) ;; TODO unsafe
+      (+first e+) ;; TODO make unsafe
   #:- #t
       (format-bounds-error #'e+ 1)
   #:φ (L-first l))
 
-;; TODO maybe works?!
-(define-syntax (-second stx)
-  (syntax-parse stx
-    [(_ e:~>)
-     #:with +second (τλ #'τ-second #'λ-second)
-     #:with e+ #'e.~>
-     (define l (φ-ref (φ #'e+) L-dom))
-     (cond
-       [(⊥? L-dom l)
-        (syntax/loc stx (+second e+))]
-       [
-        (<= 2 (length l))
-        ;; (not (φ*-null? l))
-        (⊢ (syntax/loc stx (+second e+))
-           (L-second l))]
-       [else
-         (format-bounds-error #'e+ 0)])]))
-
-;(define-tailoring (-second [e ~> e+ (φ [L-dom ↦ l])])
-;  #:with +second (τλ #'τ-second #'λ-second)
-;  #:with argh (begin (printf "xxxx ~s~n" #'e+) 0000)
-;  #:= (⊥? L-dom l)
-;      (begin (printf "bot list ~n") (+second e+))
-;  #:+ (not (φ*-null? l))
-;      (begin (printf "hit list ~s ~n" (list #'~> #'φ)) (+second e+)) ;; TODO unsafe
-;  #:- #t
-;      (format-bounds-error #'e+ 1)
-;  #:φ (L-second l))
+(define-tailoring (-second [e ~> e+ (φ [L-dom ↦ l])])
+  #:with +second (τλ #'τ-second #'λ-second)
+  #:= (⊥? L-dom l)
+      (+second e+)
+  #:+ (not (φ*-null? l))
+      (+second e+) ;; TODO make unsafe
+  #:- #t
+      (format-bounds-error #'e+ 1)
+  #:φ (L-second l))
 
 (define-tailoring (-third [e ~> e+ (φ [L-dom ↦ l])])
   #:with +third (τλ #'τ-third #'λ-third)
   #:= (⊥? L-dom l)
       (+third e+)
   #:+ (not (φ*-null? l))
-      (+third e+) ;; TODO unsafe
+      (+third e+) ;; TODO make unsafe
   #:- #t
       (format-bounds-error #'e+ 2)
   #:φ (L-third l))

@@ -162,9 +162,9 @@
 (define φ*-set
   list-set)
 
-(define (I->φ* n [φ #f])
+(define (I->φ* n [φ #f] #:dom [dom #f])
   (if (⊥? I-dom n)
-    (⊥ list-domain)
+    (⊥ (or dom list-domain))
     (make-list n (or φ (φ-init)))))
 
 (define list-domain->I-dom
@@ -203,10 +203,13 @@
     default))
 
 (define (list-domain-ref l i)
-  (lifted-ref l i (⊥ list-domain)))
+  (lifted-ref l i (φ-init)
+              ;; TODO
+              #;(⊥ list-domain)))
 
 (define (vector-domain-ref v i)
-  (lifted-ref v i (⊥ vector-domain)))
+  (lifted-ref v i (φ-init)
+              #;(⊥ vector-domain)))
 
 (define (lifted-set φ* i x default)
   (if (and (φ*? φ*) (integer? i)) ;; x should really be a φ
@@ -214,10 +217,12 @@
     default))
 
 (define (list-domain-set l i x)
-  (lifted-set l i x (⊥ list-domain)))
+  (lifted-set l i x (φ-init)
+              #;(⊥ list-domain)))
 
 (define (vector-domain-set v i x)
-  (lifted-set v i x (⊥ vector-domain)))
+  (lifted-set v i x (φ-init)
+              #;(⊥ vector-domain)))
 
 (define (list-domain-append* φ**)
   (let loop ([x* φ**])
@@ -375,25 +380,27 @@
 
   (test-case "*-domain-ref"
     (check-equal? (list-domain-ref '(1 2) 0) 1)
-    (check-equal? (list-domain-ref (⊥ list-domain) 0) (⊥ list-domain))
-    (check-equal? (list-domain-ref '(1) 'other-bot) (⊥ list-domain))
-    (check-equal? (list-domain-ref (⊤ list-domain "yo") 2) (⊥ list-domain))
+    ; TODO what is right, should be bot???
+    (check-equal? (list-domain-ref (⊥ list-domain) 0) (φ-init))
+    (check-equal? (list-domain-ref '(1) 'other-bot) (φ-init))
+    (check-equal? (list-domain-ref (⊤ list-domain "yo") 2) (φ-init))
 
     (check-equal? (vector-domain-ref '(1 2) 0) 1)
-    (check-equal? (vector-domain-ref (⊥ vector-domain) 0) (⊥ vector-domain))
-    (check-equal? (vector-domain-ref '(1) 'other-bot) (⊥ vector-domain))
-    (check-equal? (vector-domain-ref (⊤ vector-domain "yo") 2) (⊥ vector-domain)))
+    (check-equal? (vector-domain-ref (⊥ vector-domain) 0) (φ-init))
+    (check-equal? (vector-domain-ref '(1) 'other-bot) (φ-init))
+    (check-equal? (vector-domain-ref (⊤ vector-domain "yo") 2) (φ-init)))
 
   (test-case "*-domain-set"
     (check-equal? (list-domain-set '(1 2) 0 3) '(3 2))
-    (check-equal? (list-domain-set (⊥ list-domain) 0 (φ-init)) (⊥ list-domain))
-    (check-equal? (list-domain-set '(1) 'other-bot (φ-init)) (⊥ list-domain))
-    (check-equal? (list-domain-set (⊤ list-domain "yo") 2 (φ-init)) (⊥ list-domain))
+    ; TODO should be bot???
+    (check-equal? (list-domain-set (⊥ list-domain) 0 (φ-init)) (φ-init))
+    (check-equal? (list-domain-set '(1) 'other-bot (φ-init)) (φ-init))
+    (check-equal? (list-domain-set (⊤ list-domain "yo") 2 (φ-init)) (φ-init))
 
     (check-equal? (vector-domain-set '(1 2) 0 8) '(8 2))
-    (check-equal? (vector-domain-set (⊥ vector-domain) 0 (φ-init)) (⊥ vector-domain))
-    (check-equal? (vector-domain-set '(1) 'other-bot (φ-init)) (⊥ vector-domain))
-    (check-equal? (vector-domain-set (⊤ vector-domain "yo") 2 (φ-init)) (⊥ vector-domain)))
+    (check-equal? (vector-domain-set (⊥ vector-domain) 0 (φ-init)) (φ-init))
+    (check-equal? (vector-domain-set '(1) 'other-bot (φ-init)) (φ-init))
+    (check-equal? (vector-domain-set (⊤ vector-domain "yo") 2 (φ-init)) (φ-init)))
 
   (test-case "*-domain-append"
     (check-equal? (list-domain-append* '((1 2))) '(1 2))

@@ -151,7 +151,7 @@
       (+mv e1+ e2+)
   #:+ #t
       (+mv e1+ e2+)
-  #:φ (φ-set (φ-init) V-dom (make-φ* i φ2)))
+  #:φ (φ-set (φ-init) V-dom (make-φ* i φ2 #:dom V-dom)))
 
 (define-syntax (-make-vector stx)
   (syntax-parse stx
@@ -162,8 +162,9 @@
     (syntax/loc stx
       (-make-vector2 . e*))]
    [_:id
+    #:with +mv (τλ #'τ-make-vector #'λ-make-vector)
     (syntax/loc stx
-      -make-vector2)]))
+      +mv)]))
 
 (define-tailoring (-build-vector [e1 ~> e1+ (φ1 [I-dom ↦ i])]
                                  [e2 ~> e2+ (φ2 [A-dom ↦ a])])
@@ -269,7 +270,7 @@
   #:with +vf (τλ #'τ-vector-fill! #'λ-vector-fill!)
   #:= (⊥? V-dom v) (+vf e1+ e2+)
   #:+ #t (+vf e1+ e2+)
-  #:φ (φ-set (φ-init) V-dom (make-φ* (V-length v) φ2)))
+  #:φ (φ-set (φ-init) V-dom (make-φ* (V-length v) φ2 #:dom V-dom)))
 
 (define-tailoring (-vector-take [e1 ~> e1+ (φ1 [V-dom ↦ v])]
                                 [e2 ~> e2+ (φ2 [I-dom ↦ i])])

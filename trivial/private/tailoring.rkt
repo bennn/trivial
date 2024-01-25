@@ -33,6 +33,7 @@
     (pattern (~datum ->))
     (pattern (~datum ↦)))
 
+  ;; TODO ignore keywords
   (define-splicing-syntax-class elaboration
     (pattern (e0:id _:elab-> e0+:id (φ0:id [k*:id (~optional _:map->) v*:id] ...))
       #:with (e ...) #'((~var e0 ~>))
